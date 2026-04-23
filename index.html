@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tööde Haldus</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { margin: 0 0 20px 0; color: #333; }
+        
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .toolbar button, .toolbar input, .toolbar select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .toolbar button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .toolbar button:hover { background: #1d4ed8; }
+        
+        .toolbar button.secondary {
+            background: #64748b;
+        }
+        
+        .toolbar button.secondary:hover { background: #475569; }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filters input, .filters select {
+            width: 150px;
+        }
+        
+        .stats {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #334;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        th:hover { background: #e2e8f0; }
+        
+        td {
+            cursor: pointer;
+        }
+        
+        td:hover {
+            background: #f0f9ff;
+        }
+        
+        td.editing {
+            padding: 4px;
+        }
+        
+        td input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 2px solid #2563eb;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .done-row {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        .hidden-row {
+            display: none;
+        }
+        
+        .show-completed {
+            background: #fef3c7;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 50px;
+            overflow-y: auto;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+        }
+        
+        .modal h2 { margin-top: 0; }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .modal-buttons button {
+            padding: 10px 20px;
+        }
+        
+        .status-bar {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .status-bar.success { background: #dcfce7; color: #166534; }
+        .status-bar.error { background: #fef2f2; color: #991b1b; }
+        
+        .legend {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tööde Haldus</h1>
+    
+    <div class="toolbar">
+        <div class="filters">
+            <input type="text" id="filter-nr" placeholder="Töö Nr..." oninput="filterTable()">
+            <input type="text" id="filter-koht" placeholder="Täitmise koht..." oninput="filterTable()">
+            <input type="date" id="filter-date-from" placeholder="Alates" onchange="filterTable()">
+            <input type="date" id="filter-date-to" placeholder="Kuni" onchange="filterTable()">
+        </div>
+        
+        <div class="stats">
+            <label><input type="checkbox" id="show-completed" onchange="filterTable()"> Näita lõpetatud</label>
+            <span id="stats-total"></span>
+            <span id="stats-active"></span>
+        </div>
+        
+        <button onclick="openModal()">+ Lisa uus</button>
+        <button class="secondary" onclick="saveData()">Salvesta</button>
+        <button class="secondary" onclick="document.getElementById('file-input').click()">Laadi</button>
+        <input type="file" id="file-input" accept=".json" style="display:none" onchange="loadFromFile(event)">
+    </div>
+    
+    <table id="jobs-table">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+    </table>
+    
+    <div class="status-bar" id="status-bar"></div>
+    
+    <div class="legend">
+        Click any cell to edit • Check "Alustatud" to mark in progress • Check "Valmis" to complete
+    </div>
+    
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2>Lisa uus töö</h2>
+            <form id="add-form" onsubmit="addJob(event)">
+                <div class="form-grid" id="form-grid"></div>
+                <div class="modal-buttons">
+                    <button type="button" class="secondary" onclick="closeModal()">Tühista</button>
+                    <button type="submit">Lisa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+const COLUMNS = [
+    'Töö Nr',
+    'Valmis',
+    'Valmis kpv',
+    'Info sisestamise kuupäev',
+    'Tegevuse sisestaja nimi',
+    'Detaili/koostu nimetus või joonise Nr',
+    'Kommentaar(tooriku/detaili seis, muu oluline info)',
+    'Otsuse/Tegevuse vastutaja',
+    'Tooriku saabumise kuupäev EE',
+    ' EE vajaduse kuupäev (koostamiseks valmis kujul)',
+    'Meeldetuletus  X päeva ennem',
+    'Töötluse algus',
+    'Alustatud',
+    'Alustamise kpv',
+    'EE töötluse lõpp',
+    'Töötlus Lõpetatud',
+    'Töötlus allhankes',
+    'Täitmise koht',
+    'EE kuupäev tarne',
+    'TE kuupäev tarne'
+];
+
+let jobs = [];
+let editingCell = null;
+
+function init() {
+    loadData();
+    renderTable();
+    renderForm();
+}
+
+async function loadData() {
+    try {
+        const response = await fetch('jobs_data.json');
+        jobs = await response.json();
+    } catch (e) {
+        console.log('No existing file, starting fresh');
+        jobs = [];
+    }
+    updateStats();
+}
+
+function renderTable() {
+    const thead = document.getElementById('table-head');
+    const tbody = document.getElementById('table-body');
+    
+    let html = '<tr>';
+    COLUMNS.forEach(col => {
+        let title = col;
+        if (col === 'Kommentaar(tooriku/detaili seis, muu oluline info)') title = 'Kommentaar';
+        if (col === 'Detaili/koostu nimetus või joonise Nr') title = 'Detail/koostu';
+        if (col === ' EE vajaduse kuupäev (koostamiseks valmis kujul)') title = 'EE vajaduse kpv';
+        if (col === 'Meeldetuletus  X päeva ennem') title = 'Meeldetuletus';
+        html += `<th>${title}</th>`;
+    });
+    html += '</tr>';
+    thead.innerHTML = html;
+    
+    renderTableBody();
+}
+
+function renderTableBody() {
+    const tbody = document.getElementById('table-body');
+    const filterNr = document.getElementById('filter-nr').value.toLowerCase();
+    const filterKoht = document.getElementById('filter-koht').value.toLowerCase();
+    const filterFrom = document.getElementById('filter-date-from').value;
+    const filterTo = document.getElementById('filter-date-to').value;
+    const showCompleted = document.getElementById('show-completed').checked;
+    
+    let html = '';
+    let activeCount = 0;
+    
+    jobs.forEach((job, index) => {
+        const valmis = job['Valmis'];
+        if (valmis && !showCompleted) return;
+        
+        const nrMatch = !filterNr || (job['Töö Nr'] || '').toLowerCase().includes(filterNr);
+        const kohtMatch = !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);
+        
+        let dateMatch = true;
+        if (filterFrom || filterTo) {
+            const jobDate = job['Info sisestamise kuupäev'];
+            if (jobDate) {
+                if (filterFrom && jobDate < filterFrom) dateMatch = false;
+                if (filterTo && jobDate > filterTo) dateMatch = false;
+            }
+        }
+        
+        if (!nrMatch || !kohtMatch || !dateMatch) return;
+        if (!valmis) activeCount++;
+        
+        html += `<tr class="${valmis ? 'done-row' : ''}" data-index="${index}">`;
+        COLUMNS.forEach(col => {
+            const value = job[col];
+            const isCheckbox = col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes';
+            
+            if (col === 'Valmis' || col === 'Alustatud') {
+                html += `<td><input type="checkbox" class="checkbox" ${value ? 'checked' : ''} onchange="toggleField(${index}, '${col}', this.checked)"></td>`;
+            } else if (isCheckbox) {
+                html += `<td>${value ? '✓' : ''}</td>`;
+            } else {
+                const displayValue = value || '';
+                const dateCols = ['Valmis kpv', 'Info sisestamise kuupäev', 'Tooriku saabumise kuupäev EE', ' EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Töötluse algus', 'Alustamise kpv', 'EE töötluse lõpp', 'EE kuupäev tarne', 'TE kuupäev tarne'];
+                const inputType = dateCols.includes(col) ? 'date' : 'text';
+                html += `<td onclick="editCell(this, ${index}, '${col}')">${displayValue}</td>`;
+            }
+        });
+        html += '</tr>';
+    });
+    
+    tbody.innerHTML = html;
+    document.getElementById('stats-active').textContent = `Aktiivseid: ${activeCount}`;
+}
+
+function editCell(td, index, col) {
+    if (editingCell) {
+        finishEditing();
+    }
+    
+    const job = jobs[index];
+    const value = job[col] || '';
+    td.innerHTML = `<input type="${col.includes('kuupäev') ? 'date' : 'text'}" value="${value}" onblur="saveEdited(this, ${index}, '${col}')" onkeydown="handleKey(event, this, ${index}, '${col}')">`;
+    td.classList.add('editing');
+    const input = td.querySelector('input');
+    input.focus();
+    editingCell = { td, index, col };
+}
+
+function saveEdited(input, index, col) {
+    const value = input.value;
+    jobs[index][col] = value;
+    const colIndex = COLUMNS.indexOf(col);
+    const displayValue = value || '';
+    editingCell.td.innerHTML = displayValue;
+    editingCell.td.classList.remove('editing');
+    editingCell = null;
+}
+
+function handleKey(event, input, index, col) {
+    if (event.key === 'Enter') {
+        saveEdited(input, index, col);
+    } else if (event.key === 'Escape') {
+        finishEditing();
+    }
+}
+
+function finishEditing() {
+    if (!editingCell) return;
+    const job = jobs[editingCell.index];
+    const value = job[editingCell.col] || '';
+    editingCell.td.innerHTML = value;
+    editingCell.td.classList.remove('editing');
+    editingCell = null;
+}
+
+function toggleField(index, col, value) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (col === 'Valmis' && value) {
+        jobs[index]['Valmis kpv'] = today;
+    }
+    if (col === 'Alustatud' && value) {
+        jobs[index]['Alustamise kpv'] = today;
+    }
+    
+    jobs[index][col] = value;
+    filterTable();
+}
+
+function filterTable() {
+    renderTableBody();
+    updateStats();
+}
+
+function updateStats() {
+    const total = jobs.length;
+    const completed = jobs.filter(j => j['Valmis']).length;
+    document.getElementById('stats-total').textContent = `Kokku: ${total} | Lõpetatud: ${completed}`;
+}
+
+function renderForm() {
+    const grid = document.getElementById('form-grid');
+    let html = '';
+    
+    const defaultDate = new Date().toISOString().split('T')[0];
+    
+    COLUMNS.forEach(col => {
+        const isCheckbox = col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes';
+        const isDate = col.includes('kuupäev');
+        
+        let inputHtml = '';
+        if (isCheckbox) {
+            inputHtml = `<input type="checkbox" name="${col}">`;
+        } else if (isDate) {
+            inputHtml = `<input type="date" name="${col}" value="${defaultDate}">`;
+        } else if (col === 'Töö Nr') {
+            inputHtml = `<input type="text" name="${col}" required placeholder="W26001">`;
+        } else if (col === 'Info sisestamise kuupäev') {
+            inputHtml = `<input type="date" name="${col}" value="${defaultDate}">`;
+        } else {
+            inputHtml = `<input type="text" name="${col}">`;
+        }
+        
+        let label = col;
+        if (col === 'Kommentaar(tooriku/detaili seis, muu oluline info)') label = 'Kommentaar';
+        if (col === 'Detaili/koostu nimetus või joonise Nr') label = 'Detail/koostu';
+        
+        html += `<div class="form-group"><label>${label}</label>${inputHtml}</div>`;
+    });
+    
+    grid.innerHTML = html;
+}
+
+function openModal() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('#add-form input[type="date"]').forEach(i => i.value = today);
+    document.querySelectorAll('#add-form input[type="checkbox"]').forEach(i => i.checked = false);
+    document.querySelectorAll('#add-form input[type="text"]').forEach(i => i.value = '');
+    document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+function addJob(e) {
+    e.preventDefault();
+    const form = document.getElementById('add-form');
+    const formData = new FormData(form);
+    
+    const job = {};
+    COLUMNS.forEach(col => {
+        const input = form.querySelector(`[name="${col}"]`);
+        if (input) {
+            if (input.type === 'checkbox') {
+                job[col] = input.checked;
+            } else {
+                job[col] = input.value || '';
+            }
+        } else {
+            job[col] = '';
+        }
+    });
+    
+    jobs.unshift(job);
+    closeModal();
+    renderTableBody();
+    showStatus('Töö lisatud!', 'success');
+}
+
+async function saveData() {
+    try {
+        const data = JSON.stringify(jobs, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'jobs_data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showStatus('Andmed salvestatud!', 'success');
+    } catch (e) {
+        showStatus('Viga: ' + e.message, 'error');
+    }
+}
+
+function loadFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            jobs = JSON.parse(e.target.result);
+            renderTableBody();
+            updateStats();
+            showStatus('Andmed laetud!', 'success');
+        } catch (err) {
+            showStatus('Viga faili lugemisel', 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function showStatus(message, type) {
+    const bar = document.getElementById('status-bar');
+    bar.textContent = message;
+    bar.className = 'status-bar ' + type;
+    bar.style.display = 'block';
+    setTimeout(() => bar.style.display = 'none', 3000);
+}
+
+init();
+</script>
+</body>
+</html>
