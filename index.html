@@ -67,6 +67,19 @@
             color: #666;
         }
         
+        .save-indicator {
+            font-size: 12px;
+            color: #22c55e;
+            padding: 4px 10px;
+            background: #dcfce7;
+            border-radius: 4px;
+        }
+        
+        .save-indicator.unsaved {
+            color: #f59e0b;
+            background: #fef3c7;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -227,6 +240,7 @@
         </div>
         
         <div class="stats">
+            <span id="save-indicator" class="save-indicator">Salvestatud</span>
             <label><input type="checkbox" id="show-completed" onchange="filterTable()"> Näita lõpetatud</label>
             <span id="stats-total"></span>
             <span id="stats-active"></span>
@@ -311,6 +325,44 @@ const INITIAL_DATA = [
 
 let jobs = [];
 let editingCell = null;
+let hasUnsavedChanges = false;
+const STORAGE_KEY = 'jobsData';
+
+// Auto-save functions
+function saveToLocalStorage() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+        hasUnsavedChanges = false;
+        updateSaveIndicator();
+    } catch (e) {
+        console.error('Save error:', e);
+    }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            jobs = JSON.parse(saved);
+            return true;
+        }
+    } catch (e) {
+        console.error('Load error:', e);
+    }
+    return false;
+}
+
+function updateSaveIndicator() {
+    const indicator = document.getElementById('save-indicator');
+    if (!indicator) return;
+    if (hasUnsavedChanges) {
+        indicator.textContent = 'Muutused...';
+        indicator.classList.add('unsaved');
+    } else {
+        indicator.textContent = 'Salvestatud';
+        indicator.classList.remove('unsaved');
+    }
+}
 
 function init() {
     loadData();
@@ -319,7 +371,10 @@ function init() {
 }
 
 function loadData() {
-    jobs = JOBS_DATA || [];
+    // Try localStorage first, fallback to JOBS_DATA (initial data)
+    if (!loadFromLocalStorage()) {
+        jobs = INITIAL_DATA || [];
+    }
     updateStats();
 }
 
@@ -412,11 +467,12 @@ function editCell(td, index, col) {
 function saveEdited(input, index, col) {
     const value = input.value;
     jobs[index][col] = value;
-    const colIndex = COLUMNS.indexOf(col);
     const displayValue = value || '';
     editingCell.td.innerHTML = displayValue;
     editingCell.td.classList.remove('editing');
     editingCell = null;
+    hasUnsavedChanges = true;
+    saveToLocalStorage();
 }
 
 function handleKey(event, input, index, col) {
@@ -447,6 +503,8 @@ function toggleField(index, col, value) {
     }
     
     jobs[index][col] = value;
+    hasUnsavedChanges = true;
+    saveToLocalStorage();
     filterTable();
 }
 
@@ -526,6 +584,8 @@ function addJob(e) {
     });
     
     jobs.unshift(job);
+    hasUnsavedChanges = true;
+    saveToLocalStorage();
     closeModal();
     renderTableBody();
     showStatus('Töö lisatud!', 'success');
@@ -555,6 +615,8 @@ function loadFromFile(event) {
     reader.onload = function(e) {
         try {
             jobs = JSON.parse(e.target.result);
+            hasUnsavedChanges = true;
+            saveToLocalStorage();
             renderTableBody();
             updateStats();
             showStatus('Andmed laetud!', 'success');
