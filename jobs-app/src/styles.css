@@ -18,7 +18,7 @@ h1 { margin: 0 0 15px 0; color: #333; font-size: 20px; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
     font-size: 10px;
     font-weight: 500;
@@ -32,7 +32,7 @@ h1 { margin: 0 0 15px 0; color: #333; font-size: 20px; }
 }
 
 .status-box span {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1;
 }
@@ -149,17 +149,17 @@ table {
 }
 
 th, td {
-    padding: 5px 8px;
+    padding: 3px 6px;
     text-align: left;
     border-bottom: 1px solid #eee;
-    font-size: 13px;
+    font-size: 12px;
     white-space: nowrap;
 }
 
 th {
     background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11px;
     color: #334;
     position: sticky;
     top: 0;
@@ -226,9 +226,9 @@ td.editing textarea,
 td.editing input {
     width: 100%;
     min-height: 60px;
-    font-size: 13px;
+    font-size: 12px;
     font-family: inherit;
-    padding: 6px;
+    padding: 4px;
     border: 2px solid #2563eb;
     border-radius: 4px;
     resize: vertical;
@@ -241,10 +241,10 @@ td.editing input {
 
 td input {
     width: 100%;
-    padding: 4px 6px;
+    padding: 3px 5px;
     border: 2px solid #2563eb;
     border-radius: 3px;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .checkbox {

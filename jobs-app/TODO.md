@@ -1,6 +1,7 @@
 # TODO - Tööde Haldus App
 
 ## Completed
+- [x] Compact row height
 - [x] Freeze columns (status indicator + Töö Nr)
 - [x] Row hover highlight
 - [x] Full header name on hover (title tooltip)
@@ -11,7 +12,6 @@
 - [x] Remove "kuupäev" from headers
 
 ## In Progress
-- [ ] Compact row height
 - [ ] Better sort indicators (arrows)
 
 ## Ideas
