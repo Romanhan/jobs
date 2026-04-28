@@ -14,7 +14,7 @@ const DEFAULT_JOBS = [
         'Kommentaar(tooriku/detaili seis, muu oluline info)': '',
         'Otsuse/Tegevuse vastutaja': '',
         'Tooriku saabumise kuupäev EE': '',
-        ' EE vajaduse kuupäev (koostamiseks valmis kujul)': '',
+        'EE vajaduse kuupäev (koostamiseks valmis kujul)': '',
         'Meeldetuletus  X päeva ennem': '',
         'Töötluse algus': '',
         'Alustatud': false,

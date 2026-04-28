@@ -43,10 +43,12 @@
         <input type="file" id="file-input" accept=".json,.js" style="display:none" onchange="loadFromFile(event)">
     </div>
     
+    <div class="table-wrap">
     <table id="jobs-table">
         <thead id="table-head"></thead>
         <tbody id="table-body"></tbody>
     </table>
+    </div>
     
     <div class="status-bar" id="status-bar" style="display:none"></div>
     
@@ -69,7 +71,7 @@ const COLUMNS = [
     'Töö Nr', 'Valmis', 'Valmis kpv',
     'Detaili/koostu nimetus või joonise Nr', 'Kommentaar(tooriku/detaili seis, muu oluline info)',
     'Otsuse/Tegevuse vastutaja', 'Tooriku saabumise kuupäev EE',
-    'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Meeldetuletus  X päeva ennem',
+    'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Meeldetuletus X päeva ennem',
     'Töötluse algus', 'Alustatud', 'Alustamise kpv', 'EE töötluse lõpp',
     'Töötlus Lõpetatud', 'Töötlus allhankes', 'Täitmise koht',
     'EE kuupäev tarne', 'TE kuupäev tarne', 'Info sisestamise kuupäev',
@@ -80,7 +82,7 @@ const COLUMN_LABELS = {
     'Kommentaar(tooriku/detaili seis, muu oluline info)': 'Kommentaar',
     'Detaili/koostu nimetus või joonise Nr': 'Detail/koostu',
     'EE vajaduse kuupäev (koostamiseks valmis kujul)': 'EE vajadus',
-    'Meeldetuletus  X päeva ennem': 'Meeldetuletus',
+    'Meeldetuletus X päeva ennem': 'Meeldetuletus',
     'Tegevuse sisestaja nimi': 'Sisestaja',
     'Otsuse/Tegevuse vastutaja': 'Vastutaja',
     'Tooriku saabumise kuupäev EE': 'Saabunud',
@@ -97,7 +99,7 @@ const COLUMN_WIDTHS = {
     'Töö Nr': 80, 'Valmis': 45, 'Valmis kpv': 85, 'Tegevuse sisestaja nimi': 70,
     'Detaili/koostu nimetus või joonise Nr': 120, 'Kommentaar(tooriku/detaili seis, muu oluline info)': 200,
     'Otsuse/Tegevuse vastutaja': 70, 'Tooriku saabumise kuupäev EE': 70,
-    'EE vajaduse kuupäev (koostamiseks valmis kujul)': 90, 'Meeldetuletus  X päeva ennem': 60,
+    'EE vajaduse kuupäev (koostamiseks valmis kujul)': 90, 'Meeldetuletus X päeva ennem': 60,
     'Töötluse algus': 80, 'Alustatud': 55, 'Alustamise kpv': 85,
     'EE töötluse lõpp': 80, 'Töötlus Lõpetatud': 70, 'Töötlus allhankes': 70,
     'Täitmise koht': 90, 'EE kuupäev tarne': 80, 'TE kuupäev tarne': 80,
@@ -109,7 +111,7 @@ const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev', 'Tooriku saabumise
     'Alustamise kpv', 'EE töötluse lõpp', 'EE kuupäev tarne', 'TE kuupäev tarne'];
 
 const CHECKBOX_COLS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
-const HIDDEN_COLS = ['Valmis kpv', 'Alustamise kpv', 'Meeldetuletus  X päeva ennem'];
+const HIDDEN_COLS = ['Valmis kpv', 'Alustamise kpv', 'Meeldetuletus X päeva ennem'];
 
 let jobs = [];
 let editingCell = null;
@@ -190,9 +192,16 @@ function init() {
     if (saved) {
         try {
             jobs = JSON.parse(saved);
-            jobs = fixColumnKeys(jobs);
-            localStorage.setItem('jobsData', JSON.stringify(jobs));
-            showStatus('Andmed taastatud! (' + jobs.length + ' tööd)', 'success');
+            // Only fix keys if they need fixing (trimming removes leading/trailing spaces)
+            const firstJob = jobs[0] || {};
+            const hasLeadingSpaces = Object.keys(firstJob).some(k => k !== k.trim());
+            if (hasLeadingSpaces) {
+                jobs = fixColumnKeys(jobs);
+                localStorage.setItem('jobsData', JSON.stringify(jobs));
+                showStatus('Andmed parandatud! (' + jobs.length + ' tööd)', 'success');
+            } else {
+                showStatus('Andmed taastatud! (' + jobs.length + ' tööd)', 'success');
+            }
         } catch (e) {
             jobs = [];
         }
@@ -215,7 +224,7 @@ function renderTable() {
         const sortedClass = sortColumn === col ? 'sorted' : '';
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
-        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" onmousedown="startResize(event, this)">' + label + '</th>';
+        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '</th>';
     });
     html += '</tr>';
     thead.innerHTML = html;
@@ -270,18 +279,29 @@ function renderTableBody() {
             const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked);
             if (isHidden) return;
             const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
+            let colEscaped = col.replace(/'/g, "\\'");
             
             if (isCheckbox) {
-                html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + col + '\', this.checked)"></td>';
+                html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
             } else {
                 const displayValue = value || '';
-                html += '<td style="min-width: ' + width + 'px" title="' + displayValue + '" onclick="editCell(this, ' + index + ', \'' + col + '\')">' + displayValue + '</td>';
+                html += '<td style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
             }
         });
         html += '</tr>';
     });
     
     tbody.innerHTML = html;
+    
+    // Add click handlers to non-checkbox cells
+    tbody.querySelectorAll('td').forEach(td => {
+        if (td.querySelector('input')) return;
+        td.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            const col = this.getAttribute('data-col').replace(/\\'/g, "'");
+            editCell(td, index, col);
+        });
+    });
 }
 
 function sortBy(col) {
@@ -432,14 +452,9 @@ function loadFromFile(event) {
             let raw = e.target.result;
             let data;
             
-            console.log('Loading file:', file.name);
-            console.log('First 100 chars:', raw.substring(0, 100));
-            
-            // Try JSON first
             if (raw.trim().startsWith('[')) {
                 data = JSON.parse(raw);
             } else {
-                // Try JS format: const JOBS_DATA = [...]
                 const match = raw.match(/const\s+JOBS_DATA\s*=\s*(\[[\s\S]*\]);?/);
                 if (match) {
                     data = JSON.parse(match[1]);
@@ -448,20 +463,13 @@ function loadFromFile(event) {
                 }
             }
             
-            console.log('Loaded', data.length, 'jobs');
-            console.log('First job keys:', Object.keys(data[0] || {}));
-            
-            // Fix leading spaces in column names
             jobs = fixColumnKeys(data);
-            console.log('Fixed keys:', Object.keys(jobs[0] || {}));
             
-            // Save to localStorage
             localStorage.setItem('jobsData', JSON.stringify(jobs));
             renderTableBody();
             updateStats();
             showStatus('Andmed laetud! (' + jobs.length + ' tööd)', 'success');
         } catch (err) {
-            console.error('Error:', err);
             showStatus('Viga: ' + err.message, 'error');
         }
     };
