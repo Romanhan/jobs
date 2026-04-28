@@ -224,7 +224,8 @@ function renderTable() {
         const sortedClass = sortColumn === col ? 'sorted' : '';
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
-        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '</th>';
+        const arrow = sortColumn === col ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : '';
+        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
     });
     html += '</tr>';
     thead.innerHTML = html;

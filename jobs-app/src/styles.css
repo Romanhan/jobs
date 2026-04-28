@@ -193,7 +193,8 @@ th:hover::after {
 th:hover { background: #e2e8f0; }
 
 th .sort-indicator {
-    margin-left: 4px;
+    margin-left: 2px;
+    font-size: 10px;
     opacity: 0.5;
 }
 
