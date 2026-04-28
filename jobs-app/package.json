@@ -1,0 +1,38 @@
+{
+  "name": "jobs-app",
+  "version": "1.0.0",
+  "description": "Work management app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "pack": "electron-builder --dir"
+  },
+  "author": "",
+  "license": "ISC",
+  "build": {
+    "appId": "com.jobs.app",
+    "productName": "Jobs App",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "main.js",
+      "preload.js"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "electron-store": "^11.0.2"
+  }
+}

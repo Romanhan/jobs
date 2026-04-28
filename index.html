@@ -4,246 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tööde Haldus</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        h1 { margin: 0 0 20px 0; color: #333; }
-        
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .toolbar button, .toolbar input, .toolbar select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .toolbar button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .toolbar button:hover { background: #1d4ed8; }
-        
-        .toolbar button.secondary {
-            background: #64748b;
-        }
-        
-        .toolbar button.secondary:hover { background: #475569; }
-        
-        .filters {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .filters input, .filters select {
-            width: 150px;
-        }
-        
-        .stats {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .save-indicator {
-            font-size: 12px;
-            color: #22c55e;
-            padding: 4px 10px;
-            background: #dcfce7;
-            border-radius: 4px;
-        }
-        
-        .save-indicator.unsaved {
-            color: #f59e0b;
-            background: #fef3c7;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        th, td {
-            padding: 10px 8px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            font-size: 13px;
-        }
-        
-        th {
-            background: #f8fafc;
-            font-weight: 600;
-            color: #334;
-            position: sticky;
-            top: 0;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        
-        th:hover { background: #e2e8f0; }
-        
-        td {
-            cursor: pointer;
-        }
-        
-        td:hover {
-            background: #f0f9ff;
-        }
-        
-        td.editing {
-            padding: 4px;
-        }
-        
-        td input {
-            width: 100%;
-            padding: 4px 6px;
-            border: 2px solid #2563eb;
-            border-radius: 3px;
-            font-size: 13px;
-        }
-        
-        .checkbox {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        
-        .done-row {
-            opacity: 0.5;
-            text-decoration: line-through;
-        }
-        
-        .hidden-row {
-            display: none;
-        }
-        
-        .show-completed {
-            background: #fef3c7;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: flex-start;
-            padding-top: 50px;
-            overflow-y: auto;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 800px;
-        }
-        
-        .modal h2 { margin-top: 0; }
-        
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .form-group label {
-            font-size: 12px;
-            color: #666;
-            font-weight: 500;
-        }
-        
-        .form-group input, .form-group select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-        
-        .modal-buttons button {
-            padding: 10px 20px;
-        }
-        
-        .status-bar {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            display: none;
-        }
-        
-        .status-bar.success { background: #dcfce7; color: #166534; }
-        .status-bar.error { background: #fef2f2; color: #991b1b; }
-        
-        .legend {
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h1>Tööde Haldus</h1>
     
+    <div class="status-boxes">
+        <div class="status-box active">
+            <span id="count-active">0</span>
+            Aktiivsed
+        </div>
+        <div class="status-box in-progress">
+            <span id="count-in-progress">0</span>
+            Töös
+        </div>
+        <div class="status-box overdue">
+            <span id="count-overdue">0</span>
+            Hilinenud
+        </div>
+        <div class="status-box completed">
+            <span id="count-completed">0</span>
+            Valmis
+        </div>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background: #94a3b8"></div>Ootab</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #f59e0b"></div>Töös</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #22c55e"></div>OK</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #eab308"></div>Varsti</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #ef4444"></div>Hilinenud</div>
+    </div>
+    
     <div class="toolbar">
         <div class="filters">
             <input type="text" id="filter-nr" placeholder="Töö Nr..." oninput="filterTable()">
-            <input type="text" id="filter-koht" placeholder="Täitmise koht..." oninput="filterTable()">
-            <input type="date" id="filter-date-from" placeholder="Alates" onchange="filterTable()">
-            <input type="date" id="filter-date-to" placeholder="Kuni" onchange="filterTable()">
+            <input type="text" id="filter-koht" placeholder="Koht..." oninput="filterTable()">
         </div>
         
-        <div class="stats">
-            <span id="save-indicator" class="save-indicator">Salvestatud</span>
-            <label><input type="checkbox" id="show-completed" onchange="filterTable()"> Näita lõpetatud</label>
-            <span id="stats-total"></span>
-            <span id="stats-active"></span>
+        <div class="toolbar-right">
+            <label><input type="checkbox" id="show-hidden-dates" onchange="renderTable()"> Kuupäevad</label>
+            <label><input type="checkbox" id="show-completed" onchange="filterTable()"> Valmis</label>
         </div>
         
         <button onclick="openModal()">+ Lisa uus</button>
@@ -257,11 +58,7 @@
         <tbody id="table-body"></tbody>
     </table>
     
-    <div class="status-bar" id="status-bar"></div>
-    
-    <div class="legend">
-        Click any cell to edit • Check "Alustatud" to mark in progress • Check "Valmis" to complete
-    </div>
+    <div class="status-bar" id="status-bar" style="display:none"></div>
     
     <div class="modal" id="modal">
         <div class="modal-content">
@@ -269,373 +66,14 @@
             <form id="add-form" onsubmit="addJob(event)">
                 <div class="form-grid" id="form-grid"></div>
                 <div class="modal-buttons">
-                    <button type="button" class="secondary" onclick="closeModal()">Tühista</button>
-                    <button type="submit">Lisa</button>
+                    <button type="button" class="secondary" onclick="closeModal()">Katkesta</button>
+                    <button type="submit" class="primary">Lisa</button>
                 </div>
             </form>
         </div>
     </div>
-
-<script src="jobs.js"></script>
-<script>
-const COLUMNS = [
-    'Töö Nr',
-    'Valmis',
-    'Valmis kpv',
-    'Info sisestamise kuupäev',
-    'Tegevuse sisestaja nimi',
-    'Detaili/koostu nimetus või joonise Nr',
-    'Kommentaar(tooriku/detaili seis, muu oluline info)',
-    'Otsuse/Tegevuse vastutaja',
-    'Tooriku saabumise kuupäev EE',
-    ' EE vajaduse kuupäev (koostamiseks valmis kujul)',
-    'Meeldetuletus  X päeva ennem',
-    'Töötluse algus',
-    'Alustatud',
-    'Alustamise kpv',
-    'EE töötluse lõpp',
-    'Töötlus Lõpetatud',
-    'Töötlus allhankes',
-    'Täitmise koht',
-    'EE kuupäev tarne',
-    'TE kuupäev tarne'
-];
-
-const INITIAL_DATA = [
-{"Töö Nr":"w2503102","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"äärikud","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":null," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-09","Meeldetuletus  X päeva ennem":2,"Töötluse algus":"2026-02-06","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-07","Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Karusell","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"w2503103","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"äärikud","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":null," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-09","Meeldetuletus  X päeva ennem":2,"Töötluse algus":"2026-02-06","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-07","Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Karusell","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"W2503103","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-09","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"EST-A19756_r01_LOWER BLIND FLANGE","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-09","Meeldetuletus  X päeva ennem":11,"Töötluse algus":"2026-02-06","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-08","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":"Karusell","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"W2503101","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Dmitri","Detaili/koostu nimetus või joonise Nr":"Vaheseinte parandus","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-12","Meeldetuletus  X päeva ennem":1,"Töötluse algus":"2026-02-07","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-12","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":"Tos","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"w2502206","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"EST-A19080_02_Agitator blind flange","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-13","Meeldetuletus  X päeva ennem":4,"Töötluse algus":"2026-02-09","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-14","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":"Karusell","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"w2502701","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"Väiksed detailid","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-13","Meeldetuletus  X päeva ennem":1,"Töötluse algus":"2026-02-13","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-13","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":"Tos","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"W2503201","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-12","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"EST-A20346 N5","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-16","Meeldetuletus  X päeva ennem":7,"Töötluse algus":"2026-02-11","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-12","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":null,"EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"w2503103","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"kamber EST-A19740","Kommentaar(tooriku/detaili seis, muu oluline info)":"Keevitusel 05.03.26->13.03","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"2026-03-13"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-16","Meeldetuletus  X päeva ennem":2,"Töötluse algus":"2026-03-17","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-03-18","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":"TOS","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"Q26003","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-13","Tegevuse sisestaja nimi":"Alik","Detaili/koostu nimetus või joonise Nr":"EST-A20576 | REV 01 | TUBE WELDING TEST PLATE","Kommentaar(tooriku/detaili seis, muu oluline info)":"Joonis väljastatud 12.02.26","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-18","Meeldetuletus  X päeva ennem":1,"Töötluse algus":"2026-02-14","Alustatud":false,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Tandix","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"Q26002","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-13","Tegevuse sisestaja nimi":"Dmitri","Detaili/koostu nimetus või joonise Nr":null,"Kommentaar(tooriku/detaili seis, muu oluline info)":"saadetud allhanke","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-18","Meeldetuletus  X päeva ennem":1,"Töötluse algus":"2026-02-14","Alustatud":false,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Tandix","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"Q26004","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-13","Tegevuse sisestaja nimi":"Dmitri","Detaili/koostu nimetus või joonise Nr":null,"Kommentaar(tooriku/detaili seis, muu oluline info)":"saadetud allhanke joonis 13.02.2026 EST-A21038 | REV 00 | TUBE WELDING TEST PLATE | ","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-18","Meeldetuletus  X päeva ennem":1,"Töötluse algus":"2026-02-14","Alustatud":false,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Tandix","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"Q26005","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-13","Tegevuse sisestaja nimi":"Dmitri","Detaili/koostu nimetus või joonise Nr":null,"Kommentaar(tooriku/detaili seis, muu oluline info)":"saadetud allhanke","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-18","Meeldetuletus  X päeva ennem":1,"Töötluse algus":"2026-02-14","Alustatud":false,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Tandix","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"w2102404","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"deaeratori kaelus","Kommentaar(tooriku/detaili seis, muu oluline info)":"Spiraal ümbertöötlus","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-18","Meeldetuletus  X päeva ennem":7,"Töötluse algus":"2026-02-26","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-27","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":"TOS","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"W2502701","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-12","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"EST-A03395 DISC","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-20","Meeldetuletus  X päeva ennem":7,"Töötluse algus":"2026-02-16","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Multimill OÜ","EE kuupäev tarne":"2026-02-20","TE kuupäev tarne":"2026-02-23"},
-{"Töö Nr":"W2502701","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-12","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"EST-A03396_02_FLANGED SHAFT","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-20","Meeldetuletus  X päeva ennem":7,"Töötluse algus":"2026-02-16","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"LDS Metall","EE kuupäev tarne":"2026-02-20","TE kuupäev tarne":"2026-02-20"},
-{"Töö Nr":"w2502401","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-05","Tegevuse sisestaja nimi":"Roman","Detaili/koostu nimetus või joonise Nr":"EST-P98254_00_LOWER TUBESHEET","Kommentaar(tooriku/detaili seis, muu oluline info)":null,"Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-21","Meeldetuletus  X päeva ennem":7,"Töötluse algus":"2026-02-14","Alustatud":true,"Alustamise kpv":null,"EE töötluse lõpp":"2026-02-22","Töötlus Lõpetatud":true,"Töötlus allhankes":false,"Täitmise koht":"Tos","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"Q25034","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-10","Tegevuse sisestaja nimi":"Alik","Detaili/koostu nimetus või joonise Nr":null,"Kommentaar(tooriku/detaili seis, muu oluline info)":"Joonis väljastatud 10.02.2026","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"kohal"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-23","Meeldetuletus  X päeva ennem":7,"Töötluse algus":"2026-02-14","Alustatud":false,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Tandix","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"Q25025","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-10","Tegevuse sisestaja nimi":"Alik","Detaili/koostu nimetus või joonise Nr":"Forging Pre-Machined Square SA350LF2 200x200x50","Kommentaar(tooriku/detaili seis, muu oluline info)":" Joonis väljastatud 10.02.2026","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"2026-02-20"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-23","Meeldetuletus  X päeva ennem":7,"Töötluse algus":null,"Alustatud":false,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Tandix","EE kuupäev tarne":null,"TE kuupäev tarne":null},
-{"Töö Nr":"Q25026","Valmis":true,"Valmis kpv":null,"Info sisestamise kuupäev":"2026-02-10","Tegevuse sisestaja nimi":"Alik","Detaili/koostu nimetus või joonise Nr":null,"Kommentaar(tooriku/detaili seis, muu oluline info)":"Joonis väljastatud 10.02.2026","Otsuse/Tegevuse vastutaja":null,"Tooriku saabumise kuupäev EE":"2026-02-20"," EE vajaduse kuupäev (koostamiseks valmis kujul)":"2026-02-23","Meeldetuletus  X päeva ennem":7,"Töötluse algus":null,"Alustatud":false,"Alustamise kpv":null,"EE töötluse lõpp":null,"Töötlus Lõpetatud":false,"Töötlus allhankes":false,"Täitmise koht":"Tandix","EE kuupäev tarne":null,"TE kuupäev tarne":null}
-];
-
-let jobs = [];
-let editingCell = null;
-let hasUnsavedChanges = false;
-const STORAGE_KEY = 'jobsData';
-
-// Auto-save functions
-function saveToLocalStorage() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
-        hasUnsavedChanges = false;
-        updateSaveIndicator();
-    } catch (e) {
-        console.error('Save error:', e);
-    }
-}
-
-function loadFromLocalStorage() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            jobs = JSON.parse(saved);
-            return true;
-        }
-    } catch (e) {
-        console.error('Load error:', e);
-    }
-    return false;
-}
-
-function updateSaveIndicator() {
-    const indicator = document.getElementById('save-indicator');
-    if (!indicator) return;
-    if (hasUnsavedChanges) {
-        indicator.textContent = 'Muutused...';
-        indicator.classList.add('unsaved');
-    } else {
-        indicator.textContent = 'Salvestatud';
-        indicator.classList.remove('unsaved');
-    }
-}
-
-function init() {
-    loadData();
-    renderTable();
-    renderForm();
-}
-
-function loadData() {
-    // Try localStorage first, fallback to JOBS_DATA (initial data)
-    if (!loadFromLocalStorage()) {
-        jobs = INITIAL_DATA || [];
-    }
-    updateStats();
-}
-
-function renderTable() {
-    const thead = document.getElementById('table-head');
-    const tbody = document.getElementById('table-body');
     
-    let html = '<tr>';
-    COLUMNS.forEach(col => {
-        let title = col;
-        if (col === 'Kommentaar(tooriku/detaili seis, muu oluline info)') title = 'Kommentaar';
-        if (col === 'Detaili/koostu nimetus või joonise Nr') title = 'Detail/koostu';
-        if (col === ' EE vajaduse kuupäev (koostamiseks valmis kujul)') title = 'EE vajaduse kpv';
-        if (col === 'Meeldetuletus  X päeva ennem') title = 'Meeldetuletus';
-        html += `<th>${title}</th>`;
-    });
-    html += '</tr>';
-    thead.innerHTML = html;
-    
-    renderTableBody();
-}
-
-function renderTableBody() {
-    const tbody = document.getElementById('table-body');
-    const filterNr = document.getElementById('filter-nr').value.toLowerCase();
-    const filterKoht = document.getElementById('filter-koht').value.toLowerCase();
-    const filterFrom = document.getElementById('filter-date-from').value;
-    const filterTo = document.getElementById('filter-date-to').value;
-    const showCompleted = document.getElementById('show-completed').checked;
-    
-    let html = '';
-    let activeCount = 0;
-    
-    jobs.forEach((job, index) => {
-        const valmis = job['Valmis'];
-        if (valmis && !showCompleted) return;
-        
-        const nrMatch = !filterNr || (job['Töö Nr'] || '').toLowerCase().includes(filterNr);
-        const kohtMatch = !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);
-        
-        let dateMatch = true;
-        if (filterFrom || filterTo) {
-            const jobDate = job['Info sisestamise kuupäev'];
-            if (jobDate) {
-                if (filterFrom && jobDate < filterFrom) dateMatch = false;
-                if (filterTo && jobDate > filterTo) dateMatch = false;
-            }
-        }
-        
-        if (!nrMatch || !kohtMatch || !dateMatch) return;
-        if (!valmis) activeCount++;
-        
-        html += `<tr class="${valmis ? 'done-row' : ''}" data-index="${index}">`;
-        COLUMNS.forEach(col => {
-            const value = job[col];
-            const isCheckbox = col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes';
-            
-            if (col === 'Valmis' || col === 'Alustatud') {
-                html += `<td><input type="checkbox" class="checkbox" ${value ? 'checked' : ''} onchange="toggleField(${index}, '${col}', this.checked)"></td>`;
-            } else if (isCheckbox) {
-                html += `<td>${value ? '✓' : ''}</td>`;
-            } else {
-                const displayValue = value || '';
-                const dateCols = ['Valmis kpv', 'Info sisestamise kuupäev', 'Tooriku saabumise kuupäev EE', ' EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Töötluse algus', 'Alustamise kpv', 'EE töötluse lõpp', 'EE kuupäev tarne', 'TE kuupäev tarne'];
-                const inputType = dateCols.includes(col) ? 'date' : 'text';
-                html += `<td onclick="editCell(this, ${index}, '${col}')">${displayValue}</td>`;
-            }
-        });
-        html += '</tr>';
-    });
-    
-    tbody.innerHTML = html;
-    document.getElementById('stats-active').textContent = `Aktiivseid: ${activeCount}`;
-}
-
-function editCell(td, index, col) {
-    if (editingCell) {
-        finishEditing();
-    }
-    
-    const job = jobs[index];
-    const value = job[col] || '';
-    td.innerHTML = `<input type="${col.includes('kuupäev') ? 'date' : 'text'}" value="${value}" onblur="saveEdited(this, ${index}, '${col}')" onkeydown="handleKey(event, this, ${index}, '${col}')">`;
-    td.classList.add('editing');
-    const input = td.querySelector('input');
-    input.focus();
-    editingCell = { td, index, col };
-}
-
-function saveEdited(input, index, col) {
-    const value = input.value;
-    jobs[index][col] = value;
-    const displayValue = value || '';
-    editingCell.td.innerHTML = displayValue;
-    editingCell.td.classList.remove('editing');
-    editingCell = null;
-    hasUnsavedChanges = true;
-    saveToLocalStorage();
-}
-
-function handleKey(event, input, index, col) {
-    if (event.key === 'Enter') {
-        saveEdited(input, index, col);
-    } else if (event.key === 'Escape') {
-        finishEditing();
-    }
-}
-
-function finishEditing() {
-    if (!editingCell) return;
-    const job = jobs[editingCell.index];
-    const value = job[editingCell.col] || '';
-    editingCell.td.innerHTML = value;
-    editingCell.td.classList.remove('editing');
-    editingCell = null;
-}
-
-function toggleField(index, col, value) {
-    const today = new Date().toISOString().split('T')[0];
-    
-    if (col === 'Valmis' && value) {
-        jobs[index]['Valmis kpv'] = today;
-    }
-    if (col === 'Alustatud' && value) {
-        jobs[index]['Alustamise kpv'] = today;
-    }
-    
-    jobs[index][col] = value;
-    hasUnsavedChanges = true;
-    saveToLocalStorage();
-    filterTable();
-}
-
-function filterTable() {
-    renderTableBody();
-    updateStats();
-}
-
-function updateStats() {
-    const total = jobs.length;
-    const completed = jobs.filter(j => j['Valmis']).length;
-    document.getElementById('stats-total').textContent = `Kokku: ${total} | Lõpetatud: ${completed}`;
-}
-
-function renderForm() {
-    const grid = document.getElementById('form-grid');
-    let html = '';
-    
-    const defaultDate = new Date().toISOString().split('T')[0];
-    
-    COLUMNS.forEach(col => {
-        const isCheckbox = col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes';
-        const isDate = col.includes('kuupäev');
-        
-        let inputHtml = '';
-        if (isCheckbox) {
-            inputHtml = `<input type="checkbox" name="${col}">`;
-        } else if (isDate) {
-            inputHtml = `<input type="date" name="${col}" value="${defaultDate}">`;
-        } else if (col === 'Töö Nr') {
-            inputHtml = `<input type="text" name="${col}" required placeholder="W26001">`;
-        } else if (col === 'Info sisestamise kuupäev') {
-            inputHtml = `<input type="date" name="${col}" value="${defaultDate}">`;
-        } else {
-            inputHtml = `<input type="text" name="${col}">`;
-        }
-        
-        let label = col;
-        if (col === 'Kommentaar(tooriku/detaili seis, muu oluline info)') label = 'Kommentaar';
-        if (col === 'Detaili/koostu nimetus või joonise Nr') label = 'Detail/koostu';
-        
-        html += `<div class="form-group"><label>${label}</label>${inputHtml}</div>`;
-    });
-    
-    grid.innerHTML = html;
-}
-
-function openModal() {
-    const today = new Date().toISOString().split('T')[0];
-    document.querySelectorAll('#add-form input[type="date"]').forEach(i => i.value = today);
-    document.querySelectorAll('#add-form input[type="checkbox"]').forEach(i => i.checked = false);
-    document.querySelectorAll('#add-form input[type="text"]').forEach(i => i.value = '');
-    document.getElementById('modal').classList.add('active');
-}
-
-function closeModal() {
-    document.getElementById('modal').classList.remove('active');
-}
-
-function addJob(e) {
-    e.preventDefault();
-    const form = document.getElementById('add-form');
-    const formData = new FormData(form);
-    
-    const job = {};
-    COLUMNS.forEach(col => {
-        const input = form.querySelector(`[name="${col}"]`);
-        if (input) {
-            if (input.type === 'checkbox') {
-                job[col] = input.checked;
-            } else {
-                job[col] = input.value || '';
-            }
-        } else {
-            job[col] = '';
-        }
-    });
-    
-    jobs.unshift(job);
-    hasUnsavedChanges = true;
-    saveToLocalStorage();
-    closeModal();
-    renderTableBody();
-    showStatus('Töö lisatud!', 'success');
-}
-
-async function saveData() {
-    try {
-        const data = JSON.stringify(jobs, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'jobs_data.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        showStatus('Andmed salvestatud!', 'success');
-    } catch (e) {
-        showStatus('Viga: ' + e.message, 'error');
-    }
-}
-
-function loadFromFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            jobs = JSON.parse(e.target.result);
-            hasUnsavedChanges = true;
-            saveToLocalStorage();
-            renderTableBody();
-            updateStats();
-            showStatus('Andmed laetud!', 'success');
-        } catch (err) {
-            showStatus('Viga faili lugemisel', 'error');
-        }
-    };
-    reader.readAsText(file);
-}
-
-function showStatus(message, type) {
-    const bar = document.getElementById('status-bar');
-    bar.textContent = message;
-    bar.className = 'status-bar ' + type;
-    bar.style.display = 'block';
-    setTimeout(() => bar.style.display = 'none', 3000);
-}
-
-init();
-</script>
+    <script src="data.js"></script>
+    <script src="renderer.js"></script>
 </body>
 </html>

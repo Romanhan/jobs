@@ -1,0 +1,47 @@
+// Sample job data - copy your full data here or use "Laadi" to load
+const JOBS_DATA = [
+    {
+        'Töö Nr': 'w2503102',
+        'Valmis': true,
+        'Valmis kpv': '',
+        'Tegevuse sisestaja nimi': 'Roman',
+        'Detaili/koostu nimetus või joonise Nr': 'äärikud',
+        'Kommentaar(tooriku/detaili seis, muu oluline info)': '',
+        'Otsuse/Tegevuse vastutaja': '',
+        'Tooriku saabumise kuupäev EE': '',
+        'EE vajaduse kuupäev (koostamiseks valmis kujul)': '2026-02-09',
+        'Meeldetuletus  X päeva ennem': '2',
+        'Töötluse algus': '2026-02-06',
+        'Alustatud': true,
+        'Alustamise kpv': '',
+        'EE töötluse lõpp': '2026-02-07',
+        'Töötlus Lõpetatud': false,
+        'Töötlus allhankes': false,
+        'Täitmise koht': 'Karusell',
+        'EE kuupäev tarne': '',
+        'TE kuupäev tarne': '',
+        'Info sisestamise kuupäev': '2026-02-05'
+    },
+    {
+        'Töö Nr': 'W2503101',
+        'Valmis': false,
+        'Valmis kpv': '',
+        'Tegevuse sisestaja nimi': 'Dmitri',
+        'Detaili/koostu nimetus või joonise Nr': 'Vaheseinte parandus',
+        'Kommentaar(tooriku/detaili seis, muu oluline info)': '',
+        'Otsuse/Tegevuse vastutaja': '',
+        'Tooriku saabumise kuupäev EE': 'kohal',
+        'EE vajaduse kuupäev (koostamiseks valmis kujul)': '2026-02-12',
+        'Meeldetuletus  X päeva ennem': '1',
+        'Töötluse algus': '2026-02-07',
+        'Alustatud': true,
+        'Alustamise kpv': '',
+        'EE töötluse lõpp': '2026-02-12',
+        'Töötlus Lõpetatud': true,
+        'Töötlus allhankes': false,
+        'Täitmise koht': 'Tos',
+        'EE kuupäev tarne': '',
+        'TE kuupäev tarne': '',
+        'Info sisestamise kuupäev': '2026-02-05'
+    }
+];

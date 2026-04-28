@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tööde Haldus</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Tööde Haldus</h1>
+    
+    <div class="status-boxes">
+        <div class="status-box active"><span id="count-active">0</span>Aktiivsed</div>
+        <div class="status-box in-progress"><span id="count-in-progress">0</span>Töös</div>
+        <div class="status-box overdue"><span id="count-overdue">0</span>Hilinenud</div>
+        <div class="status-box completed"><span id="count-completed">0</span>Valmis</div>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div>Ootab</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Töös</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>OK</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>Varsti</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Hilinenud</div>
+    </div>
+    
+    <div class="toolbar">
+        <div class="filters">
+            <input type="text" id="filter-nr" placeholder="Töö Nr..." oninput="filterTable()">
+            <input type="text" id="filter-koht" placeholder="Koht..." oninput="filterTable()">
+        </div>
+        
+        <div class="toolbar-right">
+            <label><input type="checkbox" id="show-hidden-dates" onchange="localStorage.setItem('showHiddenDates', this.checked); renderTable()"> Kuupäevad</label>
+            <label><input type="checkbox" id="show-completed" onchange="filterTable()"> Valmis</label>
+            <label><input type="checkbox" id="show-allhankes" onchange="filterTable()"> Allhange</label>
+        </div>
+        
+        <button onclick="openModal()">+ Lisa uus</button>
+        <button class="secondary" onclick="saveData()">Salvesta</button>
+        <button class="secondary" onclick="document.getElementById('file-input').click()">Laadi</button>
+        <button class="secondary" onclick="clearData()">Tühista</button>
+        <input type="file" id="file-input" accept=".json,.js" style="display:none" onchange="loadFromFile(event)">
+    </div>
+    
+    <table id="jobs-table">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+    </table>
+    
+    <div class="status-bar" id="status-bar" style="display:none"></div>
+    
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2>Lisa uus töö</h2>
+            <form id="add-form" onsubmit="addJob(event)">
+                <div class="form-grid" id="form-grid"></div>
+                <div class="modal-buttons">
+                    <button type="button" class="secondary" onclick="closeModal()">Katkesta</button>
+                    <button type="submit" class="primary">Lisa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+// === DATA ===
+const COLUMNS = [
+    'Töö Nr', 'Valmis', 'Valmis kpv',
+    'Detaili/koostu nimetus või joonise Nr', 'Kommentaar(tooriku/detaili seis, muu oluline info)',
+    'Otsuse/Tegevuse vastutaja', 'Tooriku saabumise kuupäev EE',
+    'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Meeldetuletus  X päeva ennem',
+    'Töötluse algus', 'Alustatud', 'Alustamise kpv', 'EE töötluse lõpp',
+    'Töötlus Lõpetatud', 'Töötlus allhankes', 'Täitmise koht',
+    'EE kuupäev tarne', 'TE kuupäev tarne', 'Info sisestamise kuupäev',
+    'Tegevuse sisestaja nimi'
+];
+
+const COLUMN_LABELS = {
+    'Kommentaar(tooriku/detaili seis, muu oluline info)': 'Kommentaar',
+    'Detaili/koostu nimetus või joonise Nr': 'Detail/koostu',
+    'EE vajaduse kuupäev (koostamiseks valmis kujul)': 'EE vajadus',
+    'Meeldetuletus  X päeva ennem': 'Meeldetuletus',
+    'Tegevuse sisestaja nimi': 'Sisestaja',
+    'Otsuse/Tegevuse vastutaja': 'Vastutaja',
+    'Tooriku saabumise kuupäev EE': 'Saabunud',
+    'Valmis kpv': 'Valmis',
+    'Alustamise kpv': 'Alustamine',
+    'Töötluse algus': 'Töötlus algus',
+    'EE töötluse lõpp': 'EE lõpp',
+    'Info sisestamise kuupäev': 'Sisestatud',
+    'EE kuupäev tarne': 'EE tarne',
+    'TE kuupäev tarne': 'TE tarne'
+};
+
+const COLUMN_WIDTHS = {
+    'Töö Nr': 80, 'Valmis': 45, 'Valmis kpv': 85, 'Tegevuse sisestaja nimi': 70,
+    'Detaili/koostu nimetus või joonise Nr': 120, 'Kommentaar(tooriku/detaili seis, muu oluline info)': 200,
+    'Otsuse/Tegevuse vastutaja': 70, 'Tooriku saabumise kuupäev EE': 70,
+    'EE vajaduse kuupäev (koostamiseks valmis kujul)': 90, 'Meeldetuletus  X päeva ennem': 60,
+    'Töötluse algus': 80, 'Alustatud': 55, 'Alustamise kpv': 85,
+    'EE töötluse lõpp': 80, 'Töötlus Lõpetatud': 70, 'Töötlus allhankes': 70,
+    'Täitmise koht': 90, 'EE kuupäev tarne': 80, 'TE kuupäev tarne': 80,
+    'Info sisestamise kuupäev': 90
+};
+
+const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev', 'Tooriku saabumise kuupäev EE',
+    'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Töötluse algus',
+    'Alustamise kpv', 'EE töötluse lõpp', 'EE kuupäev tarne', 'TE kuupäev tarne'];
+
+const CHECKBOX_COLS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
+const HIDDEN_COLS = ['Valmis kpv', 'Alustamise kpv', 'Meeldetuletus  X päeva ennem'];
+
+let jobs = [];
+let editingCell = null;
+const DEADLINE_WARNING_DAYS = 7;
+let sortColumn = null, sortDirection = 'asc';
+let columnWidths = {}, hiddenColumns = {};
+
+function getStatus(job) {
+    if (job['Valmis']) return 'completed';
+    if (job['Alustatud']) return 'in-progress';
+    const deadline = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
+    if (!deadline) return 'waiting';
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const deadlineDate = new Date(deadline); deadlineDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return 'overdue';
+    if (diffDays <= DEADLINE_WARNING_DAYS) return 'soon';
+    return 'ok';
+}
+
+function loadColumnWidths() {
+    columnWidths = {};
+    const saved = localStorage.getItem('jobsColumnWidths');
+    if (saved) { try { columnWidths = JSON.parse(saved); } catch (e) { columnWidths = {}; } }
+}
+
+function saveColumnWidths() {
+    localStorage.setItem('jobsColumnWidths', JSON.stringify(columnWidths));
+}
+
+function loadHiddenColumns() {
+    hiddenColumns = {};
+    const saved = localStorage.getItem('jobsHiddenColumns');
+    if (saved) { try { hiddenColumns = JSON.parse(saved); } catch (e) { hiddenColumns = {}; } }
+}
+
+function saveHiddenColumns() {
+    localStorage.setItem('jobsHiddenColumns', JSON.stringify(hiddenColumns));
+}
+
+let resizingTh = null;
+
+function startResize(e, th) {
+    if (e.target.tagName === 'SPAN') return;
+    resizingTh = th;
+    const startX = e.pageX, startWidth = th.offsetWidth;
+    document.addEventListener('mousemove', function doResize(ev) {
+        if (!resizingTh) return;
+        const diff = ev.pageX - startX;
+        const newWidth = Math.max(40, startWidth + diff);
+        const col = resizingTh.getAttribute('data-col');
+        resizingTh.style.minWidth = newWidth + 'px';
+        columnWidths[col] = newWidth;
+    });
+    document.addEventListener('mouseup', function stopResize() {
+        if (resizingTh) {
+            const col = resizingTh.getAttribute('data-col');
+            if (col) sortBy(col);
+            saveColumnWidths();
+            resizingTh = null;
+        }
+        document.removeEventListener('mousemove', doResize);
+        document.removeEventListener('mouseup', stopResize);
+    });
+}
+
+function init() {
+    loadHiddenColumns();
+    loadColumnWidths();
+    
+    // Load checkbox states
+    const showHidden = localStorage.getItem('showHiddenDates');
+    if (showHidden === 'true') {
+        document.getElementById('show-hidden-dates').checked = true;
+    }
+    
+    const saved = localStorage.getItem('jobsData');
+    if (saved) {
+        try {
+            jobs = JSON.parse(saved);
+            jobs = fixColumnKeys(jobs);
+            localStorage.setItem('jobsData', JSON.stringify(jobs));
+            showStatus('Andmed taastatud! (' + jobs.length + ' tööd)', 'success');
+        } catch (e) {
+            jobs = [];
+        }
+    } else {
+        showStatus('Kasuta "Laadi" nupu andmete laadimiseks!', 'success');
+    }
+    
+    renderTable();
+    renderForm();
+    updateStats();
+}
+
+function renderTable() {
+    const thead = document.getElementById('table-head');
+    let html = '<tr><th class="row-indicator"></th>';
+    COLUMNS.forEach(col => {
+        const isHidden = HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked;
+        if (isHidden) return;
+        const label = COLUMN_LABELS[col] || col;
+        const sortedClass = sortColumn === col ? 'sorted' : '';
+        const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
+        const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
+        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" onmousedown="startResize(event, this)">' + label + '</th>';
+    });
+    html += '</tr>';
+    thead.innerHTML = html;
+    renderTableBody();
+}
+
+function renderTableBody() {
+    const tbody = document.getElementById('table-body');
+    const filterNr = document.getElementById('filter-nr').value.toLowerCase();
+    const filterKoht = document.getElementById('filter-koht').value.toLowerCase();
+    const showCompleted = document.getElementById('show-completed').checked;
+    const showAllhankes = document.getElementById('show-allhankes').checked;
+    
+    let filteredJobs = jobs.map((job, index) => ({ job, index }))
+        .filter(({ job }) => {
+            const valmis = job['Valmis'];
+            if (valmis && !showCompleted) return false;
+            const allhankes = job['Töötlus allhankes'];
+            if (allhankes && !showAllhankes) return false;
+            const nrMatch = !filterNr || (job['Töö Nr'] || '').toLowerCase().includes(filterNr);
+            const kohtMatch = !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);
+            return nrMatch && kohtMatch;
+        });
+    
+    if (sortColumn) {
+        filteredJobs.sort((a, b) => {
+            let valA = a.job[sortColumn], valB = b.job[sortColumn];
+            if (valA === null || valA === undefined) valA = '';
+            if (valB === null || valB === undefined) valB = '';
+            if (typeof valA === 'boolean') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
+            else if (DATE_COLS.includes(sortColumn)) { valA = valA ? new Date(valA).getTime() : 0; valB = valB ? new Date(valB).getTime() : 0; }
+            else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+    
+    let html = '';
+    const statusColors = { 'waiting': '#94a3b8', 'in-progress': '#f59e0b', 'ok': '#22c55e', 'soon': '#eab308', 'overdue': '#ef4444', 'completed': '#94a3b8' };
+    
+    filteredJobs.forEach(({ job, index }) => {
+        const status = getStatus(job);
+        const valmis = job['Valmis'];
+        const statusColor = statusColors[status] || statusColors.waiting;
+        html += '<tr class="' + (valmis ? 'done-row' : '') + '" data-index="' + index + '">';
+        html += '<td class="row-indicator" style="background-color: ' + statusColor + '"></td>';
+        
+        COLUMNS.forEach(col => {
+            const value = job[col];
+            const isCheckbox = CHECKBOX_COLS.includes(col);
+            const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked);
+            if (isHidden) return;
+            const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
+            
+            if (isCheckbox) {
+                html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + col + '\', this.checked)"></td>';
+            } else {
+                const displayValue = value || '';
+                html += '<td style="min-width: ' + width + 'px" title="' + displayValue + '" onclick="editCell(this, ' + index + ', \'' + col + '\')">' + displayValue + '</td>';
+            }
+        });
+        html += '</tr>';
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function sortBy(col) {
+    if (sortColumn === col) { sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; }
+    else { sortColumn = col; sortDirection = 'asc'; }
+    renderTable();
+}
+
+function editCell(td, index, col) {
+    if (editingCell) finishEditing();
+    const job = jobs[index];
+    const value = job[col] || '';
+    const isDate = DATE_COLS.includes(col);
+    if (isDate) {
+        td.innerHTML = '<input type="date" value="' + value + '" style="width: 100%;" onblur="saveEdited(this, ' + index + ', \'' + col + '\')">';
+    } else {
+        const rows = Math.max(2, Math.ceil(value.length / 40));
+        td.innerHTML = '<textarea style="width: 100%;" rows="' + rows + '" onblur="saveEdited(this, ' + index + ', \'' + col + '\')">' + value + '</textarea>';
+    }
+    td.classList.add('editing');
+    const input = td.querySelector('input, textarea');
+    input.focus();
+    editingCell = { td, index, col };
+}
+
+// Auto-save helper
+function autoSave() {
+    try {
+        localStorage.setItem('jobsData', JSON.stringify(jobs));
+    } catch (e) {}
+}
+
+function saveEdited(input, index, col) {
+    const value = input.value;
+    jobs[index][col] = value;
+    editingCell.td.innerHTML = value || '';
+    editingCell.td.classList.remove('editing');
+    editingCell = null;
+    autoSave();
+    renderTableBody();
+    updateStats();
+}
+
+function finishEditing() {
+    if (!editingCell) return;
+    const value = jobs[editingCell.index][editingCell.col] || '';
+    editingCell.td.innerHTML = value;
+    editingCell.td.classList.remove('editing');
+    editingCell = null;
+}
+
+function toggleField(index, col, value) {
+    const today = new Date().toISOString().split('T')[0];
+    if (col === 'Valmis') jobs[index]['Valmis kpv'] = value ? today : '';
+    if (col === 'Alustatud') jobs[index]['Alustamise kpv'] = value ? today : '';
+    jobs[index][col] = value;
+    autoSave();
+    renderTableBody();
+    updateStats();
+}
+
+function filterTable() { renderTableBody(); updateStats(); }
+
+function updateStats() {
+    const total = jobs.length;
+    const completed = jobs.filter(j => j['Valmis']).length;
+    const active = total - completed;
+    const inProgress = jobs.filter(j => j['Alustatud'] && !j['Valmis']).length;
+    const overdue = jobs.filter(j => getStatus(j) === 'overdue').length;
+    
+    document.getElementById('count-active').textContent = active;
+    document.getElementById('count-in-progress').textContent = inProgress;
+    document.getElementById('count-overdue').textContent = overdue;
+    document.getElementById('count-completed').textContent = completed;
+}
+
+function renderForm() {
+    const grid = document.getElementById('form-grid');
+    let html = '';
+    const defaultDate = new Date().toISOString().split('T')[0];
+    
+    COLUMNS.forEach(col => {
+        if (HIDDEN_COLS.includes(col)) return;
+        const isCheckbox = CHECKBOX_COLS.includes(col);
+        const isDate = DATE_COLS.includes(col);
+        let inputHtml = '';
+        if (isCheckbox) inputHtml = '<input type="checkbox" name="' + col + '">';
+        else if (isDate) inputHtml = '<input type="date" name="' + col + '" value="' + defaultDate + '">';
+        else if (col === 'Töö Nr') inputHtml = '<input type="text" name="' + col + '" required placeholder="W26001">';
+        else if (col === 'Info sisestamise kuupäev') inputHtml = '<input type="date" name="' + col + '" value="' + defaultDate + '">';
+        else inputHtml = '<input type="text" name="' + col + '">';
+        const label = COLUMN_LABELS[col] || col;
+        html += '<div class="form-group"><label>' + label + '</label>' + inputHtml + '</div>';
+    });
+    
+    grid.innerHTML = html;
+}
+
+function openModal() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('#add-form input[type="date"]').forEach(i => i.value = today);
+    document.querySelectorAll('#add-form input[type="checkbox"]').forEach(i => i.checked = false);
+    document.querySelectorAll('#add-form input[type="text"]').forEach(i => i.value = '');
+    document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+function addJob(e) {
+    e.preventDefault();
+    const form = document.getElementById('add-form');
+    const job = {};
+    COLUMNS.forEach(col => {
+        const input = form.querySelector('[name="' + col + '"]');
+        if (input) job[col] = input.type === 'checkbox' ? input.checked : (input.value || '');
+        else job[col] = '';
+    });
+    jobs.push(job);
+    autoSave();
+    closeModal();
+    renderTableBody();
+    updateStats();
+    showStatus('Töö lisatud!', 'success');
+}
+
+function saveData() {
+    try {
+        const data = JSON.stringify(jobs, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'jobs_data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showStatus('Andmed salvestatud!', 'success');
+    } catch (e) {
+        showStatus('Viga: ' + e.message, 'error');
+    }
+}
+
+function loadFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let raw = e.target.result;
+            let data;
+            
+            console.log('Loading file:', file.name);
+            console.log('First 100 chars:', raw.substring(0, 100));
+            
+            // Try JSON first
+            if (raw.trim().startsWith('[')) {
+                data = JSON.parse(raw);
+            } else {
+                // Try JS format: const JOBS_DATA = [...]
+                const match = raw.match(/const\s+JOBS_DATA\s*=\s*(\[[\s\S]*\]);?/);
+                if (match) {
+                    data = JSON.parse(match[1]);
+                } else {
+                    throw new Error('Tundmatu formaat. Fail peab olema JSON array või const JOBS_DATA = [...]');
+                }
+            }
+            
+            console.log('Loaded', data.length, 'jobs');
+            console.log('First job keys:', Object.keys(data[0] || {}));
+            
+            // Fix leading spaces in column names
+            jobs = fixColumnKeys(data);
+            console.log('Fixed keys:', Object.keys(jobs[0] || {}));
+            
+            // Save to localStorage
+            localStorage.setItem('jobsData', JSON.stringify(jobs));
+            renderTableBody();
+            updateStats();
+            showStatus('Andmed laetud! (' + jobs.length + ' tööd)', 'success');
+        } catch (err) {
+            console.error('Error:', err);
+            showStatus('Viga: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function fixColumnKeys(data) {
+    if (!Array.isArray(data)) return data;
+    return data.map(job => {
+        const fixed = {};
+        Object.keys(job).forEach(key => {
+            let newKey = key.trim();
+            fixed[newKey] = job[key];
+        });
+        return fixed;
+    });
+}
+
+function showStatus(message, type) {
+    const bar = document.getElementById('status-bar');
+    bar.textContent = message;
+    bar.className = 'status-bar ' + type;
+    bar.style.display = 'block';
+    setTimeout(() => bar.style.display = 'none', 3000);
+}
+
+function clearData() {
+    if (confirm('Kas tahad andmed kustutada? Laadi uuesti failist.')) {
+        localStorage.removeItem('jobsData');
+        jobs = [];
+        renderTableBody();
+        updateStats();
+        showStatus('Andmed tühjatud!', 'success');
+    }
+}
+
+// Start app
+init();
+</script>
+</body>
+</html>
