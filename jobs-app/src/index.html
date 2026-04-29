@@ -379,7 +379,6 @@ function editCell(td, index, col) {
     td.classList.add('editing');
     const input = td.querySelector('input, textarea');
     input.focus();
-    // Place cursor at end of text
     input.setSelectionRange(input.value.length, input.value.length);
     editingCell = { td, index, col };
 }
