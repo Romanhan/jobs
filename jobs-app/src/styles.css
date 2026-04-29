@@ -223,12 +223,6 @@ td.editing {
     vertical-align: top;
 }
 
-.selected-cell {
-    outline: 2px solid #2563eb;
-    outline-offset: -2px;
-    background-color: #f0f9ff;
-}
-
 td.editing textarea,
 td.editing input {
     width: 100%;
