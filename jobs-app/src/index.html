@@ -864,7 +864,7 @@ function loadFromFile(event) {
             showStatus('Viga: ' + err.message, 'error');
         }
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'Windows-1252');
 }
 
 function parseCSVLine(line) {
