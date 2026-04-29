@@ -798,11 +798,36 @@ function loadFromFile(event) {
             
             const headerLine = lines[0];
             const headers = parseCSVLine(headerLine);
+            
+            // Hybrid name + position mapping
             const colMap = {};
+            const usedIndices = new Set();
+            
+            // First pass: match headers by normalized name
             headers.forEach((h, i) => {
                 const key = h.trim().replace(/^"|"$/g, '');
-                const found = COLUMNS.find(c => c.toLowerCase() === key.toLowerCase());
-                if (found) colMap[found] = i;
+                const normKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const found = COLUMNS.find(c => {
+                    const normC = c.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return normC === normKey;
+                });
+                if (found) {
+                    colMap[found] = i;
+                    usedIndices.add(i);
+                }
+            });
+            
+            // Second pass: assign unmapped COLUMNS by position order
+            let posIdx = 0;
+            COLUMNS.forEach(col => {
+                if (colMap[col] === undefined) {
+                    while (usedIndices.has(posIdx) && posIdx < headers.length) posIdx++;
+                    if (posIdx < headers.length) {
+                        colMap[col] = posIdx;
+                        usedIndices.add(posIdx);
+                    }
+                    posIdx++;
+                }
             });
             
             const newJobs = [];
