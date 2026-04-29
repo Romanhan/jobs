@@ -37,10 +37,10 @@
         </div>
         
         <button onclick="openModal()">+ Lisa uus</button>
-        <button class="secondary" onclick="saveData()">Salvesta</button>
-        <button class="secondary" onclick="document.getElementById('file-input').click()">Laadi</button>
-        <button class="secondary" onclick="clearData()">Tühista</button>
-        <input type="file" id="file-input" accept=".json,.js" style="display:none" onchange="loadFromFile(event)">
+<button class="secondary" onclick="saveCSV()">Salvesta CSV</button>
+        <button class="secondary" onclick="document.getElementById('file-input').click()">Laadi CSV</button>
+
+        <input type="file" id="file-input" accept=".csv,.txt" style="display:none" onchange="loadFromFile(event)">
     </div>
     
     <div class="table-wrap">
@@ -753,20 +753,36 @@ function addJob(e) {
     showStatus('Töö lisatud!', 'success');
 }
 
-function saveData() {
-    try {
-        const data = JSON.stringify(jobs, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'jobs_data.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        showStatus('Andmed salvestatud!', 'success');
-    } catch (e) {
-        showStatus('Viga: ' + e.message, 'error');
-    }
+function saveCSV() {
+    const headerRow = COLUMNS.join(';');
+    const rows = jobs.map(job => {
+        return COLUMNS.map(col => {
+            let val = job[col] !== undefined ? job[col] : '';
+            if (val === true) val = 'TRUE';
+            else if (val === false) val = 'FALSE';
+            else if (typeof val === 'string') {
+                if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+                    const p = val.split('-');
+                    val = p[2] + '.' + p[1] + '.' + p[0];
+                }
+            }
+            val = String(val).replace(/"/g, '""');
+            if (val.includes(';') || val.includes('"') || val.includes('\n')) {
+                val = '"' + val + '"';
+            }
+            return val;
+        }).join(';');
+    });
+    const csv = [headerRow, ...rows].join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'jobs_data.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showStatus('CSV salvestatud!', 'success');
 }
 
 function loadFromFile(event) {
@@ -776,30 +792,84 @@ function loadFromFile(event) {
     reader.onload = function(e) {
         try {
             let raw = e.target.result;
-            let data;
+            raw = raw.replace(/^\uFEFF/, '');
+            const lines = raw.split(/\r?\n/).filter(l => l.trim());
+            if (lines.length < 1) throw new Error('Tühi fail');
             
-            if (raw.trim().startsWith('[')) {
-                data = JSON.parse(raw);
-            } else {
-                const match = raw.match(/const\s+JOBS_DATA\s*=\s*(\[[\s\S]*\]);?/);
-                if (match) {
-                    data = JSON.parse(match[1]);
-                } else {
-                    throw new Error('Tundmatu formaat. Fail peab olema JSON array või const JOBS_DATA = [...]');
-                }
+            const headerLine = lines[0];
+            const headers = parseCSVLine(headerLine);
+            const colMap = {};
+            headers.forEach((h, i) => {
+                const key = h.trim().replace(/^"|"$/g, '');
+                const found = COLUMNS.find(c => c.toLowerCase() === key.toLowerCase());
+                if (found) colMap[found] = i;
+            });
+            
+            const newJobs = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                const job = {};
+                COLUMNS.forEach(col => {
+                    const idx = colMap[col];
+                    let val = (idx !== undefined && values[idx] !== undefined) ? values[idx] : '';
+                    val = val.replace(/^"|"$/g, '').replace(/""/g, '"');
+                    
+                    if (col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes') {
+                        if (val.toUpperCase() === 'TRUE') val = true;
+                        else if (val.toUpperCase() === 'FALSE') val = false;
+                        else val = false;
+                    } else if (DATE_COLS.includes(col) && val) {
+                        const m = val.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+                        if (m) {
+                            val = m[3] + '-' + m[2] + '-' + m[1];
+                        }
+                    }
+                    job[col] = val;
+                });
+                if (job['Töö Nr']) newJobs.push(job);
             }
             
-            jobs = fixColumnKeys(data);
-            
+            jobs = newJobs;
             localStorage.setItem('jobsData', JSON.stringify(jobs));
-            renderTableBody();
+            renderTable();
+            renderForm();
             updateStats();
-            showStatus('Andmed laetud! (' + jobs.length + ' tööd)', 'success');
+            showStatus('CSV laetud! (' + jobs.length + ' tööd)', 'success');
         } catch (err) {
             showStatus('Viga: ' + err.message, 'error');
         }
     };
     reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+            if (ch === '"' && line[i+1] === '"') {
+                current += '"';
+                i++;
+            } else if (ch === '"') {
+                inQuotes = false;
+            } else {
+                current += ch;
+            }
+        } else {
+            if (ch === '"') {
+                inQuotes = true;
+            } else if (ch === ';') {
+                result.push(current);
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+    }
+    result.push(current);
+    return result;
 }
 
 function fixColumnKeys(data) {

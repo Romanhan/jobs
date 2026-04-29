@@ -189,7 +189,7 @@ th {
     cursor: pointer;
     white-space: nowrap;
     user-select: none;
-    padding: 7px 8px 7px 0px;
+    padding: 7px 8px 7px 1px;
     border-bottom: 2px solid #cbd5e1;
     box-shadow: inset 0 -1px 0 #cbd5e1;
 }
