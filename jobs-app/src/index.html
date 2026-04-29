@@ -32,7 +32,7 @@
         
         <div class="toolbar-right">
             <label><input type="checkbox" id="show-hidden-dates" onchange="localStorage.setItem('showHiddenDates', this.checked); renderTable()"> Kuupäevad</label>
-            <label><input type="checkbox" id="show-completed" onchange="filterTable()"> Valmis</label>
+            <label><input type="checkbox" id="show-completed" onchange="filterTable()"> Lõppenud</label>
             <label><input type="checkbox" id="show-allhankes" onchange="filterTable()"> Allhange</label>
         </div>
         
@@ -541,7 +541,11 @@ function renderTableBody() {
     let filteredJobs = jobs.map((job, index) => ({ job, index }))
         .filter(({ job }) => {
             const valmis = job['Valmis'];
-            if (valmis && !showCompleted) return false;
+            if (showCompleted) {
+                if (!valmis) return false;
+            } else {
+                if (valmis) return false;
+            }
             const allhankes = job['Töötlus allhankes'];
             if (allhankes && !showAllhankes) return false;
             const nrMatch = !filterNr || (job['Töö Nr'] || '').toLowerCase().includes(filterNr);
