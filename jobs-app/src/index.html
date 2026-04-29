@@ -298,6 +298,8 @@ function renderTableBody() {
     tbody.querySelectorAll('td').forEach(td => {
         if (td.querySelector('input')) return;
         td.addEventListener('click', function() {
+            // If clicking the same cell that's already being edited, keep editing
+            if (editingCell && editingCell.td === this) return;
             const index = parseInt(this.getAttribute('data-index'));
             const col = this.getAttribute('data-col').replace(/\\'/g, "'");
             editCell(td, index, col);
