@@ -153,6 +153,7 @@ function saveHiddenColumns() {
 }
 
 let resizingTh = null;
+let justResized = false;
 
 function startResize(e, th) {
     if (e.target.tagName === 'SPAN') return;
@@ -168,10 +169,10 @@ function startResize(e, th) {
     });
     document.addEventListener('mouseup', function stopResize() {
         if (resizingTh) {
-            const col = resizingTh.getAttribute('data-col');
-            if (col) sortBy(col);
             saveColumnWidths();
             resizingTh = null;
+            justResized = true;
+            setTimeout(() => { justResized = false; }, 200);
         }
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopResize);
@@ -187,6 +188,15 @@ function init() {
     if (showHidden === 'true') {
         document.getElementById('show-hidden-dates').checked = true;
     }
+    
+    // Add sort click handler on thead
+    document.querySelector('thead').addEventListener('click', function(e) {
+        if (justResized) { justResized = false; return; }
+        const th = e.target.closest('th');
+        if (!th) return;
+        const col = th.getAttribute('data-col');
+        if (col) sortBy(col);
+    });
     
     const saved = localStorage.getItem('jobsData');
     if (saved) {
@@ -242,7 +252,7 @@ function renderTable() {
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
         const arrow = sortColumn === col ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : '';
-        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)" onclick="sortBy(\'' + col.replace(/'/g, "\\'") + '\')">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
+        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
     });
     html += '</tr>';
     thead.innerHTML = html;
