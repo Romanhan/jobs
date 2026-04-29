@@ -154,13 +154,16 @@ function saveHiddenColumns() {
 
 let resizingTh = null;
 let justResized = false;
+let didResize = false;
 
 function startResize(e, th) {
     if (e.target.tagName === 'SPAN') return;
+    didResize = false;
     resizingTh = th;
     const startX = e.pageX, startWidth = th.offsetWidth;
     document.addEventListener('mousemove', function doResize(ev) {
         if (!resizingTh) return;
+        didResize = true;
         const diff = ev.pageX - startX;
         const newWidth = Math.max(40, startWidth + diff);
         const col = resizingTh.getAttribute('data-col');
@@ -171,8 +174,11 @@ function startResize(e, th) {
         if (resizingTh) {
             saveColumnWidths();
             resizingTh = null;
-            justResized = true;
-            setTimeout(() => { justResized = false; }, 200);
+            if (didResize) {
+                justResized = true;
+                setTimeout(() => { justResized = false; }, 200);
+            }
+            didResize = false;
         }
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopResize);
