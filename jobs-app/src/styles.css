@@ -172,7 +172,7 @@ table {
 
 th,
 td {
-    padding: 2px 4px;
+    padding: 1px 4px;
     text-align: left;
     border-bottom: 1px solid #eee;
     font-size: 12px;
@@ -182,7 +182,7 @@ td {
 th {
     background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
     font-weight: 600;
-    font-size: 10px;
+    font-size: 11px;
     color: #334;
     position: sticky;
     top: 0;
