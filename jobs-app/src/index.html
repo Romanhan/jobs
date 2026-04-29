@@ -371,14 +371,16 @@ function editCell(td, index, col) {
     const isDate = DATE_COLS.includes(col);
     if (isDate) {
         const formattedValue = formatDate(value);
-        td.innerHTML = '<input type="text" value="' + formattedValue + '" placeholder="pp.kk.aaaa" style="width: 100%;" onblur="saveEdited(this, ' + index + ', \'' + col + '\')">';
+        td.innerHTML = '<input type="text" value="' + formattedValue + '" placeholder="pp.kk.aaaa" style="width: 100%;" onblur="saveEdited(this, ' + index + ', \'' + col + '\')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveEdited(this, ' + index + ', \'' + col + '\');}">';
     } else {
         const rows = Math.max(2, Math.ceil(value.length / 40));
-        td.innerHTML = '<textarea style="width: 100%;" rows="' + rows + '" onblur="saveEdited(this, ' + index + ', \'' + col + '\')">' + value + '</textarea>';
+        td.innerHTML = '<textarea style="width: 100%;" rows="' + rows + '" onblur="saveEdited(this, ' + index + ', \'' + col + '\')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveEdited(this, ' + index + ', \'' + col + '\');}">' + value + '</textarea>';
     }
     td.classList.add('editing');
     const input = td.querySelector('input, textarea');
     input.focus();
+    // Place cursor at end of text
+    input.setSelectionRange(input.value.length, input.value.length);
     editingCell = { td, index, col };
 }
 
