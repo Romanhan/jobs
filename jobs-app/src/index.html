@@ -106,7 +106,7 @@ const COLUMN_WIDTHS = {
     'Info sisestamise kuupäev': 90
 };
 
-const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev', 'Tooriku saabumise kuupäev EE',
+const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev',
     'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Töötluse algus',
     'Alustamise kpv', 'EE töötluse lõpp', 'EE kuupäev tarne', 'TE kuupäev tarne'];
 
@@ -129,6 +129,241 @@ function parseDate(dateStr) {
     const parts = dateStr.split('.');
     if (parts.length !== 3) return dateStr;
     return parts[2] + '-' + parts[1] + '-' + parts[0];
+}
+
+function convertSaabunudDates() {
+    let count = 0;
+    jobs.forEach(job => {
+        const val = job['Tooriku saabumise kuupäev EE'];
+        if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+            const parts = val.split('-');
+            job['Tooriku saabumise kuupäev EE'] = parts[2] + '.' + parts[1] + '.' + parts[0];
+            count++;
+        }
+    });
+    if (count > 0) {
+        localStorage.setItem('jobsData', JSON.stringify(jobs));
+    }
+}
+
+let calendarPopup = null;
+let calendarCallback = null;
+let calendarCurrentYear = null;
+let calendarCurrentMonth = null;
+let calendarSelectedDate = null;
+
+function openDateCalendar(inputEl, currentValue, callback) {
+    closeCalendarPopup();
+    calendarPopup = inputEl;
+    calendarCallback = callback;
+    
+    const today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth();
+    
+    if (currentValue && /^\d{2}\.\d{2}\.\d{4}$/.test(currentValue)) {
+        const parts = currentValue.split('.');
+        year = parseInt(parts[2]);
+        month = parseInt(parts[1]) - 1;
+    }
+    
+    calendarCurrentYear = year;
+    calendarCurrentMonth = month;
+    calendarSelectedDate = currentValue;
+    
+    const popup = document.createElement('div');
+    popup.className = 'calendar-popup active';
+    popup.id = 'calendar-popup';
+    
+    const rect = inputEl.getBoundingClientRect();
+    popup.style.left = rect.left + 'px';
+    popup.style.top = (rect.bottom + 4) + 'px';
+    
+    document.body.appendChild(popup);
+    renderCalendar();
+    
+    document.addEventListener('click', handleCalendarClickOutside);
+}
+
+function closeCalendarPopup() {
+    const popup = document.getElementById('calendar-popup');
+    if (popup) {
+        popup.remove();
+    }
+    document.removeEventListener('click', handleCalendarClickOutside);
+    calendarPopup = null;
+    calendarCallback = null;
+}
+
+function handleCalendarClickOutside(e) {
+    const popup = document.getElementById('calendar-popup');
+    if (popup && (calendarCellTd || calendarPopup)) {
+        if (!popup.contains(e.target)) {
+            closeCalendarPopup();
+            if (editingCell && editingCell.isDate) {
+                finishEditing();
+            }
+        }
+    }
+}
+
+function renderCalendar() {
+    const popup = document.getElementById('calendar-popup');
+    if (!popup) return;
+    
+    const monthNames = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
+    
+    let html = '<div class="calendar-header">';
+    html += '<button class="calendar-header-btn" onclick="event.stopPropagation();changeMonth(-1)">◀</button>';
+    html += '<span class="calendar-month-year">' + monthNames[calendarCurrentMonth] + ' ' + calendarCurrentYear + '</span>';
+    html += '<button class="calendar-header-btn" onclick="event.stopPropagation();changeMonth(1)">▶</button>';
+    html += '</div>';
+    
+    html += '<div class="calendar-weekdays">';
+    const weekdays = ['E', 'K', 'T', 'N', 'R', 'L', 'P'];
+    weekdays.forEach(day => {
+        html += '<span class="calendar-weekday">' + day + '</span>';
+    });
+    html += '</div>';
+    
+    html += '<div class="calendar-days">';
+    
+    const firstDay = new Date(calendarCurrentYear, calendarCurrentMonth, 1);
+    const lastDay = new Date(calendarCurrentYear, calendarCurrentMonth + 1, 0);
+    
+    let startDay = firstDay.getDay() - 1;
+    if (startDay < 0) startDay = 6;
+    
+    const today = new Date();
+    const todayStr = String(today.getDate()).padStart(2, '0') + '.' + String(today.getMonth() + 1).padStart(2, '0') + '.' + today.getFullYear();
+    
+    for (let i = 0; i < startDay; i++) {
+        const prevDate = new Date(calendarCurrentYear, calendarCurrentMonth, -startDay + i + 1);
+        const day = prevDate.getDate();
+        const dayStr = String(day).padStart(2, '0') + '.' + String(prevDate.getMonth() + 1).padStart(2, '0') + '.' + prevDate.getFullYear();
+        const isSelected = dayStr === calendarSelectedDate;
+        const isToday = dayStr === todayStr;
+        html += '<span class="calendar-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
+    }
+    
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const dayStr = String(day).padStart(2, '0') + '.' + String(calendarCurrentMonth + 1).padStart(2, '0') + '.' + calendarCurrentYear;
+        const isSelected = dayStr === calendarSelectedDate;
+        const isToday = dayStr === todayStr;
+        html += '<span class="calendar-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
+    }
+    
+    const totalCells = startDay + lastDay.getDate();
+    const remainingCells = 42 - totalCells;
+    for (let day = 1; day <= remainingCells; day++) {
+        const nextDate = new Date(calendarCurrentYear, calendarCurrentMonth + 1, day);
+        const dayStr = String(day).padStart(2, '0') + '.' + String(nextDate.getMonth() + 1).padStart(2, '0') + '.' + nextDate.getFullYear();
+        const isSelected = dayStr === calendarSelectedDate;
+        const isToday = dayStr === todayStr;
+        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
+    }
+    
+    html += '</div>';
+    html += '<button class="calendar-today-btn" onclick="event.stopPropagation();selectTodayCalendar()">Täna</button>';
+    
+    popup.innerHTML = html;
+}
+
+function changeMonth(delta) {
+    calendarCurrentMonth += delta;
+    if (calendarCurrentMonth > 11) {
+        calendarCurrentMonth = 0;
+        calendarCurrentYear++;
+    } else if (calendarCurrentMonth < 0) {
+        calendarCurrentMonth = 11;
+        calendarCurrentYear--;
+    }
+    renderCalendar();
+}
+
+function selectDateCalendar(dateStr) {
+    if (calendarRowIndex !== null && calendarColName) {
+        selectDateCalendarDirect(dateStr);
+    } else if (calendarCallback) {
+        calendarCallback({ value: dateStr });
+    }
+    closeCalendarPopup();
+}
+
+function selectTodayCalendar() {
+    const today = new Date();
+    const dayStr = String(today.getDate()).padStart(2, '0') + '.' + String(today.getMonth() + 1).padStart(2, '0') + '.' + today.getFullYear();
+    if (calendarRowIndex !== null && calendarColName) {
+        selectDateCalendarDirect(dayStr);
+    } else {
+        selectDateCalendar(dayStr);
+    }
+}
+
+function openDateCalendarDirect(td, index, col, currentValue) {
+    closeCalendarPopup();
+    calendarCellTd = td;
+    calendarRowIndex = index;
+    calendarColName = col;
+    
+    const today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth();
+    
+    if (currentValue && /^\d{2}\.\d{2}\.\d{4}$/.test(currentValue)) {
+        const parts = currentValue.split('.');
+        year = parseInt(parts[2]);
+        month = parseInt(parts[1]) - 1;
+    }
+    
+    calendarCurrentYear = year;
+    calendarCurrentMonth = month;
+    calendarSelectedDate = currentValue;
+    
+    const popup = document.createElement('div');
+    popup.className = 'calendar-popup active';
+    popup.id = 'calendar-popup';
+    
+    const rect = td.getBoundingClientRect();
+    popup.style.left = rect.left + 'px';
+    popup.style.top = (rect.bottom + 4) + 'px';
+    
+    document.body.appendChild(popup);
+    renderCalendar();
+    
+    document.addEventListener('click', handleCalendarClickOutside);
+}
+
+let calendarCellTd = null;
+let calendarRowIndex = null;
+let calendarColName = null;
+
+function selectDateCalendarDirect(dateStr) {
+    if (calendarRowIndex !== null && calendarColName) {
+        jobs[calendarRowIndex][calendarColName] = dateStr;
+        if (calendarCellTd) {
+            calendarCellTd.innerHTML = dateStr;
+            calendarCellTd.classList.remove('editing');
+            calendarCellTd.onclick = null;
+        }
+        autoSave();
+        renderTableBody();
+        updateStats();
+    }
+    closeCalendarPopup();
+}
+
+function closeCalendarPopup() {
+    const popup = document.getElementById('calendar-popup');
+    if (popup) {
+        popup.remove();
+    }
+    document.removeEventListener('click', handleCalendarClickOutside);
+    calendarPopup = null;
+    calendarCallback = null;
+    calendarCellTd = null;
+    calendarRowIndex = null;
+    calendarColName = null;
 }
 
 let jobs = [];
@@ -177,9 +412,11 @@ let didResize = false;
 function startResize(e, th) {
     if (e.target.tagName === 'SPAN') return;
     didResize = false;
+    justResized = false;
     resizingTh = th;
     const startX = e.pageX, startWidth = th.offsetWidth;
-    document.addEventListener('mousemove', function doResize(ev) {
+
+    function doResize(ev) {
         if (!resizingTh) return;
         didResize = true;
         const diff = ev.pageX - startX;
@@ -187,8 +424,9 @@ function startResize(e, th) {
         const col = resizingTh.getAttribute('data-col');
         resizingTh.style.minWidth = newWidth + 'px';
         columnWidths[col] = newWidth;
-    });
-    document.addEventListener('mouseup', function stopResize() {
+    }
+
+    function stopResize() {
         if (resizingTh) {
             saveColumnWidths();
             resizingTh = null;
@@ -200,7 +438,10 @@ function startResize(e, th) {
         }
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopResize);
-    });
+    }
+
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
 }
 
 function init() {
@@ -231,10 +472,12 @@ function init() {
             const hasLeadingSpaces = Object.keys(firstJob).some(k => k !== k.trim());
             if (hasLeadingSpaces) {
                 jobs = fixColumnKeys(jobs);
+                convertSaabunudDates();
                 localStorage.setItem('jobsData', JSON.stringify(jobs));
                 showStatus('Andmed parandatud! (' + jobs.length + ' tööd)', 'success');
             } else {
                 showStatus('Andmed taastatud! (' + jobs.length + ' tööd)', 'success');
+                convertSaabunudDates();
             }
         } catch (e) {
             jobs = [];
@@ -245,6 +488,7 @@ function init() {
             .then(res => res.json())
             .then(data => {
                 jobs = fixColumnKeys(data);
+                convertSaabunudDates();
                 localStorage.setItem('jobsData', JSON.stringify(jobs));
                 renderTable();
                 renderForm();
@@ -344,19 +588,33 @@ function renderTableBody() {
          html += '</tr>';
      });
      
-     tbody.innerHTML = html;
-     
-     // Add click handlers to non-checkbox cells
-     tbody.querySelectorAll('td').forEach(td => {
-         if (td.querySelector('input')) return;
-         td.addEventListener('click', function() {
-             if (editingCell && editingCell.td === this) return;
-             const index = parseInt(this.getAttribute('data-index'));
-             const col = this.getAttribute('data-col').replace(/\\'/g, "'");
-             editCell(this, index, col);
-         });
-     });
- }
+tbody.innerHTML = html;
+      
+      // Add click handlers to non-checkbox cells
+      tbody.querySelectorAll('td').forEach(td => {
+          if (td.querySelector('input')) return;
+          const colAttr = td.getAttribute('data-col');
+          if (!colAttr) return;
+          const col = colAttr.replace(/\\'/g, "'");
+          if (DATE_COLS.includes(col)) {
+              // Date columns: open calendar on click
+              td.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  const index = parseInt(this.getAttribute('data-index'));
+                  const colVal = this.getAttribute('data-col').replace(/\\'/g, "'");
+                  const value = jobs[index][colVal] || '';
+                  const colEscaped = colVal.replace(/'/g, "\\'");
+                  openDateCalendarDirect(td, index, colEscaped, value);
+              });
+              return;
+          }
+          td.addEventListener('click', function() {
+              if (editingCell && editingCell.td === this) return;
+              const index = parseInt(this.getAttribute('data-index'));
+              editCell(this, index, col);
+          });
+      });
+}
 
 function sortBy(col) {
     if (sortColumn === col) { sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; }
@@ -370,18 +628,17 @@ function editCell(td, index, col) {
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
     if (isDate) {
-        const formattedValue = formatDate(value);
-        const yyyyMmDd = value ? value.split('.').reverse().join('-') : '';
-        td.innerHTML = '<div style="display:flex;gap:4px;align-items:center;"><input type="date" value="' + yyyyMmDd + '" style="flex:1;" onchange="this.nextElementSibling.value=this.value ? this.value.split(\'-\').reverse().join(\'.\') : \'\'" onblur="saveEdited(this.nextElementSibling, ' + index + ', \'' + col + '\')"><input type="text" value="' + formattedValue + '" placeholder="pp.kk.aaaa" style="width:100px;" onblur="saveEdited(this, ' + index + ', \'' + col + '\')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveEdited(this, ' + index + ', \'' + col + '\');}"></div>';
+        // Date columns handled in renderTableBody - shouldn't reach here
+        return;
     } else {
         const rows = Math.max(2, Math.ceil(value.length / 40));
         td.innerHTML = '<textarea style="width: 100%;" rows="' + rows + '" onblur="saveEdited(this, ' + index + ', \'' + col + '\')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveEdited(this, ' + index + ', \'' + col + '\');}">' + value + '</textarea>';
+        td.classList.add('editing');
+        const input = td.querySelector('textarea');
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
     }
-    td.classList.add('editing');
-    const input = td.querySelector('input, textarea');
-    input.focus();
-    input.setSelectionRange(input.value.length, input.value.length);
-    editingCell = { td, index, col };
+    editingCell = { td, index, col, isDate };
 }
 
 // Auto-save helper
@@ -393,7 +650,7 @@ function autoSave() {
 
 function saveEdited(input, index, col) {
     let value = input.value;
-    if (DATE_COLS.includes(col)) {
+    if (DATE_COLS.includes(col) && !/^\d{2}\.\d{2}\.\d{4}$/.test(value)) {
         value = parseDate(value);
     }
     jobs[index][col] = value;
@@ -572,13 +829,32 @@ function clearData() {
 }
 
 document.addEventListener('keydown', function(e) {
+    // CTRL+; inserts current date in TEXT fields (not date fields with calendar)
+    if (editingCell && e.ctrlKey && e.key === ';') {
+        if (!editingCell.isDate) {
+            const input = editingCell.td.querySelector('input, textarea');
+            if (input) {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                input.value = dd + '.' + mm + '.' + yyyy;
+            }
+        }
+        e.preventDefault();
+        return;
+    }
     if (editingCell) {
         if (e.key === 'Escape') {
+            closeCalendarPopup();
             finishEditing();
             e.preventDefault();
         }
     } else {
-        if (e.key === ' ') {
+        if (e.key === 'Escape') {
+            closeCalendarPopup();
+            e.preventDefault();
+        } else if (e.key === ' ') {
             const active = document.activeElement;
             if (active && active.tagName === 'TD') {
                 const checkbox = active.querySelector('input[type="checkbox"]');
