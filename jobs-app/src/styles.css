@@ -267,6 +267,8 @@ thead .row-indicator {
     width: 3px;
     min-width: 3px;
     max-width: 3px;
+    padding: 0 !important;
+    margin: 0 !important;
     background-color: #94a3b8;
 }
 

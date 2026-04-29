@@ -233,7 +233,7 @@ function init() {
 
 function renderTable() {
     const thead = document.querySelector('thead');
-    let html = '<tr>';
+    let html = '<tr><th class="row-indicator"></th>';
     COLUMNS.forEach(col => {
         const isHidden = HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked;
         if (isHidden) return;
