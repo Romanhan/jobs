@@ -518,7 +518,7 @@ function renderTable() {
         const label = COLUMN_LABELS[col] || col;
         const sortedClass = sortColumn === col ? 'sorted' : '';
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
-        const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
+        const width = columnWidths[col] || COLUMN_WIDTHS[col] || 40;
         const arrow = sortColumn === col ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : '';
         html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
     });
@@ -575,7 +575,7 @@ function renderTableBody() {
             const isDate = DATE_COLS.includes(col);
             const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked);
             if (isHidden) return;
-            const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
+            const width = columnWidths[col] || COLUMN_WIDTHS[col] || 40;
             let colEscaped = col.replace(/'/g, "\\'");
             
             if (isCheckbox) {
