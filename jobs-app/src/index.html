@@ -117,6 +117,10 @@ let jobs = [];
 let editingCell = null;
 const DEADLINE_WARNING_DAYS = 7;
 let sortColumn = null, sortDirection = 'asc';
+let selectedRow = null;
+let selectedColIdx = -1;
+let selectedColName = null;
+let visibleColumns = [];
 let columnWidths = {}, hiddenColumns = {};
 
 function getStatus(job) {
@@ -214,18 +218,26 @@ function init() {
     updateStats();
 }
 
+function getVisibleColumns() {
+    const showHiddenDates = document.getElementById('show-hidden-dates').checked;
+    return COLUMNS.filter(col => {
+        const isHidden = HIDDEN_COLS.includes(col) && !showHiddenDates;
+        const isColHidden = hiddenColumns[col];
+        return !isHidden && !isColHidden;
+    });
+}
+
 function renderTable() {
-    const thead = document.getElementById('table-head');
+    const thead = document.querySelector('thead');
+    visibleColumns = getVisibleColumns();
     let html = '<tr><th class="row-indicator"></th>';
-    COLUMNS.forEach(col => {
-        const isHidden = HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked;
-        if (isHidden) return;
+    visibleColumns.forEach(col => {
         const label = COLUMN_LABELS[col] || col;
         const sortedClass = sortColumn === col ? 'sorted' : '';
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
         const arrow = sortColumn === col ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : '';
-        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
+        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)" onclick="sortBy(\'' + col.replace(/'/g, "\\'") + '\')">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
     });
     html += '</tr>';
     thead.innerHTML = html;
@@ -264,48 +276,48 @@ function renderTableBody() {
         });
     }
     
-    let html = '';
-    const statusColors = { 'waiting': '#94a3b8', 'in-progress': '#f59e0b', 'ok': '#22c55e', 'soon': '#eab308', 'overdue': '#ef4444', 'completed': '#94a3b8' };
-    
-    filteredJobs.forEach(({ job, index }) => {
-        const status = getStatus(job);
-        const valmis = job['Valmis'];
-        const statusColor = statusColors[status] || statusColors.waiting;
-        html += '<tr class="' + (valmis ? 'done-row' : '') + '" data-index="' + index + '">';
-        html += '<td class="row-indicator" style="background-color: ' + statusColor + '"></td>';
-        
-        COLUMNS.forEach(col => {
-            const value = job[col];
-            const isCheckbox = CHECKBOX_COLS.includes(col);
-            const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked);
-            if (isHidden) return;
-            const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
-            let colEscaped = col.replace(/'/g, "\\'");
-            
-            if (isCheckbox) {
-                html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
-            } else {
-                const displayValue = value || '';
-                html += '<td style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
-            }
-        });
-        html += '</tr>';
-    });
-    
-    tbody.innerHTML = html;
-    
-    // Add click handlers to non-checkbox cells
-    tbody.querySelectorAll('td').forEach(td => {
-        if (td.querySelector('input')) return;
-        td.addEventListener('click', function() {
-            // If clicking the same cell that's already being edited, keep editing
-            if (editingCell && editingCell.td === this) return;
-            const index = parseInt(this.getAttribute('data-index'));
-            const col = this.getAttribute('data-col').replace(/\\'/g, "'");
-            editCell(td, index, col);
-        });
-    });
-}
+     let html = '';
+     const statusColors = { 'waiting': '#94a3b8', 'in-progress': '#f59e0b', 'ok': '#22c55e', 'soon': '#eab308', 'overdue': '#ef4444', 'completed': '#94a3b8' };
+     
+     filteredJobs.forEach(({ job, index }) => {
+         const status = getStatus(job);
+         const valmis = job['Valmis'];
+         const statusColor = statusColors[status] || statusColors.waiting;
+         html += '<tr class="' + (valmis ? 'done-row' : '') + '" data-index="' + index + '">';
+         html += '<td class="row-indicator" style="background-color: ' + statusColor + '"></td>';
+         
+         visibleColumns.forEach(col => {
+             const value = job[col];
+             const isCheckbox = CHECKBOX_COLS.includes(col);
+             const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
+             let colEscaped = col.replace(/'/g, "\\'");
+             
+             if (isCheckbox) {
+                 html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
+             } else {
+                 const displayValue = value || '';
+                 html += '<td style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
+             }
+         });
+         html += '</tr>';
+     });
+     
+     tbody.innerHTML = html;
+     initSelection();
+     
+     // Add click handlers to non-checkbox cells
+     tbody.querySelectorAll('td').forEach(td => {
+         if (td.querySelector('input')) return;
+         td.addEventListener('click', function() {
+             // If clicking the same cell that's already being edited, keep editing
+             if (editingCell && editingCell.td === this) return;
+             const index = parseInt(this.getAttribute('data-index'));
+             const col = this.getAttribute('data-col').replace(/\\'/g, "'");
+             updateSelectedCell(this, index, col);
+             editCell(this, index, col);
+         });
+     });
+ }
 
 function sortBy(col) {
     if (sortColumn === col) { sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; }
@@ -315,6 +327,7 @@ function sortBy(col) {
 
 function editCell(td, index, col) {
     if (editingCell) finishEditing();
+    td.classList.remove('selected-cell');
     const job = jobs[index];
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
@@ -508,6 +521,146 @@ function clearData() {
         showStatus('Andmed tühjatud!', 'success');
     }
 }
+
+function initSelection() {
+    if (visibleColumns.length === 0) return;
+    const tbody = document.getElementById('table-body');
+    const firstRow = tbody.querySelector('tr:not(.hidden-row)');
+    if (firstRow) {
+        const cells = firstRow.querySelectorAll('td:not(.row-indicator)');
+        if (cells.length > 0) {
+            selectedRow = firstRow;
+            selectedColIdx = 0;
+            selectedColName = visibleColumns[0];
+            cells[0].classList.add('selected-cell');
+        }
+    }
+}
+
+function updateSelectedCell(td, index, col) {
+    if (selectedRow) {
+        const prevCells = selectedRow.querySelectorAll('td:not(.row-indicator)');
+        prevCells.forEach(cell => cell.classList.remove('selected-cell'));
+    }
+    selectedRow = td.closest('tr');
+    selectedColName = col;
+    selectedColIdx = visibleColumns.indexOf(col);
+    td.classList.add('selected-cell');
+}
+
+function moveSelection(direction) {
+    if (visibleColumns.length === 0) return;
+    const tbody = document.getElementById('table-body');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.hidden-row)'));
+    if (rows.length === 0) return;
+
+    let currentRowIdx = selectedRow ? rows.indexOf(selectedRow) : -1;
+    let newRowIdx = currentRowIdx;
+    let newColIdx = selectedColIdx;
+
+    switch(direction) {
+        case 'up': newRowIdx = Math.max(0, currentRowIdx - 1); break;
+        case 'down': newRowIdx = Math.min(rows.length - 1, currentRowIdx + 1); break;
+        case 'left': newColIdx = Math.max(0, selectedColIdx - 1); break;
+        case 'right': newColIdx = Math.min(visibleColumns.length - 1, selectedColIdx + 1); break;
+    }
+
+    if (newRowIdx === currentRowIdx && newColIdx === selectedColIdx) return;
+
+    if (selectedRow) {
+        const oldCell = selectedRow.cells[selectedColIdx + 1];
+        if (oldCell) oldCell.classList.remove('selected-cell');
+    }
+
+    selectedRow = rows[newRowIdx];
+    selectedColIdx = newColIdx;
+    selectedColName = visibleColumns[selectedColIdx];
+    const newCell = selectedRow.cells[selectedColIdx + 1];
+    if (newCell) {
+        newCell.classList.add('selected-cell');
+        newCell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (editingCell) {
+        switch(e.key) {
+            case 'Escape':
+                finishEditing();
+                e.preventDefault();
+                break;
+            case 'Enter':
+                if (e.target.tagName === 'TEXTAREA') return;
+                const input = editingCell.td.querySelector('input, textarea');
+                if (input) {
+                    saveEdited(input, editingCell.index, editingCell.col);
+                    moveSelection('down');
+                    if (selectedRow && selectedColIdx !== -1) {
+                        const newCell = selectedRow.cells[selectedColIdx + 1];
+                        if (newCell && !newCell.querySelector('input')) {
+                            editCell(newCell, parseInt(newCell.getAttribute('data-index')), selectedColName);
+                        }
+                    }
+                }
+                e.preventDefault();
+                break;
+            case 'Tab':
+                const input = editingCell.td.querySelector('input, textarea');
+                if (input) {
+                    saveEdited(input, editingCell.index, editingCell.col);
+                    if (e.shiftKey) moveSelection('left');
+                    else moveSelection('right');
+                    if (selectedRow && selectedColIdx !== -1) {
+                        const newCell = selectedRow.cells[selectedColIdx + 1];
+                        if (newCell && !newCell.querySelector('input')) {
+                            editCell(newCell, parseInt(newCell.getAttribute('data-index')), selectedColName);
+                        }
+                    }
+                }
+                e.preventDefault();
+                break;
+            default:
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+                break;
+        }
+    } else {
+        switch(e.key) {
+            case 'ArrowUp': moveSelection('up'); e.preventDefault(); break;
+            case 'ArrowDown': moveSelection('down'); e.preventDefault(); break;
+            case 'ArrowLeft': moveSelection('left'); e.preventDefault(); break;
+            case 'ArrowRight': moveSelection('right'); e.preventDefault(); break;
+            case 'Enter':
+                if (selectedRow && selectedColIdx !== -1) {
+                    const cell = selectedRow.cells[selectedColIdx + 1];
+                    if (cell && !cell.querySelector('input[type="checkbox"]')) {
+                        editCell(cell, parseInt(cell.getAttribute('data-index')), selectedColName);
+                    }
+                }
+                e.preventDefault();
+                break;
+            case 'Tab':
+                if (e.shiftKey) moveSelection('left');
+                else moveSelection('right');
+                e.preventDefault();
+                break;
+            case ' ':
+                if (selectedRow && selectedColIdx !== -1) {
+                    const cell = selectedRow.cells[selectedColIdx + 1];
+                    if (cell) {
+                        const checkbox = cell.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            checkbox.dispatchEvent(new Event('change'));
+                        }
+                    }
+                }
+                e.preventDefault();
+                break;
+        }
+    }
+});
 
 // Start app
 init();
