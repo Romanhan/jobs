@@ -113,6 +113,24 @@ const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev', 'Tooriku saabumise
 const CHECKBOX_COLS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
 const HIDDEN_COLS = ['Valmis kpv', 'Alustamise kpv', 'Meeldetuletus X päeva ennem'];
 
+// Convert yyyy-mm-dd to dd.mm.yyyy
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) return dateStr;
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return parts[2] + '.' + parts[1] + '.' + parts[0];
+}
+
+// Convert dd.mm.yyyy to yyyy-mm-dd for storage
+function parseDate(dateStr) {
+    if (!dateStr) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    const parts = dateStr.split('.');
+    if (parts.length !== 3) return dateStr;
+    return parts[2] + '-' + parts[1] + '-' + parts[0];
+}
+
 let jobs = [];
 let editingCell = null;
 const DEADLINE_WARNING_DAYS = 7;
@@ -307,21 +325,22 @@ function renderTableBody() {
          html += '<tr class="' + (valmis ? 'done-row' : '') + '" data-index="' + index + '">';
          html += '<td class="row-indicator" style="background-color: ' + statusColor + '"></td>';
          
-         COLUMNS.forEach(col => {
-             const value = job[col];
-             const isCheckbox = CHECKBOX_COLS.includes(col);
-             const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked);
-             if (isHidden) return;
-             const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
-             let colEscaped = col.replace(/'/g, "\\'");
-             
-             if (isCheckbox) {
-                 html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
-             } else {
-                 const displayValue = value || '';
-                 html += '<td style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
-             }
-         });
+        COLUMNS.forEach(col => {
+            const value = job[col];
+            const isCheckbox = CHECKBOX_COLS.includes(col);
+            const isDate = DATE_COLS.includes(col);
+            const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !document.getElementById('show-hidden-dates').checked);
+            if (isHidden) return;
+            const width = columnWidths[col] || COLUMN_WIDTHS[col] || 80;
+            let colEscaped = col.replace(/'/g, "\\'");
+            
+            if (isCheckbox) {
+                html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
+            } else {
+                const displayValue = isDate ? formatDate(value) : (value || '');
+                html += '<td style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
+            }
+        });
          html += '</tr>';
      });
      
@@ -351,7 +370,8 @@ function editCell(td, index, col) {
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
     if (isDate) {
-        td.innerHTML = '<input type="date" value="' + value + '" style="width: 100%;" onblur="saveEdited(this, ' + index + ', \'' + col + '\')">';
+        const formattedValue = formatDate(value);
+        td.innerHTML = '<input type="text" value="' + formattedValue + '" placeholder="pp.kk.aaaa" style="width: 100%;" onblur="saveEdited(this, ' + index + ', \'' + col + '\')">';
     } else {
         const rows = Math.max(2, Math.ceil(value.length / 40));
         td.innerHTML = '<textarea style="width: 100%;" rows="' + rows + '" onblur="saveEdited(this, ' + index + ', \'' + col + '\')">' + value + '</textarea>';
@@ -370,9 +390,12 @@ function autoSave() {
 }
 
 function saveEdited(input, index, col) {
-    const value = input.value;
+    let value = input.value;
+    if (DATE_COLS.includes(col)) {
+        value = parseDate(value);
+    }
     jobs[index][col] = value;
-    editingCell.td.innerHTML = value || '';
+    editingCell.td.innerHTML = DATE_COLS.includes(col) ? formatDate(value) : (value || '');
     editingCell.td.classList.remove('editing');
     editingCell = null;
     autoSave();
@@ -416,7 +439,7 @@ function updateStats() {
 function renderForm() {
     const grid = document.getElementById('form-grid');
     let html = '';
-    const defaultDate = new Date().toISOString().split('T')[0];
+    const defaultDate = formatDate(new Date().toISOString().split('T')[0]);
     
     COLUMNS.forEach(col => {
         if (HIDDEN_COLS.includes(col)) return;
@@ -424,9 +447,9 @@ function renderForm() {
         const isDate = DATE_COLS.includes(col);
         let inputHtml = '';
         if (isCheckbox) inputHtml = '<input type="checkbox" name="' + col + '">';
-        else if (isDate) inputHtml = '<input type="date" name="' + col + '" value="' + defaultDate + '">';
+        else if (isDate) inputHtml = '<input type="text" name="' + col + '" value="' + defaultDate + '" placeholder="pp.kk.aaaa">';
         else if (col === 'Töö Nr') inputHtml = '<input type="text" name="' + col + '" required placeholder="W26001">';
-        else if (col === 'Info sisestamise kuupäev') inputHtml = '<input type="date" name="' + col + '" value="' + defaultDate + '">';
+        else if (col === 'Info sisestamise kuupäev') inputHtml = '<input type="text" name="' + col + '" value="' + defaultDate + '" placeholder="pp.kk.aaaa">';
         else inputHtml = '<input type="text" name="' + col + '">';
         const label = COLUMN_LABELS[col] || col;
         html += '<div class="form-group"><label>' + label + '</label>' + inputHtml + '</div>';
@@ -436,10 +459,12 @@ function renderForm() {
 }
 
 function openModal() {
-    const today = new Date().toISOString().split('T')[0];
-    document.querySelectorAll('#add-form input[type="date"]').forEach(i => i.value = today);
+    const today = formatDate(new Date().toISOString().split('T')[0]);
+    document.querySelectorAll('#add-form input[type="text"]').forEach(i => {
+        if (DATE_COLS.includes(i.name)) i.value = today;
+        else i.value = '';
+    });
     document.querySelectorAll('#add-form input[type="checkbox"]').forEach(i => i.checked = false);
-    document.querySelectorAll('#add-form input[type="text"]').forEach(i => i.value = '');
     document.getElementById('modal').classList.add('active');
 }
 
@@ -451,8 +476,11 @@ function addJob(e) {
     const job = {};
     COLUMNS.forEach(col => {
         const input = form.querySelector('[name="' + col + '"]');
-        if (input) job[col] = input.type === 'checkbox' ? input.checked : (input.value || '');
-        else job[col] = '';
+        if (input) {
+            let value = input.type === 'checkbox' ? input.checked : (input.value || '');
+            if (DATE_COLS.includes(col)) value = parseDate(value);
+            job[col] = value;
+        } else job[col] = '';
     });
     jobs.push(job);
     autoSave();
