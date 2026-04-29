@@ -1,6 +1,7 @@
 # TODO - Tööde Haldus App
 
 ## Completed
+- [x] Keyboard navigation (arrows, enter, escape, tab, space)
 - [x] Better sort indicators (arrows)
 - [x] Compact row height
 - [x] Freeze columns (status indicator + Töö Nr)
@@ -17,7 +18,6 @@
 
 ## Ideas
 - [ ] Zebra striping (rejected - prefer hover only)
-- [ ] Row click to expand/edit
-- [ ] Keyboard navigation
+- [ ] Row click to expand/edit (rejected)
 - [ ] Export to Excel
 - [ ] Dark mode

@@ -210,7 +210,24 @@ function init() {
             jobs = [];
         }
     } else {
-        showStatus('Kasuta "Laadi" nupu andmete laadimiseks!', 'success');
+        // Try to load from jobs_data.json
+        fetch('jobs_data.json')
+            .then(res => res.json())
+            .then(data => {
+                jobs = fixColumnKeys(data);
+                localStorage.setItem('jobsData', JSON.stringify(jobs));
+                renderTable();
+                renderForm();
+                updateStats();
+                showStatus('Andmed laetud! (' + jobs.length + ' tööd)', 'success');
+            })
+            .catch(() => {
+                showStatus('Kasuta "Laadi" nupu andmete laadimiseks!', 'success');
+                renderTable();
+                renderForm();
+                updateStats();
+            });
+        return;
     }
     
     renderTable();
@@ -589,7 +606,7 @@ document.addEventListener('keydown', function(e) {
                 finishEditing();
                 e.preventDefault();
                 break;
-            case 'Enter':
+            case 'Enter': {
                 if (e.target.tagName === 'TEXTAREA') return;
                 const input = editingCell.td.querySelector('input, textarea');
                 if (input) {
@@ -604,7 +621,8 @@ document.addEventListener('keydown', function(e) {
                 }
                 e.preventDefault();
                 break;
-            case 'Tab':
+            }
+            case 'Tab': {
                 const input = editingCell.td.querySelector('input, textarea');
                 if (input) {
                     saveEdited(input, editingCell.index, editingCell.col);
@@ -619,6 +637,7 @@ document.addEventListener('keydown', function(e) {
                 }
                 e.preventDefault();
                 break;
+            }
             default:
                 if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                     e.preventDefault();
