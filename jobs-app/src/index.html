@@ -115,6 +115,14 @@ const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev',
 const CHECKBOX_COLS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
 const HIDDEN_COLS = ['Valmis kpv', 'Alustamise kpv', 'Meeldetuletus X päeva ennem'];
 const COLUMN_WRAP = [];
+const FORM_FIELDS = [
+    { col: 'Töö Nr', required: true },
+    { col: 'Detaili/koostu nimetus või joonise Nr' },
+    { col: 'Kommentaar(tooriku/detaili seis, muu oluline info)' },
+    { col: 'Tooriku saabumise kuupäev EE', label: 'Saabunud' },
+    { col: 'Täitmise koht', label: 'Koht' },
+    { col: 'Tegevuse sisestaja nimi', label: 'Sisestaja' }
+];
 
 // Convert yyyy-mm-dd to dd.mm.yyyy
 function formatDate(dateStr) {
@@ -708,18 +716,11 @@ function renderForm() {
     let html = '';
     const defaultDate = formatDate(new Date().toISOString().split('T')[0]);
     
-    COLUMNS.forEach(col => {
-        if (HIDDEN_COLS.includes(col)) return;
-        const isCheckbox = CHECKBOX_COLS.includes(col);
-        const isDate = DATE_COLS.includes(col);
-        let inputHtml = '';
-        if (isCheckbox) inputHtml = '<input type="checkbox" name="' + col + '">';
-        else if (isDate) inputHtml = '<input type="text" name="' + col + '" value="' + defaultDate + '" placeholder="pp.kk.aaaa">';
-        else if (col === 'Töö Nr') inputHtml = '<input type="text" name="' + col + '" required placeholder="W26001">';
-        else if (col === 'Info sisestamise kuupäev') inputHtml = '<input type="text" name="' + col + '" value="' + defaultDate + '" placeholder="pp.kk.aaaa">';
-        else inputHtml = '<input type="text" name="' + col + '">';
-        const label = COLUMN_LABELS[col] || col;
-        html += '<div class="form-group"><label>' + label + '</label>' + inputHtml + '</div>';
+    FORM_FIELDS.forEach(f => {
+        const col = f.col;
+        const label = f.label || COLUMN_LABELS[col] || col;
+        const isRequired = f.required ? ' required' : '';
+        html += '<div class="form-group"><label>' + label + '</label><input type="text" name="' + col + '"' + isRequired + '></div>';
     });
     
     grid.innerHTML = html;
@@ -727,11 +728,9 @@ function renderForm() {
 
 function openModal() {
     const today = formatDate(new Date().toISOString().split('T')[0]);
-    document.querySelectorAll('#add-form input[type="text"]').forEach(i => {
-        if (DATE_COLS.includes(i.name)) i.value = today;
-        else i.value = '';
-    });
-    document.querySelectorAll('#add-form input[type="checkbox"]').forEach(i => i.checked = false);
+    const form = document.getElementById('add-form');
+    form.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+    form.querySelector('[name="Info sisestamise kuupäev"]').value = today;
     document.getElementById('modal').classList.add('active');
 }
 
@@ -741,14 +740,17 @@ function addJob(e) {
     e.preventDefault();
     const form = document.getElementById('add-form');
     const job = {};
-    COLUMNS.forEach(col => {
+    COLUMNS.forEach(col => job[col] = '');
+    
+    FORM_FIELDS.forEach(f => {
+        const col = f.col;
         const input = form.querySelector('[name="' + col + '"]');
-        if (input) {
-            let value = input.type === 'checkbox' ? input.checked : (input.value || '');
-            if (DATE_COLS.includes(col)) value = parseDate(value);
-            job[col] = value;
-        } else job[col] = '';
+        if (input && input.value) job[col] = input.value;
     });
+    
+    const today = new Date().toISOString().split('T')[0];
+    job['Info sisestamise kuupäev'] = today;
+    
     jobs.push(job);
     autoSave();
     closeModal();
