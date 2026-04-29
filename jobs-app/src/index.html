@@ -727,10 +727,8 @@ function renderForm() {
 }
 
 function openModal() {
-    const today = formatDate(new Date().toISOString().split('T')[0]);
     const form = document.getElementById('add-form');
     form.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
-    form.querySelector('[name="Info sisestamise kuupäev"]').value = today;
     document.getElementById('modal').classList.add('active');
 }
 
