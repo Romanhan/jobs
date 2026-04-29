@@ -194,6 +194,10 @@ th {
     box-shadow: inset 0 -1px 0 #cbd5e1;
 }
 
+th.wrap-header {
+    white-space: normal;
+}
+
 th:last-child {
     padding-right: 8px;
 }

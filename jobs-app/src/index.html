@@ -112,6 +112,7 @@ const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev',
 
 const CHECKBOX_COLS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
 const HIDDEN_COLS = ['Valmis kpv', 'Alustamise kpv', 'Meeldetuletus X päeva ennem'];
+const COLUMN_WRAP = ['Töötlus Lõpetatud', 'Töötlus allhankes'];
 
 // Convert yyyy-mm-dd to dd.mm.yyyy
 function formatDate(dateStr) {
@@ -518,9 +519,10 @@ function renderTable() {
         const label = COLUMN_LABELS[col] || col;
         const sortedClass = sortColumn === col ? 'sorted' : '';
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
+        const wrapClass = COLUMN_WRAP.includes(col) ? 'wrap-header' : '';
         const width = columnWidths[col] || COLUMN_WIDTHS[col] || 40;
         const arrow = sortColumn === col ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : '';
-        html += '<th class="' + sortedClass + ' ' + hiddenClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
+        html += '<th class="' + sortedClass + ' ' + hiddenClass + ' ' + wrapClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
     });
     html += '</tr>';
     thead.innerHTML = html;
