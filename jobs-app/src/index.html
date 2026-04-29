@@ -420,7 +420,7 @@ function startResize(e, th) {
         if (!resizingTh) return;
         didResize = true;
         const diff = ev.pageX - startX;
-        const newWidth = Math.max(40, startWidth + diff);
+        const newWidth = Math.max(25, startWidth + diff);
         const col = resizingTh.getAttribute('data-col');
         resizingTh.style.minWidth = newWidth + 'px';
         columnWidths[col] = newWidth;
