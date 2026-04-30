@@ -425,6 +425,11 @@ table th:nth-child(2) {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    background: #f5f5f5;
+}
+
+.form-group input:required {
+    background: #fff;
 }
 
 .modal-buttons {
