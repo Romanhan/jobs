@@ -237,6 +237,10 @@ td {
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 150px;
+    background: white;
+}
+
+body.modal-open .table-wrap td {
     background: #f5f5f5;
 }
 

@@ -730,10 +730,14 @@ function renderForm() {
 function openModal() {
     const form = document.getElementById('add-form');
     form.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+    document.body.classList.add('modal-open');
     document.getElementById('modal').classList.add('active');
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function closeModal() { 
+    document.body.classList.remove('modal-open');
+    document.getElementById('modal').classList.remove('active'); 
+}
 
 function addJob(e) {
     e.preventDefault();
