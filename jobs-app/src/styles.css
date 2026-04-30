@@ -251,7 +251,7 @@ table {
 
 th,
 td {
-    padding: 1px 3px;
+    padding: 0px 3px;
     text-align: left;
     border-bottom: 1px solid #eee;
     font-size: 12px;
@@ -851,7 +851,7 @@ table th:nth-child(2) {
 .calendar-popup {
     display: none;
     position: absolute;
-    width: 160px;
+    width: 240px;
     padding: 8px;
     background: white;
     border-radius: 10px;
@@ -908,7 +908,9 @@ table th:nth-child(2) {
 }
 
 .calendar-weekdays {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
     margin-bottom: 4px;
 }
 
@@ -924,8 +926,8 @@ table th:nth-child(2) {
 }
 
 .calendar-days {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     gap: 2px;
 }
 
