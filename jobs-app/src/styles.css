@@ -308,7 +308,7 @@ th .sort-indicator {
 
 th.sorted .sort-indicator {
     opacity: 1;
-    color: #0ea5e9;
+    color: #64748b;
 }
 
 td {
@@ -333,10 +333,9 @@ td.editing {
     vertical-align: top;
 }
 
-td.editing textarea,
-td.editing input {
+td.editing textarea {
     width: 100%;
-    min-height: 60px;
+    min-height: 24px;
     font-size: 12px;
     font-family: inherit;
     padding: 4px;
@@ -344,19 +343,7 @@ td.editing input {
     border-radius: 6px;
     resize: vertical;
     box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
-}
-
-td.editing input {
-    min-height: auto;
-    height: auto;
-}
-
-td input {
-    width: 100%;
-    padding: 3px 5px;
-    border: 2px solid #64748b;
-    border-radius: 4px;
-    font-size: 12px;
+    overflow: hidden;
 }
 
 .checkbox {
@@ -587,11 +574,11 @@ table th:nth-child(2) {
     box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
 }
 
-/* Accent color for interactive elements */
+/* Focus ring for keyboard navigation */
 .toolbar button:focus-visible,
 .form-group input:focus-visible,
 .form-group select:focus-visible {
-    outline: 2px solid #0ea5e9;
+    outline: 2px solid #64748b;
     outline-offset: 2px;
 }
 
@@ -972,8 +959,8 @@ table th:nth-child(2) {
 }
 
 .calendar-day.today {
-    border: 1px solid #0ea5e9;
-    color: #0ea5e9;
+    border: 1px solid #475569;
+    color: #475569;
     font-weight: 600;
 }
 
