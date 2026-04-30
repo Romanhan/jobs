@@ -251,7 +251,7 @@ table {
 
 th,
 td {
-    padding: 0px 3px;
+    padding: 0px 4px;
     text-align: left;
     border-bottom: 1px solid #eee;
     font-size: 12px;
@@ -347,8 +347,8 @@ td.editing textarea {
 }
 
 .checkbox {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     cursor: pointer;
     accent-color: #475569;
 }
@@ -357,10 +357,10 @@ td.editing textarea {
 input[type="checkbox"].checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #94a3b8;
-    border-radius: 4px;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #94a3b8;
+    border-radius: 3px;
     background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
     cursor: pointer;
     position: relative;
@@ -388,10 +388,10 @@ input[type="checkbox"].checkbox:checked {
 input[type="checkbox"].checkbox:checked::after {
     content: '';
     position: absolute;
-    left: 4px;
+    left: 3px;
     top: 1px;
-    width: 6px;
-    height: 10px;
+    width: 4px;
+    height: 8px;
     border: solid white;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
