@@ -390,6 +390,56 @@ input[type="checkbox"].checkbox:checked::after {
     position: absolute;
     left: 50%;
     top: 50%;
+    width: 3px;
+    height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+}
+
+input[type="checkbox"].checkbox:active {
+    transform: scale(0.95);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Toolbar checkboxes - match table checkbox style */
+.toolbar input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #94a3b8;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    vertical-align: middle;
+    margin: 0;
+    position: relative;
+}
+
+.toolbar input[type="checkbox"]:hover {
+    border-color: #64748b;
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar input[type="checkbox"]:checked {
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+    border-color: #334155;
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
     width: 4px;
     height: 8px;
     border: solid white;
@@ -397,7 +447,7 @@ input[type="checkbox"].checkbox:checked::after {
     transform: translate(-50%, -55%) rotate(45deg);
 }
 
-input[type="checkbox"].checkbox:active {
+.toolbar input[type="checkbox"]:active {
     transform: scale(0.95);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
