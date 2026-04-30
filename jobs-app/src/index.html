@@ -14,16 +14,16 @@
             <div class="status-boxes">
                 <div class="status-box active"><span id="count-active">0</span>Aktiivsed</div>
                 <div class="status-box in-progress"><span id="count-in-progress">0</span>Töös</div>
+                <div class="status-box allhanke"><span id="count-allhanke">0</span>Allhanke</div>
                 <div class="status-box overdue"><span id="count-overdue">0</span>Hilinenud</div>
                 <div class="status-box completed"><span id="count-completed">0</span>Valmis</div>
             </div>
             
             <div class="legend">
-                <span class="legend-item">Ootab <div class="legend-dot" style="background:#94a3b8"></div></span>
-                <span class="legend-item">Töös <div class="legend-dot" style="background:#d97706"></div></span>
-                <span class="legend-item">OK <div class="legend-dot" style="background:#16a34a"></div></span>
-                <span class="legend-item">Varsti <div class="legend-dot" style="background:#ca8a04"></div></span>
+                <span class="legend-item">Töös <div class="legend-dot" style="background:#15803d"></div></span>
+                <span class="legend-item">Allhanke <div class="legend-dot" style="background:#6d28d9"></div></span>
                 <span class="legend-item">Hilinenud <div class="legend-dot" style="background:#dc2626"></div></span>
+                <span class="legend-item">Valmis <div class="legend-dot" style="background:#64748b"></div></span>
             </div>
         </div>
         
@@ -170,34 +170,51 @@ let calendarCurrentYear = null;
 let calendarCurrentMonth = null;
 let calendarSelectedDate = null;
 
+function positionCalendarPopup(anchorEl) {
+    const popup = document.getElementById('calendar-popup');
+    if (!popup) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const calW = 240;
+    const calH = 280;
+    const gap = 4;
+    let left = rect.left + window.scrollX;
+    let top = rect.bottom + gap + window.scrollY;
+    if (rect.bottom + calH > window.innerHeight) {
+        top = rect.top - calH - gap + window.scrollY;
+    }
+    if (rect.left + calW > window.innerWidth) {
+        left = rect.right - calW + window.scrollX;
+    }
+    popup.style.left = left + 'px';
+    popup.style.top = top + 'px';
+}
+
 function openDateCalendar(inputEl, currentValue, callback) {
     closeCalendarPopup();
     calendarPopup = inputEl;
     calendarCallback = callback;
-    
+
     const today = new Date();
     let year = today.getFullYear();
     let month = today.getMonth();
-    
-    if (currentValue && /^\d{2}\.\d{2}\.\d{4}$/.test(currentValue)) {
-        const parts = currentValue.split('.');
+
+    const formattedValue = formatDate(currentValue || '');
+    if (formattedValue && /^\d{2}\.\d{2}\.\d{4}$/.test(formattedValue)) {
+        const parts = formattedValue.split('.');
         year = parseInt(parts[2]);
         month = parseInt(parts[1]) - 1;
     }
-    
+
     calendarCurrentYear = year;
     calendarCurrentMonth = month;
-    calendarSelectedDate = currentValue;
+    calendarSelectedDate = formattedValue;
     
     const popup = document.createElement('div');
     popup.className = 'calendar-popup active';
     popup.id = 'calendar-popup';
-    
-    const rect = inputEl.getBoundingClientRect();
-    popup.style.left = rect.left + 'px';
-    popup.style.top = (rect.bottom + 4) + 'px';
-    
+
     document.body.appendChild(popup);
+    positionCalendarPopup(inputEl);
     renderCalendar();
     
     document.addEventListener('click', handleCalendarClickOutside);
@@ -261,7 +278,7 @@ function renderCalendar() {
         const dayStr = String(day).padStart(2, '0') + '.' + String(prevDate.getMonth() + 1).padStart(2, '0') + '.' + prevDate.getFullYear();
         const isSelected = dayStr === calendarSelectedDate;
         const isToday = dayStr === todayStr;
-        html += '<span class="calendar-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
+        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
     }
     
     for (let day = 1; day <= lastDay.getDate(); day++) {
@@ -323,30 +340,28 @@ function openDateCalendarDirect(td, index, col, currentValue) {
     calendarCellTd = td;
     calendarRowIndex = index;
     calendarColName = col;
-    
+
     const today = new Date();
     let year = today.getFullYear();
     let month = today.getMonth();
-    
-    if (currentValue && /^\d{2}\.\d{2}\.\d{4}$/.test(currentValue)) {
-        const parts = currentValue.split('.');
+
+    const formattedValue = formatDate(currentValue || '');
+    if (formattedValue && /^\d{2}\.\d{2}\.\d{4}$/.test(formattedValue)) {
+        const parts = formattedValue.split('.');
         year = parseInt(parts[2]);
         month = parseInt(parts[1]) - 1;
     }
-    
+
     calendarCurrentYear = year;
     calendarCurrentMonth = month;
-    calendarSelectedDate = currentValue;
+    calendarSelectedDate = formattedValue;
     
     const popup = document.createElement('div');
     popup.className = 'calendar-popup active';
     popup.id = 'calendar-popup';
-    
-    const rect = td.getBoundingClientRect();
-    popup.style.left = rect.left + 'px';
-    popup.style.top = (rect.bottom + 4) + 'px';
-    
+
     document.body.appendChild(popup);
+    positionCalendarPopup(td);
     renderCalendar();
     
     document.addEventListener('click', handleCalendarClickOutside);
@@ -392,15 +407,15 @@ let columnWidths = {}, hiddenColumns = {};
 
 function getStatus(job) {
     if (job['Valmis']) return 'completed';
+    if (job['Töötlus allhankes']) return 'allhanke';
     if (job['Alustatud']) return 'in-progress';
-    const deadline = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
-    if (!deadline) return 'waiting';
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const deadlineDate = new Date(deadline); deadlineDate.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return 'overdue';
-    if (diffDays <= DEADLINE_WARNING_DAYS) return 'soon';
-    return 'ok';
+    const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
+    if (deadlineStr) {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const deadline = new Date(deadlineStr); deadline.setHours(0, 0, 0, 0);
+        if (deadline < today) return 'overdue';
+    }
+    return null;
 }
 
 function loadColumnWidths() {
@@ -583,14 +598,15 @@ function renderTableBody() {
     }
     
      let html = '';
-     const statusColors = { 'waiting': '#94a3b8', 'in-progress': '#d97706', 'ok': '#16a34a', 'soon': '#ca8a04', 'overdue': '#dc2626', 'completed': '#94a3b8' };
-     
+     const statusColors = { 'in-progress': '#15803d', 'allhanke': '#6d28d9', 'overdue': '#dc2626', 'completed': '#64748b' };
+      
      filteredJobs.forEach(({ job, index }) => {
-         const status = getStatus(job);
-         const valmis = job['Valmis'];
-         const statusColor = statusColors[status] || statusColors.waiting;
-         html += '<tr class="' + (valmis ? 'done-row' : '') + '" data-index="' + index + '">';
-         html += '<td class="row-indicator" style="background-color: ' + statusColor + '"></td>';
+          const status = getStatus(job);
+          const valmis = job['Valmis'];
+          const statusColor = status ? statusColors[status] : '#ffffff';
+          const statusClass = status ? 'row-' + status : '';
+          html += '<tr class="' + (valmis ? 'done-row ' : '') + statusClass + '" data-index="' + index + '">';
+          html += '<td class="row-indicator" style="background-color: ' + statusColor + '"></td>';
          
         COLUMNS.forEach(col => {
             const value = job[col];
@@ -645,22 +661,26 @@ function sortBy(col) {
     renderTable();
 }
 
+function autoGrowTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+
 function editCell(td, index, col) {
     if (editingCell) finishEditing();
     const job = jobs[index];
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
     if (isDate) {
-        // Date columns handled in renderTableBody - shouldn't reach here
         return;
-    } else {
-        const rows = Math.max(2, Math.ceil(value.length / 40));
-        td.innerHTML = '<textarea style="width: 100%;" rows="' + rows + '" onblur="saveEdited(this, ' + index + ', \'' + col + '\')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveEdited(this, ' + index + ', \'' + col + '\');}">' + value + '</textarea>';
-        td.classList.add('editing');
-        const input = td.querySelector('textarea');
-        input.focus();
-        input.setSelectionRange(input.value.length, input.value.length);
     }
+    td.classList.add('editing');
+    td.innerHTML = '<textarea style="width: 100%;" onblur="saveEdited(this, ' + index + ', \'' + col + '\')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveEdited(this, ' + index + ', \'' + col + '\');}" oninput="autoGrowTextarea(this)"></textarea>';
+    const input = td.querySelector('textarea');
+    input.value = value;
+    autoGrowTextarea(input);
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
     editingCell = { td, index, col, isDate };
 }
 
@@ -710,10 +730,12 @@ function updateStats() {
     const completed = jobs.filter(j => j['Valmis']).length;
     const active = total - completed;
     const inProgress = jobs.filter(j => j['Alustatud'] && !j['Valmis']).length;
+    const allhanke = jobs.filter(j => j['Töötlus allhankes'] && !j['Valmis']).length;
     const overdue = jobs.filter(j => getStatus(j) === 'overdue').length;
     
     document.getElementById('count-active').textContent = active;
     document.getElementById('count-in-progress').textContent = inProgress;
+    document.getElementById('count-allhanke').textContent = allhanke;
     document.getElementById('count-overdue').textContent = overdue;
     document.getElementById('count-completed').textContent = completed;
 }
@@ -957,7 +979,7 @@ document.addEventListener('keydown', function(e) {
     // CTRL+; inserts current date in TEXT fields (not date fields with calendar)
     if (editingCell && e.ctrlKey && e.key === ';') {
         if (!editingCell.isDate) {
-            const input = editingCell.td.querySelector('input, textarea');
+            const input = editingCell.td.querySelector('textarea');
             if (input) {
                 const today = new Date();
                 const dd = String(today.getDate()).padStart(2, '0');

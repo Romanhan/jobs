@@ -124,7 +124,11 @@ h1 {
 }
 
 .status-box.in-progress span {
-    color: #d97706;
+    color: #15803d;
+}
+
+.status-box.allhanke span {
+    color: #6d28d9;
 }
 
 .status-box.overdue span {
@@ -132,7 +136,7 @@ h1 {
 }
 
 .status-box.completed span {
-    color: #16a34a;
+    color: #64748b;
 }
 
 .toolbar {
@@ -325,6 +329,12 @@ td:hover {
     background: #f8fafc;
 }
 
+/* Vertical lines between columns */
+th:not(:last-child),
+td:not(:last-child) {
+    border-right: 1px solid #e2e8f0;
+}
+
 td.editing {
     overflow: visible;
     white-space: normal;
@@ -445,11 +455,11 @@ input[type="checkbox"].checkbox:active {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 4px;
-    height: 8px;
+    width: 3px;
+    height: 7px;
     border: solid white;
     border-width: 0 2px 2px 0;
-    transform: translate(-50%, -55%) rotate(45deg);
+    transform: translate(-50%, -60%) rotate(45deg);
 }
 
 .toolbar input[type="checkbox"]:active {
@@ -463,7 +473,8 @@ input[type="checkbox"].checkbox:active {
     max-width: 3px;
     padding: 0 !important;
     margin: 0 !important;
-    background-color: #94a3b8;
+    background-color: #ffffff;
+    overflow: hidden;
     box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -473,7 +484,7 @@ thead .row-indicator {
     max-width: 3px;
     padding: 0 !important;
     margin: 0 !important;
-    background-color: #94a3b8;
+    background-color: #ffffff;
     box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
