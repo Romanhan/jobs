@@ -394,7 +394,7 @@ input[type="checkbox"].checkbox:checked::after {
     height: 8px;
     border: solid white;
     border-width: 0 2px 2px 0;
-    transform: translate(-50%, -50%) rotate(45deg);
+    transform: translate(-50%, -55%) rotate(45deg);
 }
 
 input[type="checkbox"].checkbox:active {
