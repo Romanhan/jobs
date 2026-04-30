@@ -730,11 +730,22 @@ function renderForm() {
 function openModal() {
     const form = document.getElementById('add-form');
     form.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+    
+    document.querySelectorAll('.table-wrap table td, .table-wrap table th').forEach(cell => {
+        if (cell.classList.contains('row-indicator')) return;
+        cell.style.pointerEvents = 'none';
+    });
+    
     document.body.classList.add('modal-open');
     document.getElementById('modal').classList.add('active');
 }
 
 function closeModal() { 
+    document.querySelectorAll('.table-wrap table td, .table-wrap table th').forEach(cell => {
+        if (cell.classList.contains('row-indicator')) return;
+        cell.style.pointerEvents = '';
+    });
+    
     document.body.classList.remove('modal-open');
     document.getElementById('modal').classList.remove('active'); 
 }

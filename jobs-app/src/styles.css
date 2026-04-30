@@ -240,10 +240,6 @@ td {
     background: white;
 }
 
-body.modal-open .table-wrap td {
-    background: #f5f5f5;
-}
-
 td:hover {
     background: #f0f9ff;
 }
@@ -326,6 +322,16 @@ table th:nth-child(2) {
     position: sticky;
     left: 3px;
     z-index: 4;
+}
+
+body.modal-open table td:nth-child(2),
+body.modal-open table th:nth-child(2) {
+    position: static;
+    background: #f5f5f5 !important;
+}
+
+body.modal-open .row-indicator {
+    position: static;
 }
 
 table th:nth-child(2) {
@@ -429,7 +435,7 @@ table th:nth-child(2) {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
-    background: #f5f5f5;
+    background: #fff;
 }
 
 .form-group input:required {
