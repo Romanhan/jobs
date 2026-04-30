@@ -7,21 +7,31 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Tööde Haldus</h1>
-    
-    <div class="status-boxes">
-        <div class="status-box active"><span id="count-active">0</span>Aktiivsed</div>
-        <div class="status-box in-progress"><span id="count-in-progress">0</span>Töös</div>
-        <div class="status-box overdue"><span id="count-overdue">0</span>Hilinenud</div>
-        <div class="status-box completed"><span id="count-completed">0</span>Valmis</div>
-    </div>
-    
-    <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div>Ootab</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Töös</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>OK</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>Varsti</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Hilinenud</div>
+    <div class="header-bar">
+        <div class="header-left">
+            <h1>Tööde Haldus</h1>
+            
+            <div class="status-boxes">
+                <div class="status-box active"><span id="count-active">0</span>Aktiivsed</div>
+                <div class="status-box in-progress"><span id="count-in-progress">0</span>Töös</div>
+                <div class="status-box overdue"><span id="count-overdue">0</span>Hilinenud</div>
+                <div class="status-box completed"><span id="count-completed">0</span>Valmis</div>
+            </div>
+            
+            <div class="legend">
+                <span class="legend-item">Ootab <div class="legend-dot" style="background:#94a3b8"></div></span>
+                <span class="legend-item">Töös <div class="legend-dot" style="background:#d97706"></div></span>
+                <span class="legend-item">OK <div class="legend-dot" style="background:#16a34a"></div></span>
+                <span class="legend-item">Varsti <div class="legend-dot" style="background:#ca8a04"></div></span>
+                <span class="legend-item">Hilinenud <div class="legend-dot" style="background:#dc2626"></div></span>
+            </div>
+        </div>
+        
+        <div class="header-actions">
+            <button class="csv-btn" onclick="saveCSV()">💾 Salvesta CSV</button>
+            <button class="csv-btn" onclick="document.getElementById('file-input').click()">📂 Laadi CSV</button>
+            <input type="file" id="file-input" accept=".csv,.txt" style="display:none" onchange="loadFromFile(event)">
+        </div>
     </div>
     
     <div class="toolbar">
@@ -37,10 +47,6 @@
         </div>
         
         <button onclick="openModal()">+ Lisa uus</button>
-<button class="secondary" onclick="saveCSV()">Salvesta CSV</button>
-        <button class="secondary" onclick="document.getElementById('file-input').click()">Laadi CSV</button>
-
-        <input type="file" id="file-input" accept=".csv,.txt" style="display:none" onchange="loadFromFile(event)">
     </div>
     
     <div class="table-wrap">
@@ -577,7 +583,7 @@ function renderTableBody() {
     }
     
      let html = '';
-     const statusColors = { 'waiting': '#94a3b8', 'in-progress': '#f59e0b', 'ok': '#22c55e', 'soon': '#eab308', 'overdue': '#ef4444', 'completed': '#94a3b8' };
+     const statusColors = { 'waiting': '#94a3b8', 'in-progress': '#d97706', 'ok': '#16a34a', 'soon': '#ca8a04', 'overdue': '#dc2626', 'completed': '#94a3b8' };
      
      filteredJobs.forEach(({ job, index }) => {
          const status = getStatus(job);
