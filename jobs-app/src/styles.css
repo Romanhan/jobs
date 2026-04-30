@@ -237,7 +237,7 @@ td {
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 150px;
-    background: white;
+    background: #f5f5f5;
 }
 
 td:hover {
