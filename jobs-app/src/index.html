@@ -7,56 +7,58 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="header-bar">
-        <div class="header-left">
-            <h1>Tööde Haldus</h1>
-            
-            <div class="status-boxes">
-                <div class="status-box active"><span id="count-active">0</span>Aktiivsed</div>
-                <div class="status-box in-progress"><span id="count-in-progress">0</span>Töös</div>
-                <div class="status-box allhanke"><span id="count-allhanke">0</span>Allhanke</div>
-                <div class="status-box overdue"><span id="count-overdue">0</span>Hilinenud</div>
-                <div class="status-box completed"><span id="count-completed">0</span>Valmis</div>
+    <div class="app-container">
+        <div class="header-bar">
+            <div class="header-left">
+                <h1>Tööde Haldus</h1>
+                
+                <div class="status-boxes">
+                    <div class="status-box active"><span id="count-active">0</span>Aktiivsed</div>
+                    <div class="status-box in-progress"><span id="count-in-progress">0</span>Töös</div>
+                    <div class="status-box allhanke"><span id="count-allhanke">0</span>Allhanke</div>
+                    <div class="status-box overdue"><span id="count-overdue">0</span>Hilinenud</div>
+                    <div class="status-box completed"><span id="count-completed">0</span>Valmis</div>
+                </div>
+                
+                <div class="legend">
+                    <span class="legend-item">Töös <div class="legend-dot" style="background:#15803d"></div></span>
+                    <span class="legend-item">Allhanke <div class="legend-dot" style="background:#6d28d9"></div></span>
+                    <span class="legend-item">Hilinenud <div class="legend-dot" style="background:#dc2626"></div></span>
+                    <span class="legend-item">Valmis <div class="legend-dot" style="background:#64748b"></div></span>
+                </div>
             </div>
             
-            <div class="legend">
-                <span class="legend-item">Töös <div class="legend-dot" style="background:#15803d"></div></span>
-                <span class="legend-item">Allhanke <div class="legend-dot" style="background:#6d28d9"></div></span>
-                <span class="legend-item">Hilinenud <div class="legend-dot" style="background:#dc2626"></div></span>
-                <span class="legend-item">Valmis <div class="legend-dot" style="background:#64748b"></div></span>
+            <div class="header-actions">
+                <button class="csv-btn btn-secondary" id="btn-save-csv">💾 Salvesta CSV</button>
+                <button class="csv-btn btn-secondary" id="btn-load-csv">📂 Laadi CSV</button>
+                <input type="file" id="file-input" accept=".csv,.txt" style="display:none">
             </div>
         </div>
         
-        <div class="header-actions">
-            <button class="csv-btn btn-secondary" id="btn-save-csv">💾 Salvesta CSV</button>
-            <button class="csv-btn btn-secondary" id="btn-load-csv">📂 Laadi CSV</button>
-            <input type="file" id="file-input" accept=".csv,.txt" style="display:none">
-        </div>
-    </div>
-    
-    <div class="toolbar">
-        <div class="filters">
-            <input type="text" id="filter-nr" placeholder="Töö Nr...">
-            <input type="text" id="filter-koht" placeholder="Koht...">
-        </div>
-        
-        <div class="toolbar-right">
-            <label><input type="checkbox" id="show-hidden-dates"> Kuupäevad</label>
-            <label><input type="checkbox" id="show-completed"> Lõppenud</label>
-            <label><input type="checkbox" id="show-allhankes"> Allhange</label>
+        <div class="toolbar">
+            <div class="filters">
+                <input type="text" id="filter-nr" placeholder="Töö Nr...">
+                <input type="text" id="filter-koht" placeholder="Koht...">
+            </div>
+            
+            <div class="toolbar-right">
+                <label><input type="checkbox" id="show-hidden-dates"> Kuupäevad</label>
+                <label><input type="checkbox" id="show-completed"> Lõppenud</label>
+                <label><input type="checkbox" id="show-allhankes"> Allhange</label>
+            </div>
+            
+            <button id="btn-add-job" class="btn-static">+ Lisa uus</button>
         </div>
         
-        <button id="btn-add-job" class="btn-static">+ Lisa uus</button>
+        <div class="table-wrap">
+        <table id="jobs-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+        </table>
+        </div>
+        
+        <div class="status-bar" id="status-bar" style="display:none"></div>
     </div>
-    
-    <div class="table-wrap">
-    <table id="jobs-table">
-        <thead id="table-head"></thead>
-        <tbody id="table-body"></tbody>
-    </table>
-    </div>
-    
-    <div class="status-bar" id="status-bar" style="display:none"></div>
     
     <div class="modal" id="modal">
         <div class="modal-content">
