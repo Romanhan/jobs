@@ -1,0 +1,31 @@
+.status-bar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    z-index: 1000;
+}
+
+.status-bar.success {
+    background: #16a34a;
+}
+
+.status-bar.error {
+    background: #dc2626;
+}
+
+.save-indicator {
+    font-size: 11px;
+    color: #22c55e;
+    padding: 4px 10px;
+    background: #dcfce7;
+    border-radius: 4px;
+}
+
+.save-indicator.unsaved {
+    color: #f59e0b;
+    background: #fef3c7;
+}

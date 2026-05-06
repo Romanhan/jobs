@@ -1,0 +1,127 @@
+import { loadData, loadFromFileLegacy, saveCSV, loadFromFile, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs } from './data.js';
+import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy } from './ui.js';
+import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
+import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
+
+setSelectDateCallback((rowIndex, colName, dateStr) => {
+    const tbody = document.getElementById('table-body');
+    const rows = tbody.querySelectorAll('tr');
+    const row = rows[rowIndex];
+    if (row) {
+        const cells = row.querySelectorAll('td');
+        cells.forEach(cell => {
+            const col = cell.getAttribute('data-col');
+            if (col === colName) {
+                cell.textContent = dateStr;
+            }
+        });
+    }
+    doAutoSave();
+    renderTableBody();
+    updateStats();
+});
+
+function attachSortListener() {
+    document.querySelector('thead').addEventListener('click', function(e) {
+        if (e.target.tagName === 'SPAN') return;
+        const th = e.target.closest('th');
+        if (!th) return;
+        const col = th.getAttribute('data-col');
+        if (col) sortBy(col);
+    });
+
+    document.addEventListener('keydown', handleKeydown);
+}
+
+function setUpForm() {
+    const form = document.getElementById('add-form');
+    form.addEventListener('submit', addJob);
+}
+
+async function init() {
+    loadColumnWidths();
+    loadHiddenColumns();
+    
+    const showHidden = localStorage.getItem('showHiddenDates');
+    if (showHidden === 'true') {
+        document.getElementById('show-hidden-dates').checked = true;
+    }
+    
+    const dataResult = loadData();
+    if (dataResult) {
+        if (dataResult.status === 'fixed') {
+            showStatus('Andmed parandatud! (' + dataResult.count + ' tööd)', 'success');
+        } else if (dataResult.status === 'loaded') {
+            showStatus('Andmed taastatud! (' + dataResult.count + ' tööd)', 'success');
+        } else if (dataResult.status === 'error') {
+            showStatus('Viga andmete laadimisel', 'error');
+        }
+        renderTable();
+        renderForm();
+        updateStats();
+    } else {
+        try {
+            const result = await loadFromFileLegacy();
+            if (result) {
+                showStatus('Andmed laetud! (' + result.count + ' tööd)', 'success');
+            } else {
+                showStatus('Kasuta "Laadi" nupu andmete laadimiseks!', 'success');
+            }
+        } catch (e) {
+            showStatus('Kasuta "Laadi" nupu andmete laadimiseks!', 'success');
+        }
+        renderTable();
+        renderForm();
+        updateStats();
+    }
+}
+
+attachSortListener();
+attachEventListeners();
+setUpForm();
+setUpButtons();
+
+window.toggleField = toggleField;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.renderTableBody = renderTableBody;
+window.updateStats = updateStats;
+window.showStatus = showStatus;
+window.filterTable = filterTable;
+window.saveCSV = saveCSV;
+
+window.loadFromFileWrapper = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    loadFromFile(file).then(result => {
+        renderTable();
+        renderForm();
+        updateStats();
+        showStatus('CSV laetud! (' + result.count + ' tööd)', 'success');
+    }).catch(err => {
+        showStatus('Viga: ' + err.message, 'error');
+    });
+};
+
+function setUpButtons() {
+    document.getElementById('btn-save-csv').addEventListener('click', saveCSV);
+    document.getElementById('btn-load-csv').addEventListener('click', function() {
+        document.getElementById('file-input').click();
+    });
+    document.getElementById('file-input').addEventListener('change', window.loadFromFileWrapper);
+    
+    document.getElementById('btn-add-job').addEventListener('click', openModal);
+    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+    document.getElementById('btn-cancel').addEventListener('click', closeModal);
+    
+    document.getElementById('filter-nr').addEventListener('input', filterTable);
+    document.getElementById('filter-koht').addEventListener('input', filterTable);
+    document.getElementById('show-hidden-dates').addEventListener('change', function() {
+        localStorage.setItem('showHiddenDates', this.checked);
+        renderTable();
+    });
+    document.getElementById('show-completed').addEventListener('change', filterTable);
+    document.getElementById('show-allhankes').addEventListener('change', filterTable);
+}
+
+init();

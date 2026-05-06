@@ -1,0 +1,99 @@
+* {
+    box-sizing: border-box;
+}
+
+button {
+    font-family: inherit;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+    color: white;
+    border: 1px solid #334155;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(180deg, #718096 0%, #475569 100%);
+    box-shadow: 0 2px 6px rgba(71, 85, 105, 0.25);
+}
+
+.btn-primary:active {
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(1px);
+}
+
+.btn-secondary {
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    border-color: #94a3b8;
+}
+
+.btn-secondary:active {
+    background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+    transform: translateY(1px);
+}
+
+.btn-static {
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
+    color: white !important;
+    border-color: #334155 !important;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+.btn-static:hover {
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
+    color: white !important;
+    border-color: #334155 !important;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+.btn-static:active {
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
+    color: white !important;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 16px 20px;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+h1 {
+    margin: 0 15px 0 0;
+    color: #334155;
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-block;
+}
