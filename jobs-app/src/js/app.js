@@ -4,17 +4,9 @@ import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, ha
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
 setSelectDateCallback((rowIndex, colName, dateStr) => {
-    const tbody = document.getElementById('table-body');
-    const rows = tbody.querySelectorAll('tr');
-    const row = rows[rowIndex];
-    if (row) {
-        const cells = row.querySelectorAll('td');
-        cells.forEach(cell => {
-            const col = cell.getAttribute('data-col');
-            if (col === colName) {
-                cell.textContent = dateStr;
-            }
-        });
+    const jobs = getJobs();
+    if (rowIndex >= 0 && rowIndex < jobs.length) {
+        jobs[rowIndex][colName] = dateStr;
     }
     doAutoSave();
     renderTableBody();

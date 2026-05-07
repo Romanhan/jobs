@@ -107,16 +107,19 @@ td.editing {
 }
 
 td.editing textarea {
-    width: 100%;
+    min-width: 100%;
+    width: auto;
     min-height: 24px;
     font-size: 12px;
     font-family: inherit;
     padding: 4px;
     border: 2px solid #64748b;
     border-radius: 6px;
-    resize: vertical;
+    resize: both;
     box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
-    overflow: hidden;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .checkbox {

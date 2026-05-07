@@ -2,7 +2,7 @@ import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { formatDate, parseDate, autoGrowTextarea } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
-import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect } from './calendar.js';
+import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit } from './calendar.js';
 
 let editingCell = null;
 
@@ -14,22 +14,42 @@ export function getEditingCell() {
     return editingCell;
 }
 
+setOnDateSelectedInEdit((textarea, dateStr) => {
+    const cell = editingCell;
+    if (!cell) return;
+    
+    const jobsArr = getJobs();
+    jobsArr[cell.index][cell.col] = dateStr;
+    
+    cell.td.innerHTML = formatDate(dateStr);
+    cell.td.classList.remove('editing');
+    editingCell = null;
+    
+    doAutoSave(jobsArr);
+    renderTableBody();
+    updateStats();
+});
+
 export function editCell(td, index, col) {
     if (editingCell) finishEditing();
     const job = getJobs()[index];
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
-    if (isDate) {
-        return;
-    }
     td.classList.add('editing');
     
     const input = document.createElement('textarea');
-    input.style.width = '100%';
-    input.value = value;
+    input.style.minWidth = '100%';
+    input.style.width = 'auto';
+    input.value = isDate ? formatDate(value) : value;
+    autoGrowTextarea(input);
     
     input.addEventListener('blur', function() {
-        saveEdited(input, index, col);
+        setTimeout(() => {
+            if (document.getElementById('calendar-popup')) {
+                return;
+            }
+            saveEdited(input, index, col);
+        }, 10);
     });
     
     input.addEventListener('keydown', function(e) {
@@ -48,6 +68,20 @@ export function editCell(td, index, col) {
     
     td.innerHTML = '';
     td.appendChild(input);
+    
+    if (isDate) {
+        const calBtn = document.createElement('button');
+        calBtn.className = 'calendar-edit-btn';
+        calBtn.innerHTML = '📅';
+        calBtn.onmousedown = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openDateCalendarDirect(td, index, col.replace(/'/g, "\\'"), input.value);
+        };
+        td.style.position = 'relative';
+        td.appendChild(calBtn);
+    }
+    
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
     editingCell = { td, index, col, isDate };
@@ -196,14 +230,6 @@ export function attachEventListeners() {
         if (!colAttr) return;
         const index = parseInt(td.getAttribute('data-index'));
         const col = colAttr.replace(/\\'/g, "'");
-        if (DATE_COLS.includes(col)) {
-            e.stopPropagation();
-            const colVal = td.getAttribute('data-col').replace(/\\'/g, "'");
-            const value = getJobs()[index][colVal] || '';
-            const colEscaped = colVal.replace(/'/g, "\\'");
-            openDateCalendarDirect(td, index, colEscaped, value);
-            return;
-        }
         editCell(td, index, col);
     });
     

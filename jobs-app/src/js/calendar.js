@@ -9,6 +9,7 @@ let calendarSelectedDate = null;
 let calendarCellTd = null;
 let calendarRowIndex = null;
 let calendarColName = null;
+let ignoreNextClick = false;
 
 export function positionCalendarPopup(anchorEl) {
     const popup = document.getElementById('calendar-popup');
@@ -71,9 +72,15 @@ export function closeCalendarPopup() {
     calendarCellTd = null;
     calendarRowIndex = null;
     calendarColName = null;
+    calendarEditingInput = null;
+    ignoreNextClick = false;
 }
 
 function handleCalendarClickOutside(e) {
+    if (ignoreNextClick) {
+        ignoreNextClick = false;
+        return;
+    }
     const popup = document.getElementById('calendar-popup');
     if (popup && (calendarCellTd || calendarPopup)) {
         if (!popup.contains(e.target)) {
@@ -191,6 +198,11 @@ export function openDateCalendarDirect(td, index, col, currentValue) {
     calendarCellTd = td;
     calendarRowIndex = index;
     calendarColName = col;
+    
+    const textarea = td.querySelector('textarea');
+    if (textarea) {
+        calendarEditingInput = textarea;
+    }
 
     const today = new Date();
     let year = today.getFullYear();
@@ -216,19 +228,36 @@ export function openDateCalendarDirect(td, index, col, currentValue) {
     renderCalendar();
     
     document.addEventListener('click', handleCalendarClickOutside);
+    ignoreNextClick = true;
 }
 
 let selectDateCalendarDirectCallback = null;
+let calendarEditingInput = null;
+let onDateSelectedInEdit = null;
 
 export function setSelectDateCallback(cb) {
     selectDateCalendarDirectCallback = cb;
 }
 
+export function setOnDateSelectedInEdit(cb) {
+    onDateSelectedInEdit = cb;
+}
+
 export function selectDateCalendarDirect(dateStr) {
-    if (calendarRowIndex !== null && calendarColName) {
+    if (calendarEditingInput) {
+        calendarEditingInput.value = dateStr;
+        if (onDateSelectedInEdit) {
+            onDateSelectedInEdit(calendarEditingInput, dateStr);
+        }
+        calendarEditingInput = null;
+    } else if (calendarRowIndex !== null && calendarColName) {
         if (selectDateCalendarDirectCallback) {
             selectDateCalendarDirectCallback(calendarRowIndex, calendarColName, dateStr);
         }
     }
     closeCalendarPopup();
 }
+
+window.selectTodayCalendar = selectTodayCalendar;
+window.changeMonth = changeMonth;
+window.selectDateCalendar = selectDateCalendar;
