@@ -199,9 +199,12 @@ export function openDateCalendarDirect(td, index, col, currentValue) {
     calendarRowIndex = index;
     calendarColName = col;
     
-    const textarea = td.querySelector('textarea');
-    if (textarea) {
-        calendarEditingInput = textarea;
+    let calendarInput = document.querySelector('.floating-editor textarea');
+    if (!calendarInput) {
+        calendarInput = td.querySelector('textarea');
+    }
+    if (calendarInput) {
+        calendarEditingInput = calendarInput;
     }
 
     const today = new Date();

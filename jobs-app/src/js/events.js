@@ -21,7 +21,9 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
     const jobsArr = getJobs();
     jobsArr[cell.index][cell.col] = dateStr;
     
-    cell.td.innerHTML = formatDate(dateStr);
+    const floatingEditor = document.querySelector('.floating-editor');
+    if (floatingEditor) floatingEditor.remove();
+    cell.td.style.visibility = '';
     cell.td.classList.remove('editing');
     editingCell = null;
     
@@ -35,25 +37,83 @@ export function editCell(td, index, col) {
     const job = getJobs()[index];
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
-    td.classList.add('editing');
+    const textToMeasure = isDate ? formatDate(value) : value;
+    
+    const rect = td.getBoundingClientRect();
+    const maxPopupWidth = 400;
+    
+    const floatingEditor = document.createElement('div');
+    floatingEditor.className = 'floating-editor' + (isDate ? ' date-editor' : '');
+    floatingEditor.style.position = 'fixed';
+    floatingEditor.style.top = rect.top + 'px';
+    floatingEditor.style.left = rect.left + 'px';
+    floatingEditor.style.width = 'auto';
+    floatingEditor.style.zIndex = '1000';
     
     const input = document.createElement('textarea');
-    input.style.minWidth = '100%';
-    input.style.width = 'auto';
-    input.value = isDate ? formatDate(value) : value;
-    autoGrowTextarea(input);
+    input.rows = 1;
+    floatingEditor.appendChild(input);
+    document.body.appendChild(floatingEditor);
+    
+    input.value = textToMeasure;
+    
+    requestAnimationFrame(() => {
+        const measureDiv = document.createElement('div');
+        measureDiv.style.position = 'absolute';
+        measureDiv.style.visibility = 'hidden';
+        measureDiv.style.whiteSpace = 'nowrap';
+        measureDiv.style.fontSize = '12px';
+        measureDiv.style.fontFamily = window.getComputedStyle(td).fontFamily;
+        measureDiv.style.padding = '2px';
+        measureDiv.textContent = textToMeasure;
+        document.body.appendChild(measureDiv);
+        
+        let textWidth = measureDiv.scrollWidth;
+        document.body.removeChild(measureDiv);
+        
+        let popupWidth;
+        if (textWidth + 8 <= rect.width) {
+            popupWidth = rect.width;
+        } else {
+            popupWidth = Math.min(textWidth + 8, maxPopupWidth);
+        }
+        if (isDate) {
+            popupWidth += 18;
+        }
+        floatingEditor.style.width = popupWidth + 'px';
+        if (isDate) {
+            input.style.width = textWidth + 'px';
+        }
+        if (isDate) {
+            input.style.whiteSpace = 'nowrap';
+            input.style.flex = 'none';
+        } else {
+            input.style.whiteSpace = 'pre-wrap';
+        }
+        autoGrowTextarea(input);
+    });
+    
+    if (isDate) {
+        const calBtn = document.createElement('button');
+        calBtn.className = 'calendar-edit-btn';
+        calBtn.innerHTML = '📅';
+        calBtn.onmousedown = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openDateCalendarDirect(td, index, col.replace(/'/g, "\\'"), input.value);
+        };
+        floatingEditor.appendChild(calBtn);
+    }
     
     input.addEventListener('blur', function() {
         setTimeout(() => {
-            if (document.getElementById('calendar-popup')) {
-                return;
-            }
+            if (document.getElementById('calendar-popup')) return;
             saveEdited(input, index, col);
         }, 10);
     });
     
     input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             saveEdited(input, index, col);
         } else if (e.key === 'Escape') {
@@ -66,25 +126,11 @@ export function editCell(td, index, col) {
         autoGrowTextarea(input);
     });
     
-    td.innerHTML = '';
-    td.appendChild(input);
-    
-    if (isDate) {
-        const calBtn = document.createElement('button');
-        calBtn.className = 'calendar-edit-btn';
-        calBtn.innerHTML = '📅';
-        calBtn.onmousedown = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            openDateCalendarDirect(td, index, col.replace(/'/g, "\\'"), input.value);
-        };
-        td.style.position = 'relative';
-        td.appendChild(calBtn);
-    }
-    
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
     editingCell = { td, index, col, isDate };
+    td.style.visibility = 'hidden';
+    td.classList.add('editing');
 }
 
 export function saveEdited(input, index, col) {
@@ -94,9 +140,15 @@ export function saveEdited(input, index, col) {
     }
     const jobsArr = getJobs();
     jobsArr[index][col] = value;
-    editingCell.td.innerHTML = DATE_COLS.includes(col) ? formatDate(value) : (value || '');
-    editingCell.td.classList.remove('editing');
-    editingCell = null;
+
+    const floatingEditor = document.querySelector('.floating-editor');
+    if (floatingEditor) floatingEditor.remove();
+    if (editingCell) {
+        editingCell.td.style.visibility = '';
+        editingCell.td.classList.remove('editing');
+        editingCell = null;
+    }
+
     doAutoSave(jobsArr);
     renderTableBody();
     updateStats();
@@ -104,9 +156,12 @@ export function saveEdited(input, index, col) {
 
 export function finishEditing() {
     if (!editingCell) return;
-    const value = getJobs()[editingCell.index][editingCell.col] || '';
-    editingCell.td.innerHTML = value;
-    editingCell.td.classList.remove('editing');
+    const floatingEditor = document.querySelector('.floating-editor');
+    if (floatingEditor) floatingEditor.remove();
+    if (editingCell.td) {
+        editingCell.td.style.visibility = '';
+        editingCell.td.classList.remove('editing');
+    }
     editingCell = null;
 }
 

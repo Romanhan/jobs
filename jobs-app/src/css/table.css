@@ -98,13 +98,7 @@ td:not(:last-child) {
     border-right: 1px solid #e2e8f0;
 }
 
-td.editing {
-    overflow: visible;
-    white-space: normal;
-    max-width: none;
-    background: white;
-    vertical-align: top;
-}
+
 
 td.editing textarea {
     min-width: 100%;
@@ -117,7 +111,7 @@ td.editing textarea {
     border-radius: 6px;
     resize: both;
     box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
-    overflow: auto;
+    overflow: hidden;
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -277,4 +271,49 @@ table th:nth-child(2) {
 
 .hidden-col {
     display: none;
+}
+
+.floating-editor {
+    position: fixed;
+    z-index: 1000;
+    background: white;
+    border: 2px solid #64748b;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 2px;
+}
+
+.floating-editor textarea {
+    width: 100%;
+    font-size: 12px;
+    font-family: inherit;
+    padding: 2px;
+    border: none;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    resize: none;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.floating-editor.date-editor {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.floating-editor.date-editor textarea {
+    flex: 1;
+}
+
+.floating-editor .calendar-edit-btn {
+    position: static;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    flex-shrink: 0;
 }
