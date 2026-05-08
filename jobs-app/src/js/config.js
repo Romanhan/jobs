@@ -40,7 +40,7 @@ export const COLUMN_WIDTHS = {
 };
 
 export const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev',
-    'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Töötluse algus',
+    'Tooriku saabumise kuupäev EE', 'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Töötluse algus',
     'Alustamise kpv', 'EE töötluse lõpp', 'EE kuupäev tarne', 'TE kuupäev tarne'];
 
 export const CHECKBOX_COLS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
