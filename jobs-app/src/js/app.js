@@ -1,5 +1,5 @@
 import { loadData, loadFromFileLegacy, saveCSV, loadFromFile, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs } from './data.js';
-import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy } from './ui.js';
+import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
@@ -81,6 +81,7 @@ window.updateStats = updateStats;
 window.showStatus = showStatus;
 window.filterTable = filterTable;
 window.saveCSV = saveCSV;
+window.startResize = startResize;
 
 window.loadFromFileWrapper = function(event) {
     const file = event.target.files[0];

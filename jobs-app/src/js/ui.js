@@ -82,8 +82,20 @@ export function renderTableBody() {
             let valA = a.job[sortColumn], valB = b.job[sortColumn];
             if (valA === null || valA === undefined) valA = '';
             if (valB === null || valB === undefined) valB = '';
+            
+            const isEmptyA = !valA || valA === '';
+            const isEmptyB = !valB || valB === '';
+            
+            if (isEmptyA && !isEmptyB) return 1;
+            if (!isEmptyA && isEmptyB) return -1;
+            
             if (typeof valA === 'boolean') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
-            else if (DATE_COLS.includes(sortColumn)) { valA = valA ? new Date(valA).getTime() : 0; valB = valB ? new Date(valB).getTime() : 0; }
+            else if (DATE_COLS.includes(sortColumn)) { 
+                const dateA = valA ? new Date(valA).getTime() : 0;
+                const dateB = valB ? new Date(valB).getTime() : 0;
+                valA = isNaN(dateA) ? 0 : dateA;
+                valB = isNaN(dateB) ? 0 : dateB;
+            }
             else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
             if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
             if (valA > valB) return sortDirection === 'asc' ? 1 : -1;

@@ -135,7 +135,7 @@ export function editCell(td, index, col) {
 
 export function saveEdited(input, index, col) {
     let value = input.value;
-    if (DATE_COLS.includes(col) && !/^\d{2}\.\d{2}\.\d{4}$/.test(value)) {
+    if (DATE_COLS.includes(col) && value) {
         value = parseDate(value);
     }
     const jobsArr = getJobs();
@@ -270,15 +270,6 @@ export function handleKeydown(e) {
 }
 
 export function attachEventListeners() {
-    document.querySelector('thead').addEventListener('click', function(e) {
-        const th = e.target.closest('th');
-        if (!th) return;
-        const col = th.getAttribute('data-col');
-        if (col) {
-            const { sortBy } = import('./ui.js');
-            sortBy.then(fn => fn(col));
-        }
-    });
     
     const tbody = document.getElementById('table-body');
     tbody.addEventListener('click', function(e) {
