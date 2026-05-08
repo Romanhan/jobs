@@ -1,4 +1,4 @@
-import { COLUMNS, COLUMN_LABELS, COLUMN_WIDTHS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS } from './config.js';
+import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS } from './config.js';
 import { formatDate } from './utils.js';
 import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave } from './data.js';
 import { openDateCalendar } from './calendar.js';
@@ -39,12 +39,12 @@ export function renderTable() {
         if (isHidden) return;
         const label = COLUMN_LABELS[col] || col;
         const sortedClass = sortColumn === col ? 'sorted' : '';
+        const sortedDir = sortColumn === col ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const wrapClass = COLUMN_WRAP.includes(col) ? 'wrap-header' : '';
         const widths = getColumnWidths();
-        const width = widths[col] || COLUMN_WIDTHS[col] || 40;
-        const arrow = sortColumn === col ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : '';
-        html += '<th class="' + sortedClass + ' ' + hiddenClass + ' ' + wrapClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '" onmousedown="startResize(event, this)">' + label + '<span class="sort-indicator">' + arrow + '</span></th>';
+        const width = widths[col] || 40;
+        html += '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>';
     });
     html += '</tr>';
     thead.innerHTML = html;
@@ -121,7 +121,7 @@ export function renderTableBody() {
             const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !showHidden);
             if (isHidden) return;
             const widths = getColumnWidths();
-            const width = widths[col] || COLUMN_WIDTHS[col] || 40;
+            const width = widths[col] || 40;
             let colEscaped = col.replace(/'/g, "\\'");
             
             if (isCheckbox) {
@@ -236,15 +236,20 @@ export function sortBy(col) {
 }
 
 export function startResize(e, th) {
+    e.stopPropagation();
     if (e.target.tagName === 'SPAN') return;
+
+    window._isResizing = false;
+
     let didResize = false;
     const startX = e.pageX, startWidth = th.offsetWidth;
     const col = th.getAttribute('data-col');
 
     function doResize(ev) {
+        window._isResizing = true;
         didResize = true;
         const diff = ev.pageX - startX;
-        const newWidth = Math.max(25, startWidth + diff);
+        const newWidth = Math.max(4, startWidth + diff);
         th.style.minWidth = newWidth + 'px';
         setColumnWidth(col, newWidth);
     }

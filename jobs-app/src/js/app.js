@@ -19,6 +19,12 @@ function attachSortListener() {
         const th = e.target.closest('th');
         if (!th) return;
         const col = th.getAttribute('data-col');
+
+        if (window._isResizing) {
+            window._isResizing = false;
+            return;
+        }
+
         if (col) sortBy(col);
     });
 

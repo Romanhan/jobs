@@ -28,16 +28,16 @@ export const COLUMN_LABELS = {
     'Töötlus allhankes': 'Allhankes'
 };
 
-export const COLUMN_WIDTHS = {
-    'Töö Nr': 80, 'Valmis': 45, 'Valmis kpv': 85, 'Tegevuse sisestaja nimi': 70,
-    'Detaili/koostu nimetus või joonise Nr': 120, 'Kommentaar(tooriku/detaili seis, muu oluline info)': 200,
-    'Otsuse/Tegevuse vastutaja': 70, 'Tooriku saabumise kuupäev EE': 70,
-    'EE vajaduse kuupäev (koostamiseks valmis kujul)': 90, 'Meeldetuletus X päeva ennem': 60,
-    'Töötluse algus': 80, 'Alustatud': 55, 'Alustamise kpv': 85,
-    'EE töötluse lõpp': 80, 'Töötlus Lõpetatud': 70, 'Töötlus allhankes': 70,
-    'Täitmise koht': 90, 'EE kuupäev tarne': 80, 'TE kuupäev tarne': 80,
-    'Info sisestamise kuupäev': 90
-};
+// export const COLUMN_WIDTHS = {
+//     'Töö Nr': 80, 'Valmis': 45, 'Valmis kpv': 85, 'Tegevuse sisestaja nimi': 70,
+//     'Detaili/koostu nimetus või joonise Nr': 120, 'Kommentaar(tooriku/detaili seis, muu oluline info)': 200,
+//     'Otsuse/Tegevuse vastutaja': 70, 'Tooriku saabumise kuupäev EE': 70,
+//     'EE vajaduse kuupäev (koostamiseks valmis kujul)': 90, 'Meeldetuletus X päeva ennem': 60,
+//     'Töötluse algus': 80, 'Alustatud': 55, 'Alustamise kpv': 85,
+//     'EE töötluse lõpp': 80, 'Töötlus Lõpetatud': 70, 'Töötlus allhankes': 70,
+//     'Täitmise koht': 90, 'EE kuupäev tarne': 80, 'TE kuupäev tarne': 80,
+//     'Info sisestamise kuupäev': 90
+// };
 
 export const DATE_COLS = ['Valmis kpv', 'Info sisestamise kuupäev',
     'Tooriku saabumise kuupäev EE', 'EE vajaduse kuupäev (koostamiseks valmis kujul)', 'Töötluse algus',

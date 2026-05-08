@@ -1,4 +1,4 @@
-import { COLUMNS, DATE_COLS } from './config.js';
+import { COLUMNS, COLUMN_LABELS, DATE_COLS } from './config.js';
 import { convertSaabunudDates, parseCSVLine, fixColumnKeys, autoSave as doAutoSave } from './utils.js';
 
 export let jobs = [];
@@ -65,6 +65,9 @@ export function loadColumnWidths() {
     columnWidths = {};
     const saved = localStorage.getItem('jobsColumnWidths');
     if (saved) { try { columnWidths = JSON.parse(saved); } catch (e) { columnWidths = {}; } }
+    if (Object.keys(columnWidths).length === 0) {
+        autoCalculateColumnWidths(COLUMNS);
+    }
 }
 
 export function saveColumnWidths() {
@@ -77,6 +80,23 @@ export function getColumnWidths() {
 
 export function setColumnWidth(col, width) {
     columnWidths[col] = width;
+}
+
+export function measureTextWidth(text) {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:absolute;visibility:hidden;font:600 11px/1 system-ui,sans-serif;white-space:nowrap';
+    div.textContent = text;
+    document.body.appendChild(div);
+    const width = div.offsetWidth;
+    document.body.removeChild(div);
+    return width;
+}
+
+export function autoCalculateColumnWidths(columns) {
+    columns.forEach(col => {
+        const label = COLUMN_LABELS[col] || col;
+        columnWidths[col] = measureTextWidth(label);
+    });
 }
 
 export function loadHiddenColumns() {
