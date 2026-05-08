@@ -1,6 +1,7 @@
 import { COLUMNS, COLUMN_LABELS, COLUMN_WIDTHS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS } from './config.js';
 import { formatDate } from './utils.js';
 import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave } from './data.js';
+import { openDateCalendar } from './calendar.js';
 
 let sortColumn = null;
 let sortDirection = 'asc';
@@ -145,7 +146,11 @@ export function renderForm() {
             html += '<div class="form-group" style="max-width: ' + f.width + 'px; width: ' + f.width + 'px;">';
             
             if (f.isDate) {
-                html += '<input type="text" name="' + col + '" class="date-input" placeholder="' + label + '" title="' + label + '"' + isRequired + '>';
+                const inputId = 'modal-date-' + col.replace(/[^a-zA-Z0-9]/g, '-');
+                html += '<div class="date-input-wrapper">';
+                html += '<input type="text" name="' + col + '" id="' + inputId + '" class="date-input" placeholder="' + label + '" title="' + label + '"' + isRequired + '>';
+                html += '<button type="button" class="calendar-icon-btn" data-input-id="' + inputId + '"></button>';
+                html += '</div>';
             } else {
                 html += '<input type="text" name="' + col + '" placeholder="' + label + '" title="' + label + '"' + isRequired + '>';
             }
@@ -156,6 +161,20 @@ export function renderForm() {
     });
     
 grid.innerHTML = html;
+        
+        // Add calendar button click handlers for date inputs
+        document.querySelectorAll('.calendar-icon-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const inputId = this.getAttribute('data-input-id');
+                const inputEl = document.getElementById(inputId);
+                if (inputEl) {
+                    openDateCalendar(inputEl, inputEl.value, function(result) {
+                        inputEl.value = result.value || '';
+                    });
+                }
+            });
+        });
         
         // Move buttons to last form-line
         const lastFormLine = grid.querySelector('.form-line:last-child');

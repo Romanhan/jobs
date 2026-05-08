@@ -96,7 +96,7 @@ export function editCell(td, index, col) {
     if (isDate) {
         const calBtn = document.createElement('button');
         calBtn.className = 'calendar-edit-btn';
-        calBtn.innerHTML = '📅';
+        calBtn.type = 'button';
         calBtn.onmousedown = function(e) {
             e.preventDefault();
             e.stopPropagation();

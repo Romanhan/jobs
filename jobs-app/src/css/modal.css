@@ -123,6 +123,39 @@
     font-feature-settings: "tnum";
 }
 
+.date-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 120px;
+}
+
+.date-input-wrapper .date-input {
+    padding-right: 24px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.calendar-icon-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent url('../icons/calendar.svg') no-repeat center center;
+    background-size: 14px 14px;
+    border: none;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    padding: 2px;
+    pointer-events: auto;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.calendar-icon-btn:hover {
+    opacity: 1;
+}
+
 .input-with-calendar {
     display: flex;
     gap: 6px;

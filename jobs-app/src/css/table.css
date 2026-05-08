@@ -312,7 +312,6 @@ table th:nth-child(2) {
     position: static;
     padding: 2px;
     border: none;
-    background: transparent;
     cursor: pointer;
     font-size: 12px;
     line-height: 1;
