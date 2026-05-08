@@ -82,7 +82,7 @@ export function editCell(td, index, col) {
         }
         floatingEditor.style.width = popupWidth + 'px';
         if (isDate) {
-            input.style.width = textWidth + 'px';
+            input.style.width = Math.max(textWidth, 60) + 'px';
         }
         if (isDate) {
             input.style.whiteSpace = 'nowrap';

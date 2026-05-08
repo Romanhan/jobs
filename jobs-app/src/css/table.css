@@ -305,6 +305,7 @@ table th:nth-child(2) {
 
 .floating-editor.date-editor textarea {
     flex: 1;
+    text-align: left;
 }
 
 .floating-editor .calendar-edit-btn {
