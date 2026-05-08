@@ -244,7 +244,11 @@ export function handleKeydown(e) {
         }
     } else if (document.getElementById('modal').classList.contains('active')) {
         if (e.key === 'Escape') {
-            closeModal();
+            if (document.getElementById('calendar-popup')) {
+                closeCalendarPopup();
+            } else {
+                closeModal();
+            }
             e.preventDefault();
         }
     } else {
