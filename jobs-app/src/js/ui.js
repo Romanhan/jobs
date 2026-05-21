@@ -104,15 +104,12 @@ export function renderTableBody() {
     }
     
     let html = '';
-    const statusColors = { 'in-progress': '#15803d', 'allhanke': '#6d28d9', 'overdue': '#dc2626', 'completed': '#64748b' };
-    
     filteredJobs.forEach(({ job, index }) => {
         const status = getStatus(job);
         const valmis = job['Valmis'];
-        const statusColor = status ? statusColors[status] : '#ffffff';
         const statusClass = status ? 'row-' + status : '';
         html += '<tr class="' + (valmis ? 'done-row ' : '') + statusClass + '" data-index="' + index + '">';
-        html += '<td class="row-indicator" style="background-color: ' + statusColor + '"></td>';
+        html += '<td class="row-indicator">' + (status ? '<span class="status-dot status-dot--' + status + '"></span>' : '') + '</td>';
         
         COLUMNS.forEach(col => {
             const value = job[col];
