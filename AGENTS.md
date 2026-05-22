@@ -13,7 +13,6 @@ Simple single-page HTML app for work management - replaces Excel spreadsheet. Fe
 - **Skeuomorphic elements** - Custom checkboxes with gradients, beveled buttons, depth shadows
 - **Compact header layout** - Title + status boxes + legend + actions in single row
 - **CSV buttons top-right** - "💾 Salvesta CSV" and "📂 Laadi CSV" with icons
-- **Subtle accent color** - Sky blue (#0ea5e9) for interactive elements
 - **Custom scrollbar** - Styled to match the theme
 
 ## How to Run

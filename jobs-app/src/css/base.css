@@ -25,7 +25,7 @@ button {
 }
 
 .btn-primary:hover {
-    background: linear-gradient(180deg, #718096 0%, #475569 100%);
+    background: linear-gradient(180deg, #7a8ba5 0%, #64748b 100%);
     box-shadow: 0 2px 6px rgba(71, 85, 105, 0.25);
 }
 
@@ -53,32 +53,6 @@ button {
     background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
     transform: translateY(1px);
-}
-
-.btn-static {
-    background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
-    color: white !important;
-    border-color: #334155 !important;
-    box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-}
-
-.btn-static:hover {
-    background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
-    color: white !important;
-    border-color: #334155 !important;
-    box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-}
-
-.btn-static:active {
-    background: linear-gradient(180deg, #64748b 0%, #475569 100%) !important;
-    color: white !important;
-    box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 body {

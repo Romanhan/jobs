@@ -131,8 +131,8 @@ td.editing textarea {
 }
 
 .checkbox {
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
     cursor: pointer;
     accent-color: #475569;
 }
@@ -140,8 +140,8 @@ td.editing textarea {
 input[type="checkbox"].checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
     border: 1px solid #94a3b8;
     border-radius: 3px;
     background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
@@ -241,31 +241,6 @@ body.modal-open .row-indicator {
 
 table th:nth-child(2) {
     z-index: 9;
-}
-
-.status-cell {
-    font-weight: 600;
-    font-size: 12px;
-}
-
-.status-cell.waiting {
-    color: #64748b;
-}
-
-.status-cell.in-progress {
-    color: #d97706;
-}
-
-.status-cell.ok {
-    color: #16a34a;
-}
-
-.status-cell.soon {
-    color: #ca8a04;
-}
-
-.status-cell.overdue {
-    color: #dc2626;
 }
 
 .done-row {

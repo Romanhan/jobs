@@ -20,7 +20,6 @@
     color: #475569;
 }
 
-.toolbar button,
 .toolbar input,
 .toolbar select {
     border: 1px solid #cbd5e1;
@@ -140,11 +139,11 @@
 .toolbar input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    min-width: 14px;
-    min-height: 14px;
-    line-height: 14px;
+    width: 13px;
+    height: 13px;
+    min-width: 13px;
+    min-height: 13px;
+    line-height: 13px;
     box-sizing: border-box;
     border: 1px solid #94a3b8;
     border-radius: 3px;
