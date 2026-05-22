@@ -17,6 +17,16 @@ table {
     border: 1px solid #cbd5e1;
 }
 
+th:has(input[type="checkbox"].checkbox) {
+    text-align: center;
+    vertical-align: middle;
+}
+
+td:has(input[type="checkbox"].checkbox) {
+    text-align: center;
+    vertical-align: middle;
+}
+
 th,
 td {
     padding: 0px 4px;
@@ -37,7 +47,7 @@ th {
     cursor: pointer;
     white-space: nowrap;
     user-select: none;
-    padding: 5px 2px 5px 2px;
+    padding: 4px 2px;
     border-bottom: 2px solid #cbd5e1;
     box-shadow: inset 0 -1px 0 #cbd5e1;
 }
@@ -95,6 +105,7 @@ td {
     max-width: 150px;
     background: white;
     transition: background 0.1s ease;
+    line-height: 1;
 }
 
 td:hover {
@@ -131,8 +142,8 @@ td.editing textarea {
 }
 
 .checkbox {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     cursor: pointer;
     accent-color: #475569;
 }
@@ -140,8 +151,8 @@ td.editing textarea {
 input[type="checkbox"].checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     border: 1px solid #94a3b8;
     border-radius: 3px;
     background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
