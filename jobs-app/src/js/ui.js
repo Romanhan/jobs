@@ -55,6 +55,7 @@ export function renderTableBody() {
     const tbody = document.getElementById('table-body');
     const filterNr = document.getElementById('filter-nr').value.toLowerCase();
     const filterKoht = document.getElementById('filter-koht').value.toLowerCase();
+    const showBlankKoht = document.getElementById('show-blank-koht').checked;
     const showCompleted = document.getElementById('show-completed').checked;
     const showAllhankes = document.getElementById('show-allhankes').checked;
     const showHidden = document.getElementById('show-hidden-dates')?.checked;
@@ -73,7 +74,8 @@ export function renderTableBody() {
             const allhankes = job['Töötlus allhankes'];
             if (allhankes && !showAllhankes) return false;
             const nrMatch = !filterNr || (job['Töö Nr'] || '').toLowerCase().includes(filterNr);
-            const kohtMatch = !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);
+            const kohtBlank = showBlankKoht && (!job['Täitmise koht'] || job['Täitmise koht'].trim() === '');
+            const kohtMatch = kohtBlank || !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);
             return nrMatch && kohtMatch;
         });
     
@@ -125,7 +127,7 @@ export function renderTableBody() {
                 html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
             } else {
                 const displayValue = isDate ? formatDate(value) : (value || '');
-                html += '<td style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
+                html += '<td tabindex="0" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
             }
         });
         html += '</tr>';

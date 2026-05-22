@@ -255,6 +255,16 @@ export function handleKeydown(e) {
         if (e.key === 'Escape') {
             closeCalendarPopup();
             e.preventDefault();
+        } else if (e.key === 'Enter') {
+            const active = document.activeElement;
+            if (active && active.tagName === 'TD') {
+                const colAttr = active.getAttribute('data-col');
+                if (colAttr) {
+                    const index = parseInt(active.getAttribute('data-index'));
+                    editCell(active, index, colAttr.replace(/\\'/g, "'"));
+                    e.preventDefault();
+                }
+            }
         } else if (e.key === ' ') {
             const active = document.activeElement;
             if (active && active.tagName === 'TD') {

@@ -115,6 +115,7 @@ function setUpButtons() {
     
     document.getElementById('filter-nr').addEventListener('input', filterTable);
     document.getElementById('filter-koht').addEventListener('input', filterTable);
+    document.getElementById('show-blank-koht').addEventListener('change', filterTable);
     document.getElementById('show-hidden-dates').addEventListener('change', function() {
         localStorage.setItem('showHiddenDates', this.checked);
         renderTable();

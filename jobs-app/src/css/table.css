@@ -101,6 +101,12 @@ td:hover {
     background: #f8fafc;
 }
 
+td:focus {
+    outline: 2px solid #64748b;
+    outline-offset: -1px;
+    border-radius: 2px;
+}
+
 th:not(:last-child),
 td:not(:last-child) {
     border-right: 1px solid #e2e8f0;
