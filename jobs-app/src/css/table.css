@@ -1,6 +1,9 @@
 .table-wrap {
     overflow-x: auto;
+    overflow-y: hidden;
     max-width: 100%;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
 }
 
 table {
@@ -14,7 +17,6 @@ table {
         0 2px 8px rgba(0, 0, 0, 0.06),
         0 1px 3px rgba(0, 0, 0, 0.04),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    border: 1px solid #cbd5e1;
 }
 
 th:has(input[type="checkbox"].checkbox) {
@@ -171,42 +173,8 @@ input[type="checkbox"].checkbox:hover {
         0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-input[type="checkbox"].checkbox:checked {
-    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
-    border-color: #334155;
-    box-shadow:
-        inset 0 1px 2px rgba(0, 0, 0, 0.15),
-        0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-input[type="checkbox"].checkbox:checked::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 3px;
-    height: 7px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: translate(-50%, -60%) rotate(45deg);
-}
-
-input[type="checkbox"].checkbox:active {
-    transform: scale(0.95);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.row-indicator {
-    width: 16px;
-    min-width: 16px;
-    max-width: 16px;
-    padding: 0 !important;
-    margin: 0 !important;
-    text-align: center;
-    vertical-align: middle;
-    background-color: #ffffff;
+table {
     overflow: visible;
-    box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
 thead .row-indicator {
@@ -217,16 +185,19 @@ thead .row-indicator {
     margin: 0 !important;
     background-color: #ffffff;
     box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.05);
+    border-top-left-radius: 10px;
 }
 
-table {
-    overflow: visible;
+.row-indicator {
+    border-right: none !important;
 }
 
 table .row-indicator {
     position: sticky;
     left: 0;
     z-index: 5;
+    box-shadow:
+        inset -1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
 table thead .row-indicator {

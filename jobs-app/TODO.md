@@ -17,7 +17,5 @@
 - [ ]
 
 ## Ideas
-- [ ] Zebra striping (rejected - prefer hover only)
-- [ ] Row click to expand/edit (rejected)
 - [ ] Export to Excel
 - [ ] Dark mode

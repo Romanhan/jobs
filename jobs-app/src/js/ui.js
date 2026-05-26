@@ -30,10 +30,10 @@ export function getStatus(job) {
 
 export function renderTable() {
     const thead = document.querySelector('thead');
-    let html = '<tr><th class="row-indicator"></th>';
     const showHidden = document.getElementById('show-hidden-dates')?.checked;
     const hiddenColumns = getHiddenColumns();
     
+    const ths = [];
     COLUMNS.forEach(col => {
         const isHidden = HIDDEN_COLS.includes(col) && !showHidden;
         if (isHidden) return;
@@ -44,8 +44,18 @@ export function renderTable() {
         const wrapClass = COLUMN_WRAP.includes(col) ? 'wrap-header' : '';
         const widths = getColumnWidths();
         const width = widths[col] || 40;
-        html += '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>';
+        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
+    
+    for (let i = ths.length - 1; i >= 0; i--) {
+        if (!ths[i].hidden) {
+            ths[i].html = ths[i].html.replace('<th class="', '<th class="last-visible-th ');
+            break;
+        }
+    }
+    
+    let html = '<tr><th class="row-indicator"></th>';
+    ths.forEach(th => { html += th.html; });
     html += '</tr>';
     thead.innerHTML = html;
     renderTableBody();
