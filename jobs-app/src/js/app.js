@@ -1,10 +1,11 @@
-import { loadData, loadFromFileLegacy, saveCSV, loadFromFile, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs } from './data.js';
+import { loadData, loadFromFileLegacy, saveCSV, loadFromFile, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, pushUndo } from './data.js';
 import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
 setSelectDateCallback((rowIndex, colName, dateStr) => {
     const jobs = getJobs();
+    pushUndo();
     if (rowIndex >= 0 && rowIndex < jobs.length) {
         jobs[rowIndex][colName] = dateStr;
     }
@@ -28,7 +29,6 @@ function attachSortListener() {
         if (col) sortBy(col);
     });
 
-    document.addEventListener('keydown', handleKeydown);
 }
 
 function setUpForm() {

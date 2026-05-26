@@ -11,11 +11,33 @@ export function getJobs() {
     return jobs;
 }
 
+let undoStack = [];
+const MAX_UNDO = 50;
+
+export function pushUndo() {
+    try {
+        undoStack.push(JSON.parse(JSON.stringify(jobs)));
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+    } catch (e) {}
+}
+
+export function undo() {
+    if (undoStack.length === 0) return false;
+    jobs = undoStack.pop();
+    autoSave();
+    return true;
+}
+
+export function clearUndo() {
+    undoStack = [];
+}
+
 export function loadData() {
     const saved = localStorage.getItem('jobsData');
     if (saved) {
         try {
             jobs = JSON.parse(saved);
+            clearUndo();
             const firstJob = jobs[0] || {};
             const hasLeadingSpaces = Object.keys(firstJob).some(k => k !== k.trim());
             if (hasLeadingSpaces) {
@@ -41,6 +63,7 @@ export async function loadFromFileLegacy() {
         const res = await fetch('jobs_data.json');
         const data = await res.json();
         jobs = fixColumnKeys(data);
+        clearUndo();
         convertSaabunudDates(jobs);
         autoSave(jobs);
         return { status: 'legacy', count: jobs.length, jobs };
@@ -54,6 +77,7 @@ export function autoSave() {
 }
 
 export function addJob(job) {
+    pushUndo();
     jobs.push(job);
     autoSave(jobs);
 }
@@ -219,6 +243,7 @@ export function loadFromFile(file) {
                 }
                 
                 jobs = newJobs;
+                clearUndo();
                 autoSave(jobs);
                 resolve({ count: jobs.length, jobs });
             } catch (err) {

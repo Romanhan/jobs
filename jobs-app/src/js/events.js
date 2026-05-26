@@ -1,6 +1,6 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { formatDate, parseDate, autoGrowTextarea } from './utils.js';
-import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV } from './data.js';
+import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit } from './calendar.js';
 
@@ -18,6 +18,7 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
     const cell = editingCell;
     if (!cell) return;
     
+    pushUndo();
     const jobsArr = getJobs();
     jobsArr[cell.index][cell.col] = dateStr;
     
@@ -134,8 +135,14 @@ export function editCell(td, index, col) {
 }
 
 export function saveEdited(input, index, col) {
+    if (!editingCell) return;
+    pushUndo();
     let value = input.value;
     if (DATE_COLS.includes(col) && value) {
+        if (/^\d{1,2}\.\d{1,2}$/.test(value)) {
+            const [d, m] = value.split('.');
+            value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
+        }
         value = parseDate(value);
     }
     const jobsArr = getJobs();
@@ -166,6 +173,7 @@ export function finishEditing() {
 }
 
 export function toggleField(index, col, value) {
+    pushUndo();
     const today = new Date().toISOString().split('T')[0];
     const jobsArr = getJobs();
     if (col === 'Valmis') jobsArr[index]['Valmis kpv'] = value ? today : '';
@@ -222,16 +230,24 @@ export function addJob(e) {
 }
 
 export function handleKeydown(e) {
+    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (undo()) {
+            if (editingCell) finishEditing();
+            renderTableBody();
+            updateStats();
+            showStatus('Tagasi võetud', 'success');
+        }
+        return;
+    }
     if (editingCell && e.ctrlKey && e.key === ';') {
-        if (!editingCell.isDate) {
-            const input = editingCell.td.querySelector('textarea');
-            if (input) {
-                const today = new Date();
-                const dd = String(today.getDate()).padStart(2, '0');
-                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                const yyyy = today.getFullYear();
-                input.value = dd + '.' + mm + '.' + yyyy;
-            }
+        const input = document.querySelector('.floating-editor textarea');
+        if (input) {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            input.value = dd + '.' + mm + '.' + yyyy;
         }
         e.preventDefault();
         return;
