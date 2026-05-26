@@ -216,7 +216,15 @@ export function addJob(e) {
     FORM_FIELDS.forEach(f => {
         const col = f.col;
         const input = form.querySelector('[name="' + col + '"]');
-        if (input && input.value) job[col] = input.value;
+        if (input && input.value) {
+            let val = input.value;
+            if (DATE_COLS.includes(col) && /^\d{1,2}\.\d{1,2}$/.test(val)) {
+                const [d, m] = val.split('.');
+                val = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
+                val = parseDate(val);
+            }
+            job[col] = val;
+        }
     });
     
     const today = new Date().toISOString().split('T')[0];
@@ -242,7 +250,7 @@ export function handleKeydown(e) {
         e.preventDefault();
         return;
     }
-    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && !document.getElementById('modal').classList.contains('active')) {
         e.preventDefault();
         if (undo()) {
             if (editingCell) finishEditing();
@@ -252,16 +260,22 @@ export function handleKeydown(e) {
         }
         return;
     }
-    if (editingCell && e.ctrlKey && e.key === ';') {
-        const input = document.querySelector('.floating-editor textarea');
-        if (input) {
-            const today = new Date();
-            const dd = String(today.getDate()).padStart(2, '0');
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const yyyy = today.getFullYear();
-            input.value = dd + '.' + mm + '.' + yyyy;
-        }
+    if (e.ctrlKey && e.key === ';') {
         e.preventDefault();
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const dateStr = dd + '.' + mm + '.' + yyyy;
+        if (editingCell) {
+            const input = document.querySelector('.floating-editor textarea');
+            if (input) input.value = dateStr;
+        } else if (document.getElementById('modal').classList.contains('active')) {
+            const active = document.activeElement;
+            if (active && active.tagName === 'INPUT' && active.closest('#add-form')) {
+                active.value = dateStr;
+            }
+        }
         return;
     }
     if (editingCell) {
@@ -324,6 +338,17 @@ export function attachEventListeners() {
     document.addEventListener('keydown', handleKeydown);
     
     document.getElementById('add-form').addEventListener('submit', addJob);
+    document.getElementById('add-form').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            const input = e.target;
+            const col = input.getAttribute('name');
+            if (DATE_COLS.includes(col) && /^\d{1,2}\.\d{1,2}$/.test(input.value)) {
+                e.preventDefault();
+                const [d, m] = input.value.split('.');
+                input.value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
+            }
+        }
+    });
     
     const menuBtn = document.getElementById('btn-menu');
     const menuDropdown = document.getElementById('menu-dropdown');
