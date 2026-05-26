@@ -153,8 +153,13 @@ export function loadFromFile(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                let raw = e.target.result;
-                raw = raw.replace(/^\uFEFF/, '');
+                const arr = new Uint8Array(e.target.result);
+                let raw;
+                if (arr[0] === 0xEF && arr[1] === 0xBB && arr[2] === 0xBF) {
+                    raw = new TextDecoder('utf-8').decode(arr.slice(3));
+                } else {
+                    raw = new TextDecoder('windows-1252').decode(arr);
+                }
                 const lines = raw.split(/\r?\n/).filter(l => l.trim());
                 if (lines.length < 1) throw new Error('Tühi fail');
                 
@@ -220,6 +225,9 @@ export function loadFromFile(file) {
                 reject(err);
             }
         };
-        reader.readAsText(file, 'Windows-1252');
+        reader.onerror = function() {
+            reject(new Error('Faili lugemine ebaõnnestus'));
+        };
+        reader.readAsArrayBuffer(file);
     });
 }

@@ -89,25 +89,30 @@ window.filterTable = filterTable;
 window.saveCSV = saveCSV;
 window.startResize = startResize;
 
-window.loadFromFileWrapper = function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    loadFromFile(file).then(result => {
-        renderTable();
-        renderForm();
-        updateStats();
-        showStatus('CSV laetud! (' + result.count + ' tööd)', 'success');
-    }).catch(err => {
-        showStatus('Viga: ' + err.message, 'error');
-    });
-};
-
 function setUpButtons() {
     document.getElementById('btn-save-csv').addEventListener('click', saveCSV);
     document.getElementById('btn-load-csv').addEventListener('click', function() {
-        document.getElementById('file-input').click();
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.csv,.txt';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            document.body.removeChild(input);
+            if (!file) return;
+            showStatus('Laen...', 'success');
+            loadFromFile(file).then(result => {
+                renderTable();
+                renderForm();
+                updateStats();
+                showStatus('CSV laetud! (' + result.count + ' tööd)', 'success');
+            }).catch(err => {
+                showStatus('Viga: ' + err.message, 'error');
+            });
+        });
+        input.click();
     });
-    document.getElementById('file-input').addEventListener('change', window.loadFromFileWrapper);
     
     document.getElementById('btn-add-job').addEventListener('click', openModal);
     document.getElementById('btn-close-modal').addEventListener('click', closeModal);
