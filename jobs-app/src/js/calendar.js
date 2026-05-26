@@ -16,12 +16,13 @@ export function positionCalendarPopup(anchorEl) {
     if (!popup) return;
     const rect = anchorEl.getBoundingClientRect();
     const calW = 240;
-    const calH = 280;
-    const gap = 4;
+    const gapBelow = 4;
+    const gapAbove = 5;
     let left = rect.left + window.scrollX;
-    let top = rect.bottom + gap + window.scrollY;
+    const calH = popup.offsetHeight || 280;
+    let top = rect.bottom + gapBelow + window.scrollY;
     if (rect.bottom + calH > window.innerHeight) {
-        top = rect.top - calH - gap + window.scrollY;
+        top = rect.top - calH - gapAbove + window.scrollY;
     }
     if (rect.left + calW > window.innerWidth) {
         left = rect.right - calW + window.scrollX;
@@ -30,7 +31,7 @@ export function positionCalendarPopup(anchorEl) {
     popup.style.top = top + 'px';
 }
 
-export function openDateCalendar(inputEl, currentValue, callback) {
+export function openDateCalendar(inputEl, currentValue, callback, anchorEl) {
     closeCalendarPopup();
     calendarPopup = inputEl;
     calendarCallback = callback;
@@ -55,8 +56,8 @@ export function openDateCalendar(inputEl, currentValue, callback) {
     popup.id = 'calendar-popup';
 
     document.body.appendChild(popup);
-    positionCalendarPopup(inputEl);
     renderCalendar();
+    positionCalendarPopup(anchorEl || inputEl);
     
     document.addEventListener('click', handleCalendarClickOutside);
 }
@@ -193,7 +194,7 @@ export function selectTodayCalendar() {
     }
 }
 
-export function openDateCalendarDirect(td, index, col, currentValue) {
+export function openDateCalendarDirect(td, index, col, currentValue, anchorEl) {
     closeCalendarPopup();
     calendarCellTd = td;
     calendarRowIndex = index;
@@ -227,8 +228,8 @@ export function openDateCalendarDirect(td, index, col, currentValue) {
     popup.id = 'calendar-popup';
 
     document.body.appendChild(popup);
-    positionCalendarPopup(td);
     renderCalendar();
+    positionCalendarPopup(anchorEl || td);
     
     document.addEventListener('click', handleCalendarClickOutside);
     ignoreNextClick = true;

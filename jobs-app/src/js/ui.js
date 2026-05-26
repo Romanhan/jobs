@@ -192,7 +192,7 @@ grid.innerHTML = html;
                 if (inputEl) {
                     openDateCalendar(inputEl, inputEl.value, function(result) {
                         inputEl.value = result.value || '';
-                    });
+                    }, this);
                 }
             });
         });
