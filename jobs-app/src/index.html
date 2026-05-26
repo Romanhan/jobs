@@ -29,8 +29,12 @@
             </div>
             
             <div class="header-actions">
-                <button class="csv-btn btn-secondary" id="btn-save-csv">💾 Salvesta CSV</button>
-                <button class="csv-btn btn-secondary" id="btn-load-csv">📂 Laadi CSV</button>
+                <button id="btn-menu" class="btn-menu" title="Menüü">&#8801;</button>
+                <div id="menu-dropdown" class="menu-dropdown" style="display:none">
+                    <button class="menu-item" data-action="save-csv">Save CSV</button>
+                    <button class="menu-item" data-action="load-csv">Load CSV</button>
+                    <button class="menu-item" data-action="shortcuts">Shortcuts</button>
+                </div>
             </div>
         </div>
         
@@ -58,6 +62,17 @@
         </div>
         
         <div class="status-bar" id="status-bar" style="display:none"></div>
+    </div>
+    
+    <div id="shortcuts-popup" class="shortcuts-popup" style="display:none">
+        <div class="shortcuts-grid">
+            <span class="key">Ctrl+;</span><span>Sisesta tänane kuupäev</span>
+            <span class="key">DD.MM</span><span>Auto-täienda aastaga (20.05 → 20.05.2026)</span>
+            <span class="key">Ctrl+Z</span><span>Võta tagasi (Undo)</span>
+            <span class="key">Enter</span><span>Salvesta redigeerimine</span>
+            <span class="key">Esc</span><span>Tühista / Sulge</span>
+            <span class="key">Space</span><span>Märgi / eemalda linnuke</span>
+        </div>
     </div>
     
     <div class="modal" id="modal">

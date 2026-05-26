@@ -26,6 +26,7 @@
     display: flex;
     gap: 6px;
     flex-shrink: 0;
+    position: relative;
 }
 
 .csv-btn {

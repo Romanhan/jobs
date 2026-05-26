@@ -230,6 +230,18 @@ export function addJob(e) {
 }
 
 export function handleKeydown(e) {
+    const shortcutsPopup = document.getElementById('shortcuts-popup');
+    const menuDropdown = document.getElementById('menu-dropdown');
+    if (e.key === 'Escape' && shortcutsPopup && shortcutsPopup.style.display !== 'none') {
+        shortcutsPopup.style.display = 'none';
+        e.preventDefault();
+        return;
+    }
+    if (e.key === 'Escape' && menuDropdown && menuDropdown.style.display !== 'none') {
+        menuDropdown.style.display = 'none';
+        e.preventDefault();
+        return;
+    }
     if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
         e.preventDefault();
         if (undo()) {
@@ -312,4 +324,61 @@ export function attachEventListeners() {
     document.addEventListener('keydown', handleKeydown);
     
     document.getElementById('add-form').addEventListener('submit', addJob);
+    
+    const menuBtn = document.getElementById('btn-menu');
+    const menuDropdown = document.getElementById('menu-dropdown');
+    const shortcutsPopup = document.getElementById('shortcuts-popup');
+    
+    function closeMenu() {
+        menuDropdown.style.display = 'none';
+    }
+    
+    menuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    menuDropdown.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const item = e.target.closest('.menu-item');
+        if (!item) return;
+        const action = item.getAttribute('data-action');
+        closeMenu();
+        
+        if (action === 'save-csv') {
+            doSaveCSV();
+        } else if (action === 'load-csv') {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv,.txt';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                document.body.removeChild(input);
+                if (!file) return;
+                showStatus('Laen...', 'success');
+                doLoadFromFile(file).then(result => {
+                    renderTable();
+                    renderForm();
+                    updateStats();
+                    showStatus('CSV laetud! (' + result.count + ' tööd)', 'success');
+                }).catch(err => {
+                    showStatus('Viga: ' + err.message, 'error');
+                });
+            });
+            input.click();
+        } else if (action === 'shortcuts') {
+            shortcutsPopup.style.display = shortcutsPopup.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (menuDropdown.style.display !== 'none' && !menuDropdown.contains(e.target) && e.target !== menuBtn) {
+            closeMenu();
+        }
+        if (shortcutsPopup.style.display !== 'none' && !shortcutsPopup.contains(e.target) && e.target !== menuBtn) {
+            shortcutsPopup.style.display = 'none';
+        }
+    });
 }
