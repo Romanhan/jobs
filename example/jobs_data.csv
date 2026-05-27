@@ -1,0 +1,131 @@
+﻿Töö Nr;Valmis;Valmis kpv;Detaili/koostu nimetus või joonise Nr;Kommentaar(tooriku/detaili seis, muu oluline info);Otsuse/Tegevuse vastutaja;Tooriku saabumise kuupäev EE;EE vajaduse kuupäev (koostamiseks valmis kujul);Meeldetuletus X päeva ennem;Töötluse algus;Alustatud;Alustamise kpv;EE töötluse lõpp;Töötlus Lõpetatud;Töötlus allhankes;Täitmise koht;EE kuupäev tarne;TE kuupäev tarne;Info sisestamise kuupäev;Tegevuse sisestaja nimi
+w2503102;TRUE;;äärikud;;;;09.02.2026;2;06.02.2026;TRUE;;07.02.2026;FALSE;FALSE;Karusell;;;05.02.2026;Roman
+w2503103;TRUE;;äärikud;;;;09.02.2026;2;06.02.2026;TRUE;;07.02.2026;FALSE;FALSE;Karusell;;;05.02.2026;Roman
+W2503103;TRUE;;EST-A19756_r01_LOWER BLIND FLANGE;;;kohal;09.02.2026;11;06.02.2026;TRUE;;08.02.2026;TRUE;FALSE;Karusell;;;09.02.2026;Roman
+W2503101;TRUE;;Vaheseinte parandus;;;kohal;12.02.2026;1;07.02.2026;TRUE;;12.02.2026;TRUE;FALSE;Tos;;;05.02.2026;Dmitri
+w2502206;TRUE;;EST-A19080_02_Agitator blind flange;;;kohal;13.02.2026;4;09.02.2026;TRUE;;14.02.2026;TRUE;FALSE;Karusell;;;05.02.2026;Roman
+w2502701;TRUE;;Väiksed detailid;;;kohal;13.02.2026;1;13.02.2026;TRUE;;13.02.2026;TRUE;FALSE;Tos;;;05.02.2026;Roman
+W2503201;TRUE;;EST-A20346 N5;;;kohal;16.02.2026;7;11.02.2026;TRUE;;12.02.2026;TRUE;FALSE;;;;12.02.2026;Roman
+w2503103;TRUE;19.03.2026;kamber EST-A19740;Keevitusel 05.03.26->13.03;;13.03.2026;16.02.2026;2;17.03.2026;TRUE;18.03.2026;18.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+Q26003;TRUE;;EST-A20576 | REV 01 | TUBE WELDING TEST PLATE;Joonis väljastatud 12.02.26;;kohal;18.02.2026;1;14.02.2026;FALSE;;;FALSE;FALSE;Tandix;;;13.02.2026;Alik
+Q26002;TRUE;;;saadetud allhanke;;kohal;18.02.2026;1;14.02.2026;FALSE;;;FALSE;FALSE;Tandix;;;13.02.2026;Dmitri
+Q26004;TRUE;;;saadetud allhanke joonis 13.02.2026 EST-A21038 | REV 00 | TUBE WELDING TEST PLATE | ;;kohal;18.02.2026;1;14.02.2026;FALSE;;;FALSE;FALSE;Tandix;;;13.02.2026;Dmitri
+Q26005;TRUE;;;saadetud allhanke;;kohal;18.02.2026;1;14.02.2026;FALSE;;;FALSE;FALSE;Tandix;;;13.02.2026;Dmitri
+w2102404;TRUE;;deaeratori kaelus;Spiraal ümbertöötlus;;kohal;18.02.2026;7;26.02.2026;TRUE;;27.02.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+W2502701;TRUE;;EST-A03395 DISC;;;kohal;20.02.2026;7;16.02.2026;TRUE;;;FALSE;FALSE;Multimill OÜ;20.02.2026;23.02.2026;12.02.2026;Roman
+W2502701;TRUE;;EST-A03396_02_FLANGED SHAFT;;;kohal;20.02.2026;7;16.02.2026;TRUE;;;FALSE;FALSE;LDS Metall;20.02.2026;20.02.2026;12.02.2026;Roman
+w2502401;TRUE;;EST-P98254_00_LOWER TUBESHEET;;;kohal;21.02.2026;7;14.02.2026;TRUE;;22.02.2026;TRUE;FALSE;Tos;;;05.02.2026;Roman
+Q25034;TRUE;;;Joonis väljastatud 10.02.2026;;kohal;23.02.2026;7;14.02.2026;FALSE;;;FALSE;FALSE;Tandix;;;10.02.2026;Alik
+Q25025;TRUE;;Forging Pre-Machined Square SA350LF2 200x200x50; Joonis väljastatud 10.02.2026;;20.02.2026;23.02.2026;7;;FALSE;;;FALSE;FALSE;Tandix;;;10.02.2026;Alik
+Q25026;TRUE;;;Joonis väljastatud 10.02.2026;;20.02.2026;23.02.2026;7;;FALSE;;;FALSE;FALSE;Tandix;;;10.02.2026;Alik
+w2502301;TRUE;;vaheseinad;joonis väljastatud;;kohal;26.02.2026;2;06.03.2026;TRUE;;07.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+w2503101;TRUE;;kambrid;karusel;;03.03.2026;26.02.2026;2;03.03.2026;TRUE;;03.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+w2503102;TRUE;;kambrid;;;04.03.2026;26.02.2026;2;03.03.2026;TRUE;;05.03.2026;TRUE;FALSE;Karusel;;;05.02.2026;Roman
+w2503103;TRUE;;kambrid;;;05.03.2026;26.02.2026;2;03.03.2026;TRUE;;05.03.2026;TRUE;FALSE;Karusel;;;05.02.2026;Roman
+w2503102;TRUE;;kambrid EST-A19727, EST-A19726;;;04.03.2026;26.02.2026;2;05.03.2026;TRUE;;06.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+w2102404;TRUE;;deaerator;;;kohal;27.02.2026;7;26.02.2026;TRUE;;26.02.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+w2502206;TRUE;;Kaante töötlus (ümbertegemine);;;na;27.02.2026;7;26.02.2026;TRUE;;27.02.2026;TRUE;FALSE;Karusel;;;26.02.2026;Alik
+Q25022;TRUE;;Forging Pre-Machined Square SA350LF2 200x200x50_toorikud N8; Joonis väljastatud 10.02.2026;;20.02.2026;02.03.2026;4;04.03.2026;TRUE;;10.03.2026;TRUE;FALSE;Tandix;;;09.02.2026;Alik
+Q25023;TRUE;;Forging Pre-Machined Square SA350LF2 200x200x50_toorikud N8; Joonis väljastatud 10.02.2026;;20.02.2026;02.03.2026;4;04.03.2026;TRUE;;10.03.2026;TRUE;FALSE;Tandix;;;09.02.2026;Alik
+Q25024;TRUE;;Forging Pre-Machined Square SA350LF2 200x200x50_toorikud N8; Joonis väljastatud 10.02.2026;;20.02.2026;02.03.2026;4;04.03.2026;TRUE;;10.03.2026;TRUE;FALSE;Tandix;;;09.02.2026;Alik
+W2502601;TRUE;;EST-P100038 TUBESHEET LEFT SIDE;torude tarne ca 17-18.02  (torud valmis, kui maksame siis tarnitakse);;kohal;05.03.2026;7;16.02.2026;TRUE;;26.02.2026;TRUE;FALSE;Karusel;;;05.02.2026;Roman
+W2502602;TRUE;16.03.2026;EST-P100038  TUBESHEET LEFT SIDE;;;kohal;05.03.2026;7;05.03.2026;TRUE;;12.03.2026;TRUE;FALSE;Karusel;;;06.02.2026;Alik
+W2502601;TRUE;;Vaheplaadid;Puhastuses Terastoorikus;;kohal;05.03.2026;7;;FALSE;;02.02.2026;TRUE;FALSE;Laserist;;12.02.2026;06.02.2026;Alik
+W2502602;TRUE;;Vaheplaadid;Puhastuses Terastoorikus;;kohal;05.03.2026;7;;FALSE;;02.02.2026;TRUE;FALSE;Laserist;;12.02.2026;06.02.2026;Alik
+W2502601;TRUE;18.03.2026;EST-P100330 TUBESHEET  RIGHT SIDE;torud valmis, kui maksame siis tarnitakse;;kohal;10.03.2026;7;10.03.2026;TRUE;;17.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+W2502602;TRUE;09.04.2026;EST-P100330 TUBESHEET  RIGHT SIDE;Pink katki 25.03. > 27.03 ja 30.03 > 04.04.;;kohal;10.03.2026;1;23.03.2026;TRUE;24.03.2026;07.04.2026;TRUE;FALSE;Karusel;;;06.02.2026;Alik
+w2502401;TRUE;;demister;;;kohal;12.03.2026;7;04.03.2026;TRUE;;05.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+w2503102;TRUE;17.03.2026;kaaned;plasmast, keevituses;;kohal;15.03.2026;1;16.03.2026;TRUE;17.03.2026;17.03.2026;TRUE;FALSE;Karusel;;;12.02.2026;Roman
+w2503103;TRUE;18.03.2026;kaaned;plasmast, keevituses;;kohal;15.03.2026;1;16.03.2026;TRUE;17.03.2026;17.03.2026;TRUE;FALSE;Karusel;;;12.02.2026;Roman
+w2503101;TRUE;;kaaned;plasmast;;kohal;15.03.2026;7;;FALSE;;;FALSE;FALSE;;;;12.02.2026;Roman
+w2502305;TRUE;02.04.2026;vaheseinad;vaheseinad laserist avadega;;31.03.2026;15.03.2026;7;na;TRUE;12.03.2026;na;FALSE;TRUE;laserist;31.03.2026;;05.02.2026;Roman
+w2502901;TRUE;23.04.2026;vaheseinad;vaheseinad lõigatud aga ei ole puhastatud (AG 02.04.2026) Exmet`ist lõikus avadega ja puhastatud Timesvaeriga;Margus.T;pooleli;16.03.2026;1;na;TRUE;12.03.2026;na;FALSE;TRUE;laserist;27.03.2026;;09.02.2026;Alik
+W2503501;TRUE;;Electro Nozzle;;;kohal;18.03.2026;;17.03.2026;TRUE;;18.03.2026;TRUE;FALSE;Karusel;;;19.03.2026;Roman
+w2502401;TRUE;23.03.2026;demister head;Tagasi keevitusele;;kohal;19.03.2026;7;20.03.2026;TRUE;23.03.2026;21.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+w2502206;TRUE;16.03.2026;kamber katsetamiseks teine kord;;;16.03.2026;19.03.2026;7;16.03.2026;TRUE;16.03.2026;17.03.2026;TRUE;FALSE;Karusel;;;12.03.2026;Dmitri
+W2502304;TRUE;;Äärikud;Diameetri parandamine;;kohal;20.03.2026;3;19.03.2026;TRUE;;20.03.2026;TRUE;FALSE;TOS;;;19.03.2026;Roman
+W2503201;TRUE;23.03.2026;EST-A20521_00_INNER CONTAINER LOWER SIDE;Esimene op. avad;;kohal;20.03.2026;7;20.03.2026;TRUE;20.03.2026;20.03.2026;TRUE;FALSE;TOS;;;20.03.2026;Roman
+w2502701;TRUE;;uks;detail valmis töötlemiseks;;kohal;20.03.2026;7;10.03.2026;TRUE;;11.03.2026;TRUE;FALSE;TOS;;;05.02.2026;Roman
+w2503103;TRUE;24.03.2026;EST-A19747_01_UPPER BLIND FLANGE;Pärast tasapinna parandamist;;kohal;20.03.2026;7;20.03.2026;TRUE;23.03.2026;23.03.2026;TRUE;FALSE;Karusel;;;20.03.2026;Roman
+w2502302;TRUE;28.04.2026;vaheplaadid ;puurida/ joonis väljastatud;;kohal;23.03.2026;25;;TRUE;19.03.2026;;TRUE;TRUE;Multimill;16.04.2026;;05.02.2026;Roman
+w2502302;TRUE;23.03.2026;torulaud;Pool Fully machined allh N10, Teha kesta keev faasid, U torud valmis märtsi keskel ja saab tuua märtsi lõpuks Info Kaarlilr antud koosolekul 25.02;Baturinil, docide kontrollis 12-13.03;kohal;27.03.2026;14;19.03.2026;TRUE;19.03.2026;20.03.2026;TRUE;FALSE;Karusel;;;06.02.2026;Dmitri
+w2600301-04;TRUE;26.03.2026;torulauad 4tk (|);joonis puurimiseks Kert teeb (esialgne tähtaeg oli 16.02);;kohal;30.03.2026;7;03.03.2026;TRUE;11.03.2026;20.03.2026;TRUE;TRUE;Tandix;20.03.2026;;09.02.2026;Alik
+w2502303;TRUE;;vaheseinad;;;Kohal;30.03.2026;7;28.02.2026;TRUE;;28.02.2026;TRUE;FALSE;Karusel;;;05.02.2026;Roman
+w2600301-04;TRUE;26.03.2026;torulauad  4tk (||);;;kohal;30.03.2026;7;03.03.2026;TRUE;11.03.2026;20.03.2026;TRUE;TRUE;Tandix;20.03.2026;;05.02.2026;Alik
+w2502303;TRUE;09.04.2026;torulauad 2tk;toorikud 2tk_1 paar  toorikud N9 Allh? Otsustada N13;Roman;kohal;30.03.2026;7;27.03.2026;TRUE;01.04.2026;04.04.2026;FALSE;TRUE;Tandix;07.04.2026;;09.02.2026;Alik
+w2502901;TRUE;24.04.2026;Torulaud 1;SD materjal kohal-> lõikusse D2800, 06.03->11.03->12.03 saabunud >  tööpaus 24.03. >;;kohal;30.03.2026;7;17.04.2026;TRUE;24.03.2026;23.04.2026;TRUE;FALSE;TOS;;;09.02.2026;Alik
+w2504201;TRUE;09.04.2026;Torulauad 2tk (|+||);joonised väljastatud 23.02, toorik  CuZn38Sn1As  40,0x1565x1565 13.03->17.03>19.03;;kohal;06.04.2026;14;25.03.2026;TRUE;26.03.2026;05.04.2026;FALSE;FALSE;TOS;;;09.02.2026;Alik
+w2504202;TRUE;23.04.2026;Torulauad 2tk (|+||);joonised väljastatud 23.02, toorik  CuZn38Sn1As  40,0x1565x1565 13.03->17.03>19.03 > paus, teeme 2501201;;kohal;06.04.2026;7;06.04.2026;TRUE;23.04.2026;16.04.2026;TRUE;FALSE;TOS;;;09.02.2026;Alik
+w2504201-02;TRUE;26.03.2026;Vaheseinad;Laserist avadega kõik paksused;;27.03.2026;06.04.2026;21;na;TRUE;12.03.2026;na;TRUE;TRUE;Laserist;27.03.2026;;09.02.2026;Alik
+w2501201;TRUE;23.04.2026;Alumine kaan;lõppmehaanika;;kohal;08.04.2026;7;10.04.2026;TRUE;01.04.2026;10.04.2026;TRUE;FALSE;Karusel;;;19.03.2026;Dmitri
+w2502206;TRUE;08.04.2026;;tihendipinna parandus;;;09.04.2026;7;08.04.2026;TRUE;08.04.2026;09.04.2026;TRUE;FALSE;Karusel;;;02.04.2026;Dmitri
+w2502303;TRUE;23.04.2026;torulauad 2tk;toorikud 2tk_2 paar  toorikud N9 Allh? Otsustada N13;Roman;kohal;10.04.2026;7;10.04.2026;TRUE;23.04.2026;20.04.2026;FALSE;FALSE;Allh/Karusel;;;09.02.2026;Alik
+w2504301;FALSE;;torulauad 2tk;joonis väljastatud, lõigata toorikud plasmaga, materjal laost HOLD 08.05;;kohal;13.04.2026;7;05.05.2026;TRUE;05.05.2026;;FALSE;FALSE;karusel;;;09.02.2026;Alik
+w2502901;TRUE;07.05.2026;Torulaud 2;SD materjal kohal-> lõikusse D2800, 06.03->11.03->12.03 saabunud;;kohal;13.04.2026;7;24.04.2026;TRUE;24.04.2026;02.05.2026;TRUE;FALSE;TOS;;;09.02.2026;Alik
+w2600301-04;TRUE;07.05.2026;vaheseinad 32tk;Puhastuses    uus katseplaat terastoorikust 12.02->16.02 /otsustada kas ise teeme või allhankes (laseri kvaliteet ei sobi, vesi x3 kallim kui puurimine);;kohal;17.04.2026;7;;TRUE;23.04.2026;;FALSE;TRUE;Tandix;;;05.02.2026;Alik
+q26009;TRUE;23.04.2026;Katsekehad 5tk.;;;kohal;20.04.2026;7;17.04.2026;TRUE;23.04.2026;20.04.2026;TRUE;FALSE;Karusel;;;16.04.2026;Dmitri
+w2600501;TRUE;28.04.2026;Kaaned;Puurimine ja tihendipind;;kohal;20.04.2026;7;24.04.2026;TRUE;24.04.2026;27.04.2026;TRUE;FALSE;Karusel;;;09.02.2026;Alik
+w2502301;TRUE;;Kambrite eelmehaanika;;;kohal;20.04.2026;1;16.04.2026;TRUE;;17.04.2026;TRUE;FALSE;TOS;;;16.04.2026;Dmitri
+w2502304;TRUE;23.04.2026; vaheseinad;puurida;;kohal;20.04.2026;7;;TRUE;23.04.2026;;TRUE;TRUE;Fleibel;;20.04.2026;05.02.2026;Roman
+w2502304;FALSE;;torulauad 1tk(esimene);Forging Ring pre-machined claddinguga toorik allhankest N9, puurida ja faas. Kohal 06.05.;;kohal;20.04.2026;7;08.05.2026;TRUE;12.05.2026;19.05.2026;TRUE;FALSE;TOS;;;06.02.2026;Dmitri
+w2504301;TRUE;23.04.2026;vaheplaadid;laserist tellitud OT260508, versenkimine???;DG;kohal;23.04.2026;7;;TRUE;23.04.2026;;TRUE;TRUE;FinEst Steel AS;10.04.2026;08.04.2026;09.02.2026;Alik
+w2502304;FALSE;;torulauad 1tk (teine);Forging Ring pre-machined claddinguga toorik allhankest N9, puurida ja faas. Kohal 06.05.;;kohal;27.04.2026;7;23.05.2026;FALSE;;04.06.2026;FALSE;FALSE;TOS;;;06.02.2026;Dmitri
+W2600501;TRUE;24.04.2026;äärikud;eeltöötlus;;kohal;24.04.2026;7;22.04.2026;TRUE;23.04.2026;23.04.2026;TRUE;FALSE;Karusel;;;22.04.2026;Roman
+w2600501;TRUE;05.05.2026;Torulauad;toorikud, toimub vastuvõtmine (AG_23.03);;kohal;27.04.2026;7;27.04.2026;TRUE;28.04.2026;05.05.2026;TRUE;FALSE;Karusel;;;11.02.2026;Alik
+w2600501;TRUE;23.04.2026;Vaheseinad;versenkimine, laserist, puhastatud OT260535, (MT)ei saanud puhastada Timesaveris, kuna RST materjal ei “haakunud” kinni masinas(17.04.2026).;;20.04.2026;27.04.2026;7;;TRUE;23.04.2026;;FALSE;TRUE;Allh;20.04.2026;17.04.2026;11.02.2026;Alik
+w2600501;TRUE;21.05.2026;Kambrid;HOLD;;kohal;18.05.2026;7;11.05.2026;TRUE;21.05.2026;;TRUE;FALSE;Karusel;;;09.02.2026;Alik
+W2502304;TRUE;08.05.2026;Kambri eelmehaanika(pealekeevitus);Teine kord: 07.05. - 08.05.;;kohal;06.05.2026;1;02.05.2026;TRUE;05.05.2026;06.05.2026;TRUE;FALSE;TOS;;;23.04.2026;Roman
+Q26025;TRUE;12.05.2026;Test plate;;;kohal;11.05.2026;7;08.05.2026;TRUE;12.05.2026;08.05.2026;TRUE;FALSE;Karusel;;;07.05.2026;Roman
+w2504301;TRUE;18.05.2026;kambri äärikud; ;;kohal;23.04.2026;7;13.05.2026;TRUE;14.05.2026;14.05.2026;FALSE;FALSE;Karusel;;;09.02.2026;Alik
+w2601001;FALSE;;vaheseinad;Time Saver?;;kohal;25.05.2026;7;28.05.2026;FALSE;;31.05.2026;FALSE;FALSE;Karusel;;;23.04.2026;Alik
+W2503801;FALSE;;Ots;Puurimine;;kohal;25.05.2026;7;21.05.2026;TRUE;21.05.2026;22.05.2026;TRUE;FALSE;TOS;;;21.05.2026;Roman
+W2503802;FALSE;;Ots;Puurimine;;kohal;25.05.2026;7;22.05.2026;TRUE;22.05.2026;23.05.2026;FALSE;FALSE;TOS;;;21.05.2026;Roman
+w2601201;FALSE;;Kesta äärikud 4tk;Fully machined 4tk;;22.05.2026;25.05.2026;2;;FALSE;;;FALSE;FALSE;;;;23.03.2026;Alik
+w2601201;FALSE;;Ovalne ühendus;;;;30.05.2026;7;;FALSE;;;FALSE;FALSE;;;;19.03.2026;Alik
+w2601201;FALSE;;Ümargune ühendus;;;;30.05.2026;7;;FALSE;;;FALSE;FALSE;;;;19.03.2026;Alik
+w2502305;FALSE;;Torulaud; Ei tohi puurida(01.04.26) MUUDATUS!!! 304->316 cladding   Forging Pre-Machined_Toorik N9;AG;kohal;31.05.2026;7;;FALSE;;;FALSE;FALSE;;;;06.02.2026;Dmitri
+w2601201;FALSE;;väikesed detailid;;;;01.06.2026;7;;FALSE;;;FALSE;FALSE;;;;19.03.2026;Alik
+w2601001;FALSE;;torulaud;OT260499 Fully mach.;;02.06.2026;04.06.2026;7;;FALSE;;;FALSE;FALSE;;;;23.04.2026;Alik
+w2601001;FALSE;;erinevad detailid;OT260499 Fully mach.;;02.06.2026;04.06.2026;7;;FALSE;;;FALSE;FALSE;;;;23.04.2026;Alik
+w2601201;FALSE;;kesta osa ühendustega;;;29.05.2026;05.06.2026;7;;FALSE;;;FALSE;FALSE;;;;19.03.2026;Alik
+w2502305;FALSE;;kamber;;;;10.06.2026;7;;FALSE;;;FALSE;FALSE;;;;05.02.2026;Roman
+w2502302;FALSE;;kamber;;;;10.06.2026;7;;FALSE;;;FALSE;FALSE;;;;05.02.2026;Roman
+w2600305-08;FALSE;;torulauad 4tk (|);;;kohal;11.06.2026;7;21.05.2026;TRUE;22.05.2026;28.05.2026;FALSE;FALSE;Karusel;;;09.02.2026;Alik
+w2600305-08;FALSE;;torulauad  4tk (||);;;kohal;11.06.2026;7;01.06.2026;FALSE;;05.06.2026;FALSE;FALSE;Karusel;;;05.02.2026;Alik
+w2504301;TRUE;18.05.2026;kambrid;meh.töötlus peale keevitamist;;;01.06.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2600305-08;TRUE;22.05.2026;vaheseinad 32tk;Puhastusse Puurida      uus katseplaat terastoorikust 12.02->16.02 /otsustada kas ise teeme või allhankes (laseri kvaliteet ei sobi, vesi x3 kallim kui puurimine);;kohal;11.06.2026;7;;TRUE;07.05.2026;;TRUE;TRUE;Tandix;21.05.2026;21.05.2026;05.02.2026;Alik
+w2601201;FALSE;;kest ilma ühendusteta;;;04.06.2026;12.06.2026;7;;FALSE;;;FALSE;FALSE;;;;19.03.2026;Alik
+W2502304;FALSE;;Kamber 1 mehaanika;;;kohal;15.06.2026;7;;FALSE;;;FALSE;FALSE;TOS;;;23.04.2026;Roman
+w2502301;FALSE;;kamber;;;;15.06.2026;7;;FALSE;;;FALSE;FALSE;;;;26.02.2026;Roman
+w2502303;FALSE;;Kaaned;;;kohal;15.06.2026;7;;FALSE;;;FALSE;FALSE;;;;16.04.2026;Dmitri
+w2502303;TRUE;21.05.2026;kamber;;;;17.06.2026;7;14.05.2026;TRUE;18.05.2026;15.05.2026;TRUE;FALSE;Karusel;;;05.02.2026;Roman
+w2600401;FALSE;;deaerator+kaelus;;;;18.06.2026;7;;FALSE;;;FALSE;FALSE;;;;05.02.2026;Roman
+w2600309-12;FALSE;;vaheseinad 32tk;Puurida      uus katseplaat terastoorikust 12.02->16.02 /otsustada kas ise teeme või allhankes (laseri kvaliteet ei sobi, vesi x3 kallim kui puurimine);DG/DP;kohal;19.06.2026;7;;FALSE;;;FALSE;FALSE;Tandix;;;05.02.2026;Alik
+w2600309-12;FALSE;;torulauad 4tk (|);;;kohal;19.06.2026;7;;FALSE;;;FALSE;FALSE;karusel;;;05.02.2026;Alik
+w2600309-12;FALSE;;torulauad  4tk (||);;;kohal;19.06.2026;7;;FALSE;;;FALSE;FALSE;karusel;;;09.02.2026;Alik
+w2502304;FALSE;;Kamber 2 mehaanika;;;20.05.2026;25.06.2026;7;;FALSE;;;FALSE;FALSE;;;;05.02.2026;Roman
+w2502002;FALSE;;äärikud;;;;30.06.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2502002;FALSE;;Torulaud;;;kohal;01.07.2026;7;;FALSE;;;FALSE;FALSE;Karusel;;;16.04.2026;Dmitri
+w2502001;FALSE;;Torulaud;;;kohal;01.08.2026;7;;FALSE;;;FALSE;FALSE;TOS;;;16.04.2026;Dmitri
+w2502901;FALSE;;Ülemine kamber;;;;15.08.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2602101;FALSE;;Vaheplaadid;puurimise start planeeritud al 25.06.26, otsad ja lehed juuli lõpus;;20.06.2026;15.08.2026;7;;FALSE;;;FALSE;FALSE;;;;16.04.2026;Alik
+w2502002;FALSE;;vaheplaadid;;;;17.08.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2502001;FALSE;;vaheplaadid;;;;24.08.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2502001;FALSE;;äärikud;;;;25.08.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2502001;FALSE;; koonus äärikuga;;;;31.08.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2602101;FALSE;;torulaud 1;puurimise start planeeritud al 25.06.26, otsad ja lehed juuli lõpus;;20.06.2026;31.08.2026;7;;FALSE;;;FALSE;FALSE;;;;16.04.2026;Alik
+w2602101;FALSE;;torulaud 2;puurimise start planeeritud al 25.06.26, otsad ja lehed juuli lõpus;;20.06.2026;15.09.2026;7;;FALSE;;;FALSE;FALSE;;;;16.04.2026;Alik
+w2503601-02;FALSE;;Vaheseinad ;joonised väljastatud 27.04;;kohal;19.09.2026;7;26.05.2026;FALSE;;02.06.2026;FALSE;FALSE;TOS;;;05.02.2026;Alik
+w2503601-02;FALSE;;Torulauad 4tk;Fully machined ;;05.06.2026;19.09.2026;7;;FALSE;;02.11.2026;FALSE;FALSE;TOS/ALLH;;;05.02.2026;Alik
+w2502002;FALSE;;Demister ???;;;;01.11.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2502001;FALSE;;kamber;;;;15.11.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2503603-04;FALSE;;Vaheseinad ;materjal saabub 15.06.26;;20.06.2026;16.11.2026;7;29.06.2026;FALSE;;28.08.2026;FALSE;FALSE;Karusel/TOS/Allh;;;05.02.2026;Alik
+w2503603-04;FALSE;;Torulauad 2tk;Pre-machined keev nokaga, puurida;;18.06.2026;16.11.2026;7;07.09.2026;FALSE;;09.10.2026;FALSE;FALSE;Karusel/TOS/Allh;;;05.02.2026;Alik
+w2502002;FALSE;;kamber;;;;16.11.2026;7;;FALSE;;;FALSE;FALSE;;;;09.02.2026;Alik
+w2503603-04;FALSE;;Torulauad 2tk;Pre-machined keev nokaga, puurida;;18.06.2026;09.12.2026;7;07.09.2026;FALSE;;09.10.2026;FALSE;FALSE;Karusel/TOS/Allh;;;05.02.2026;Alik
+w2502301;TRUE;12.03.2026;torulauad;Fully machined allhankest N9, P98844 ,  P98848;;kohal;na;7;na;TRUE;12.03.2026;na;TRUE;FALSE;na;;20.02.2026;06.02.2026;Dmitri
+w2501201;TRUE;;kamber  ;;;05.02.2026;;;05.02.2026;FALSE;;05.02.2026;FALSE;FALSE;Karusell;;;05.02.2026;Roman
+w2504301;TRUE;26.03.2026;kaaned ja äärikud;Fully machined 2+2 OT260296;;24.03.2026;;7;na;FALSE;;na;FALSE;FALSE;na;;;02.03.2026;Alik
+w2503605-06;FALSE;;Vaheseinad ;materjal saabub 15.06.26;;20.06.2026;15.12.2026;7;29.06.2026;FALSE;;09.11.2026;FALSE;FALSE;Karusel/TOS/Allh;;;05.02.2026;Alik
+w2503605-06;FALSE;;Torulauad 2tk;Pre-machined keev nokaga, puurida;;18.06.2026;15.12.2026;7;10.11.2026;FALSE;;27.11.2026;FALSE;FALSE;Karusel/TOS/Allh;;;05.02.2026;Alik
+w2503605-06;FALSE;;Torulauad 2tk;Puhastuses Terastoorikus;;18.06.2026;04.01.2027;7;10.11.2026;FALSE;;27.11.2026;FALSE;FALSE;Karusel/TOS/Allh;;;05.02.2026;Alik

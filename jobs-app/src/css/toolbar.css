@@ -348,7 +348,10 @@
 
 .menu-item:hover {
     background: var(--gradient-menu-item-hover);
-    box-shadow: var(--shadow-inset-btn-secondary);
+    border-color: var(--border-strong);
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .menu-item:active {
