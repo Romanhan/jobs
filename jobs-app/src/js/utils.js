@@ -71,6 +71,40 @@ export function fixColumnKeys(data) {
     });
 }
 
+export function renderMarkdown(text) {
+    if (!text) return '';
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/!!(.+?)!!/g, '<span class="text-important">$1</span>');
+    html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+    return html;
+}
+
+export function wrapSelection(textarea, wrapper) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+    if (selected) {
+        const wl = wrapper.length;
+        if (selected.startsWith(wrapper) && selected.endsWith(wrapper)) {
+            const inner = selected.substring(wl, selected.length - wl);
+            textarea.value = text.substring(0, start) + inner + text.substring(end);
+            textarea.selectionStart = start;
+            textarea.selectionEnd = start + inner.length;
+        } else {
+            textarea.value = text.substring(0, start) + wrapper + selected + wrapper + text.substring(end);
+            textarea.selectionStart = start + wl;
+            textarea.selectionEnd = end + wl;
+        }
+    } else {
+        textarea.value = text.substring(0, start) + wrapper + wrapper + text.substring(end);
+        textarea.selectionStart = start + wrapper.length;
+        textarea.selectionEnd = start + wrapper.length;
+    }
+    textarea.focus();
+}
+
 export function autoGrowTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';

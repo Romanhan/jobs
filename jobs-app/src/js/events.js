@@ -1,5 +1,5 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
-import { formatDate, parseDate, autoGrowTextarea } from './utils.js';
+import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit } from './calendar.js';
@@ -54,6 +54,7 @@ export function editCell(td, index, col) {
     const input = document.createElement('textarea');
     input.rows = 1;
     floatingEditor.appendChild(input);
+
     document.body.appendChild(floatingEditor);
     
     input.value = textToMeasure;
@@ -120,6 +121,18 @@ export function editCell(td, index, col) {
         } else if (e.key === 'Escape') {
             e.preventDefault();
             finishEditing();
+        } else if (e.ctrlKey && e.key === 'b') {
+            e.preventDefault();
+            wrapSelection(input, '**');
+            autoGrowTextarea(input);
+        } else if (e.ctrlKey && e.key === 'i') {
+            e.preventDefault();
+            wrapSelection(input, '!!');
+            autoGrowTextarea(input);
+        } else if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+            e.preventDefault();
+            wrapSelection(input, '~~');
+            autoGrowTextarea(input);
         }
     });
     

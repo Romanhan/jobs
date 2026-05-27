@@ -354,3 +354,12 @@ body.modal-open .row-indicator {
 .status-dot--completed {
     background: #64748b;
 }
+
+.text-important {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+td strong, td s, td .text-important {
+    white-space: nowrap;
+}

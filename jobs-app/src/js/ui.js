@@ -1,5 +1,5 @@
 import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
-import { formatDate } from './utils.js';
+import { formatDate, renderMarkdown } from './utils.js';
 import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave } from './data.js';
 import { openDateCalendar } from './calendar.js';
 
@@ -139,8 +139,10 @@ export function renderTableBody() {
             if (isCheckbox) {
                 html += '<td class="' + stickyClass + '" style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
             } else {
-                const displayValue = isDate ? formatDate(value) : (value || '');
-                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + displayValue + '">' + displayValue + '</td>';
+                const rawValue = isDate ? formatDate(value) : (value || '');
+                const displayValue = isDate ? rawValue : renderMarkdown(rawValue);
+                const tooltipValue = rawValue.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '">' + displayValue + '</td>';
             }
         });
         html += '</tr>';
