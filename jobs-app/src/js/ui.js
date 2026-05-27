@@ -45,7 +45,7 @@ export function renderTable() {
         const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
         const widths = getColumnWidths();
         const width = widths[col] || 40;
-        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
+        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
     
     for (let i = ths.length - 1; i >= 0; i--) {
@@ -140,7 +140,7 @@ export function renderTableBody() {
                 html += '<td class="' + stickyClass + '" style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
             } else {
                 const displayValue = isDate ? formatDate(value) : (value || '');
-                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
+                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + displayValue + '">' + displayValue + '</td>';
             }
         });
         html += '</tr>';
@@ -204,11 +204,11 @@ export function renderForm() {
             if (f.isDate) {
                 const inputId = 'modal-date-' + col.replace(/[^a-zA-Z0-9]/g, '-');
                 html += '<div class="date-input-wrapper">';
-                html += '<input type="text" name="' + col + '" id="' + inputId + '" class="date-input" placeholder="' + label + '" title="' + label + '"' + isRequired + '>';
+                html += '<input type="text" name="' + col + '" id="' + inputId + '" class="date-input" placeholder="' + label + '" data-tooltip="' + label + '"' + isRequired + '>';
                 html += '<button type="button" class="calendar-icon-btn" data-input-id="' + inputId + '"></button>';
                 html += '</div>';
             } else {
-                html += '<input type="text" name="' + col + '" placeholder="' + label + '" title="' + label + '"' + isRequired + '>';
+                html += '<input type="text" name="' + col + '" placeholder="' + label + '" data-tooltip="' + label + '"' + isRequired + '>';
             }
             
             html += '</div>';

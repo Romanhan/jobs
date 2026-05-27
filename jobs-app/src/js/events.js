@@ -406,4 +406,80 @@ export function attachEventListeners() {
             shortcutsPopup.style.display = 'none';
         }
     });
+
+    let tooltipEl = null;
+    let tooltipTimeout = null;
+
+    function hideTooltip() {
+        if (tooltipTimeout) {
+            clearTimeout(tooltipTimeout);
+            tooltipTimeout = null;
+        }
+        if (tooltipEl) tooltipEl.classList.remove('visible');
+    }
+
+    function showTooltip(target) {
+        const text = target.getAttribute('data-tooltip');
+        if (!text) return;
+
+        if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.className = 'tooltip-popup';
+            document.body.appendChild(tooltipEl);
+        }
+        tooltipEl.textContent = text;
+
+        const rect = target.getBoundingClientRect();
+        tooltipEl.classList.add('visible');
+        const tooltipRect = tooltipEl.getBoundingClientRect();
+        let left = rect.left + (rect.width - tooltipRect.width) / 2;
+        let top = rect.bottom + 6;
+
+        if (left < 4) left = 4;
+        if (left + tooltipRect.width > window.innerWidth - 4) {
+            left = window.innerWidth - tooltipRect.width - 4;
+        }
+        if (top + tooltipRect.height > window.innerHeight - 4) {
+            top = rect.top - tooltipRect.height - 6;
+        }
+
+        tooltipEl.style.left = left + 'px';
+        tooltipEl.style.top = top + 'px';
+    }
+
+    document.addEventListener('mouseover', function(e) {
+        const target = e.target.closest('[data-tooltip]');
+        if (!target) {
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+            return;
+        }
+        const text = target.getAttribute('data-tooltip');
+        if (!text) {
+            hideTooltip();
+            return;
+        }
+
+        if (target.tagName === 'TD' && target.scrollWidth <= target.clientWidth) {
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+            hideTooltip();
+            return;
+        }
+
+        if (tooltipTimeout) clearTimeout(tooltipTimeout);
+        tooltipEl?.classList.remove('visible');
+        tooltipTimeout = setTimeout(() => showTooltip(target), 500);
+    });
+
+    document.addEventListener('mouseout', function(e) {
+        const target = e.target.closest('[data-tooltip]');
+        if (!target) {
+            hideTooltip();
+        }
+    });
 }
