@@ -211,7 +211,7 @@
     border: 1px solid var(--border-medium);
     background: var(--gradient-btn-secondary);
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
@@ -277,11 +277,11 @@
 .btn-menu {
     width: 24px;
     height: 24px;
-    border-radius: 6px;
+    border-radius: 5px;
     border: 1px solid var(--border-medium);
     background: var(--gradient-btn-secondary);
     color: var(--text-muted);
-    font-size: 16px;
+    font-size: 13px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
