@@ -184,7 +184,7 @@ thead .row-indicator {
     padding: 0 !important;
     margin: 0 !important;
     background-color: #ffffff;
-    box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.05);
+    box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.05), inset 0 -1px 0 #cbd5e1;
     border-top-left-radius: 10px;
 }
 
@@ -202,6 +202,9 @@ table .row-indicator {
 
 table thead .row-indicator {
     z-index: 10;
+    box-shadow:
+        inset -1px 0 2px rgba(0, 0, 0, 0.05),
+        inset 0 -1px 0 #cbd5e1;
 }
 
 table td.sticky-col,
