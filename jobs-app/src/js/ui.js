@@ -136,7 +136,8 @@ export function renderTableBody() {
     filteredJobs.forEach(({ job, index }) => {
         const status = getStatus(job);
         const valmis = job['Valmis'];
-        const statusClass = status ? 'row-' + status : '';
+        const showRowColors = localStorage.getItem('showRowColors') !== 'false';
+        const statusClass = status && showRowColors ? 'row-' + status : '';
         html += '<tr class="' + (valmis ? 'done-row ' : '') + statusClass + '" data-index="' + index + '">';
         html += '<td class="row-indicator">' + (status ? '<span class="status-dot status-dot--' + status + '"></span>' : '') + '</td>';
         

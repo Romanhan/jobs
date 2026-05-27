@@ -61,6 +61,12 @@ async function init() {
         document.getElementById('show-hidden-dates').checked = true;
     }
     
+    if (localStorage.getItem('showRowColors') === null) {
+        localStorage.setItem('showRowColors', 'true');
+    }
+    const showRowColors = localStorage.getItem('showRowColors') !== 'false';
+    document.getElementById('menu-row-colors').textContent = (showRowColors ? '✓ ' : '') + 'Värvi read';
+    
     const dataResult = loadData();
     if (dataResult) {
         if (dataResult.status === 'fixed') {
