@@ -47,6 +47,8 @@ export const CHECKBOX_COLS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'T�
 export const HIDDEN_COLS = ['Valmis kpv', 'Alustamise kpv', 'Meeldetuletus X päeva ennem'];
 export const COLUMN_WRAP = [];
 
+export const STICKY_COLS = ['Töö Nr', 'Valmis', 'Detaili/koostu nimetus või joonise Nr'];
+
 export const FORM_FIELDS = [
     { col: 'Töö Nr', required: true, label: 'Töö Nr', width: 120, line: 1 },
     { col: 'Detaili/koostu nimetus või joonise Nr', label: 'Detail/koostu', width: 120, line: 1 },

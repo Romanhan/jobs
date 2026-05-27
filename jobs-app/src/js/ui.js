@@ -1,4 +1,4 @@
-import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS } from './config.js';
+import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
 import { formatDate } from './utils.js';
 import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave } from './data.js';
 import { openDateCalendar } from './calendar.js';
@@ -42,9 +42,10 @@ export function renderTable() {
         const sortedDir = sortColumn === col ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const wrapClass = COLUMN_WRAP.includes(col) ? 'wrap-header' : '';
+        const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
         const widths = getColumnWidths();
         const width = widths[col] || 40;
-        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
+        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" title="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
     
     for (let i = ths.length - 1; i >= 0; i--) {
@@ -59,6 +60,7 @@ export function renderTable() {
     html += '</tr>';
     thead.innerHTML = html;
     renderTableBody();
+    updateStickyPositions();
 }
 
 export function renderTableBody() {
@@ -133,17 +135,50 @@ export function renderTableBody() {
             const width = widths[col] || 40;
             let colEscaped = col.replace(/'/g, "\\'");
             
+            const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
             if (isCheckbox) {
-                html += '<td style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
+                html += '<td class="' + stickyClass + '" style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
             } else {
                 const displayValue = isDate ? formatDate(value) : (value || '');
-                html += '<td tabindex="0" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
+                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" title="' + displayValue + '">' + displayValue + '</td>';
             }
         });
         html += '</tr>';
     });
     
     tbody.innerHTML = html;
+    updateStickyPositions();
+}
+
+export function updateStickyPositions() {
+    requestAnimationFrame(() => {
+        const headerRow = document.querySelector('thead tr');
+        if (!headerRow) return;
+
+        const headerSticky = headerRow.querySelectorAll('.sticky-col:not(.hidden-col)');
+        const positions = [];
+        let left = 16;
+
+        headerSticky.forEach(el => {
+            positions.push({ left: left });
+            left += el.getBoundingClientRect().width;
+        });
+
+        headerSticky.forEach((el, i) => {
+            el.style.left = positions[i].left + 'px';
+            el.style.zIndex = 9 - i;
+        });
+
+        document.querySelectorAll('#table-body tr').forEach(row => {
+            const cells = row.querySelectorAll('.sticky-col:not(.hidden-col)');
+            cells.forEach((cell, i) => {
+                if (i < positions.length) {
+                    cell.style.left = positions[i].left + 'px';
+                    cell.style.zIndex = 4 - i;
+                }
+            });
+        });
+    });
 }
 
 export function renderForm() {
@@ -266,6 +301,7 @@ export function startResize(e, th) {
     function stopResize() {
         if (didResize) {
             saveColumnWidths();
+            updateStickyPositions();
         }
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopResize);
