@@ -4,15 +4,15 @@
     right: 20px;
     padding: 10px 20px;
     border-radius: 6px;
-    color: white;
+    color: var(--text-on-success);
     font-size: 14px;
     z-index: 1000;
 }
 
 .status-bar.success {
-    background: #16a34a;
+    background: var(--color-success);
 }
 
 .status-bar.error {
-    background: #dc2626;
+    background: var(--color-overdue);
 }

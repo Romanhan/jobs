@@ -3,6 +3,17 @@ import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filt
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
+function setTheme(theme) {
+    if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('btn-theme').innerHTML = '<span class="icon-sun">&#9728;</span>';
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+        document.getElementById('btn-theme').innerHTML = '<span class="icon-moon">&#9790;</span>';
+    }
+    localStorage.setItem('theme', theme);
+}
+
 setSelectDateCallback((rowIndex, colName, dateStr) => {
     const jobs = getJobs();
     pushUndo();
@@ -37,6 +48,11 @@ function setUpForm() {
 }
 
 async function init() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        setTheme('dark');
+    }
+
     loadColumnWidths();
     loadHiddenColumns();
     
@@ -93,6 +109,11 @@ function setUpButtons() {
     document.getElementById('btn-add-job').addEventListener('click', openModal);
     document.getElementById('btn-close-modal').addEventListener('click', closeModal);
     document.getElementById('btn-cancel').addEventListener('click', closeModal);
+
+    document.getElementById('btn-theme').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        setTheme(isDark ? 'light' : 'dark');
+    });
     
     document.getElementById('filter-nr').addEventListener('input', filterTable);
     document.getElementById('filter-koht').addEventListener('input', filterTable);

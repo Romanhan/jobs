@@ -3,20 +3,19 @@
     overflow-y: auto;
     max-width: 100%;
     border-radius: 10px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border-medium);
 }
 
 table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    background: white;
+    background: var(--bg-table);
     border-radius: 10px;
     overflow: visible;
     box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.06),
-        0 1px 3px rgba(0, 0, 0, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        var(--shadow-table),
+        var(--shadow-inset-light);
 }
 
 th:has(input[type="checkbox"].checkbox) {
@@ -33,7 +32,7 @@ th,
 td {
     padding: 0px 4px;
     text-align: left;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-table);
     font-size: 12px;
     white-space: nowrap;
 }
@@ -41,16 +40,16 @@ td {
 th {
     position: sticky;
     top: 0;
-    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    background: var(--gradient-th);
     font-weight: 600;
     font-size: 11px;
-    color: #334155;
+    color: var(--text-header);
     cursor: pointer;
     white-space: nowrap;
     user-select: none;
     padding: 4px 2px;
-    border-bottom: 2px solid #cbd5e1;
-    box-shadow: inset 0 -1px 0 #cbd5e1;
+    border-bottom: 2px solid var(--border-header);
+    box-shadow: inset 0 -1px 0 var(--border-header);
 }
 
 th .resize-handle {
@@ -65,7 +64,7 @@ th .resize-handle {
 }
 
 th:hover .resize-handle {
-    background: #94a3b8;
+    background: var(--border-strong);
 }
 
 th.wrap-header {
@@ -78,13 +77,13 @@ th.wrap-header .resize-handle {
 }
 
 th:hover {
-    background: #e2e8f0;
+    background: var(--bg-scrollbar-track);
 }
 
 th.sorted::after {
     content: '▾';
     font-size: 8px;
-    color: #94a3b8;
+    color: var(--border-strong);
     opacity: 1;
     margin-left: 2px;
     vertical-align: middle;
@@ -104,24 +103,25 @@ td {
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 150px;
-    background: white;
+    background: var(--bg-cell);
+    color: var(--text-secondary);
     transition: background 0.1s ease;
     line-height: 1;
 }
 
 td:hover {
-    background: #f8fafc;
+    background: var(--bg-body);
 }
 
 td:focus {
-    outline: 2px solid #64748b;
+    outline: 2px solid var(--text-muted);
     outline-offset: -1px;
     border-radius: 2px;
 }
 
 th:not(:last-child),
 td:not(:last-child) {
-    border-right: 1px solid #e2e8f0;
+    border-right: 1px solid var(--border-light);
 }
 
 
@@ -133,9 +133,11 @@ td.editing textarea {
     font-size: 12px;
     font-family: inherit;
     padding: 4px;
-    border: 2px solid #64748b;
+    border: 2px solid var(--text-muted);
     border-radius: 6px;
     resize: both;
+    background: var(--bg-input);
+    color: var(--text-secondary);
     box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
     overflow: hidden;
     white-space: pre-wrap;
@@ -146,7 +148,7 @@ td.editing textarea {
     width: 12px;
     height: 12px;
     cursor: pointer;
-    accent-color: #475569;
+    accent-color: var(--text-muted);
 }
 
 input[type="checkbox"].checkbox {
@@ -154,22 +156,42 @@ input[type="checkbox"].checkbox {
     -webkit-appearance: none;
     width: 12px;
     height: 12px;
-    border: 1px solid #94a3b8;
+    border: 1px solid var(--border-strong);
     border-radius: 3px;
-    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    background: var(--gradient-checkbox);
     cursor: pointer;
     position: relative;
     box-shadow:
-        inset 0 1px 2px rgba(0, 0, 0, 0.06),
-        0 1px 2px rgba(0, 0, 0, 0.04);
+        var(--shadow-inset-input),
+        var(--shadow-input);
     transition: all 0.15s ease;
 }
 
 input[type="checkbox"].checkbox:hover {
-    border-color: #64748b;
+    border-color: var(--text-muted);
     box-shadow:
         inset 0 1px 2px rgba(0, 0, 0, 0.05),
         0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+input[type="checkbox"].checkbox:checked {
+    background: var(--gradient-checkbox-checked);
+    border-color: var(--border-btn-primary);
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+input[type="checkbox"].checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 3px;
+    height: 7px;
+    border: solid var(--checkbox-check-color);
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
 }
 
 table {
@@ -194,12 +216,12 @@ table thead .row-indicator {
     max-width: 16px;
     padding: 0 !important;
     margin: 0 !important;
-    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    background: var(--gradient-th);
     border-top-left-radius: 10px;
     z-index: 10;
     box-shadow:
         inset -1px 0 2px rgba(0, 0, 0, 0.05),
-        inset 0 -1px 0 #cbd5e1;
+        inset 0 -1px 0 var(--border-header);
 }
 
 table td.sticky-col,
@@ -211,7 +233,7 @@ table th.sticky-col {
 body.modal-open table td.sticky-col,
 body.modal-open table th.sticky-col {
     position: static !important;
-    background: #f5f5f5 !important;
+    background: var(--bg-app) !important;
 }
 
 body.modal-open .row-indicator {
@@ -227,31 +249,31 @@ body.modal-open .row-indicator {
 }
 
 #table-body tr.row-in-progress td:not(.row-indicator) {
-    background: linear-gradient(0deg, rgba(21, 128, 45, 0.05), rgba(21, 128, 45, 0.05)), #ffffff;
+    background: linear-gradient(0deg, var(--row-tint-in-progress), var(--row-tint-in-progress)), var(--bg-table);
 }
 #table-body tr.row-allhanke td:not(.row-indicator) {
-    background: linear-gradient(0deg, rgba(109, 39, 217, 0.05), rgba(109, 39, 217, 0.05)), #ffffff;
+    background: linear-gradient(0deg, var(--row-tint-allhanke), var(--row-tint-allhanke)), var(--bg-table);
 }
 #table-body tr.row-overdue td:not(.row-indicator) {
-    background: linear-gradient(0deg, rgba(220, 38, 38, 0.05), rgba(220, 38, 38, 0.05)), #ffffff;
+    background: linear-gradient(0deg, var(--row-tint-overdue), var(--row-tint-overdue)), var(--bg-table);
 }
 #table-body tr.row-completed td:not(.row-indicator) {
-    background: linear-gradient(0deg, rgba(100, 116, 139, 0.05), rgba(100, 116, 139, 0.05)), #ffffff;
+    background: linear-gradient(0deg, var(--row-tint-completed), var(--row-tint-completed)), var(--bg-table);
 }
 
 #table-body tr.row-in-progress:hover td:not(.row-indicator),
 #table-body tr.row-allhanke:hover td:not(.row-indicator),
 #table-body tr.row-overdue:hover td:not(.row-indicator),
 #table-body tr.row-completed:hover td:not(.row-indicator) {
-    background: #f8fafc;
+    background: var(--bg-row-hover);
 }
 
 #table-body tr:hover td {
-    background-color: #f8fafc;
+    background-color: var(--bg-row-hover);
 }
 
 #table-body tr:hover td.row-indicator {
-    background-color: #f8fafc;
+    background-color: var(--bg-row-hover);
 }
 
 .hidden-col {
@@ -266,7 +288,7 @@ body.modal-open .row-indicator {
     display: none;
     position: fixed;
     z-index: 99999;
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.75) 100%);
+    background: var(--gradient-tooltip);
     backdrop-filter: blur(1px);
     -webkit-backdrop-filter: blur(1px);
     color: #f1f5f9;
@@ -276,7 +298,7 @@ body.modal-open .row-indicator {
     border-radius: 4px;
     border: 1px solid #0f172a;
     box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.25),
+        var(--shadow-tooltip-popup),
         inset 0 1px 0 rgba(255, 255, 255, 0.12);
     pointer-events: none;
     white-space: nowrap;
@@ -290,10 +312,10 @@ body.modal-open .row-indicator {
 .floating-editor {
     position: fixed;
     z-index: 1000;
-    background: white;
-    border: 2px solid #64748b;
+    background: var(--bg-cell);
+    border: 2px solid var(--text-muted);
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-floating-editor);
     padding: 2px;
 }
 
@@ -304,6 +326,8 @@ body.modal-open .row-indicator {
     padding: 2px;
     border: none;
     outline: none;
+    background: transparent;
+    color: var(--text-secondary);
     white-space: pre-wrap;
     word-wrap: break-word;
     resize: none;
@@ -341,20 +365,20 @@ body.modal-open .row-indicator {
     vertical-align: middle;
 }
 .status-dot--in-progress {
-    background: #15803d;
+    background: var(--color-in-progress);
 }
 .status-dot--allhanke {
-    background: #6d28d9;
+    background: var(--color-allhanke);
 }
 .status-dot--overdue {
-    background: #dc2626;
+    background: var(--color-overdue);
 }
 .status-dot--completed {
-    background: #64748b;
+    background: var(--color-completed);
 }
 
 .text-important {
-    color: #dc2626;
+    color: var(--text-important);
     font-weight: 600;
 }
 
