@@ -5,6 +5,7 @@ import { openDateCalendar } from './calendar.js';
 
 let sortColumn = null;
 let sortDirection = 'asc';
+let statusFilter = null;
 
 export function setSortingState(column, direction) {
     sortColumn = column;
@@ -13,6 +14,16 @@ export function setSortingState(column, direction) {
 
 export function getSortingState() {
     return { sortColumn, sortDirection };
+}
+
+export function setStatusFilter(filter) {
+    statusFilter = filter;
+    renderTableBody();
+    updateStats();
+}
+
+export function getStatusFilter() {
+    return statusFilter;
 }
 
 export function getStatus(job) {
@@ -77,14 +88,18 @@ export function renderTableBody() {
     
     let filteredJobs = jobsArr.map((job, index) => ({ job, index }))
         .filter(({ job }) => {
-            const valmis = job['Valmis'];
-            if (showCompleted) {
-                if (!valmis) return false;
+            if (statusFilter) {
+                if (getStatus(job) !== statusFilter) return false;
             } else {
-                if (valmis) return false;
+                const valmis = job['Valmis'];
+                if (showCompleted) {
+                    if (!valmis) return false;
+                } else {
+                    if (valmis) return false;
+                }
+                const allhankes = job['Töötlus allhankes'];
+                if (allhankes && !showAllhankes) return false;
             }
-            const allhankes = job['Töötlus allhankes'];
-            if (allhankes && !showAllhankes) return false;
             const nrMatch = !filterNr || (job['Töö Nr'] || '').toLowerCase().includes(filterNr);
             const kohtBlank = showBlankKoht && (!job['Täitmise koht'] || job['Täitmise koht'].trim() === '');
             const kohtMatch = kohtBlank || !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);

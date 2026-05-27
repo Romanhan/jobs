@@ -1,5 +1,5 @@
 import { loadData, loadFromFileLegacy, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, pushUndo } from './data.js';
-import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize } from './ui.js';
+import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
@@ -124,6 +124,25 @@ function setUpButtons() {
     });
     document.getElementById('show-completed').addEventListener('change', filterTable);
     document.getElementById('show-allhankes').addEventListener('change', filterTable);
+
+    document.querySelector('.status-boxes').addEventListener('click', function(e) {
+        const box = e.target.closest('.status-box');
+        if (!box) return;
+        const filter = box.getAttribute('data-filter');
+        if (filter === 'all') {
+            setStatusFilter(null);
+            document.querySelectorAll('.status-box.filter-active').forEach(el => el.classList.remove('filter-active'));
+            return;
+        }
+        if (getStatusFilter() === filter) {
+            setStatusFilter(null);
+            box.classList.remove('filter-active');
+        } else {
+            document.querySelectorAll('.status-box.filter-active').forEach(el => el.classList.remove('filter-active'));
+            setStatusFilter(filter);
+            box.classList.add('filter-active');
+        }
+    });
 }
 
 init();

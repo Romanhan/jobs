@@ -72,15 +72,56 @@
         var(--shadow-inset-bottom),
         var(--shadow-inset-light);
     transition: all 0.15s ease;
-    cursor: default;
+    cursor: pointer;
 }
 
 .status-box:hover {
+    background: var(--gradient-btn-secondary-hover);
+    border-color: var(--border-strong);
     box-shadow:
         var(--shadow-status-box-hover),
         var(--shadow-inset-bottom),
         var(--shadow-inset-light);
-    transform: translateY(-1px);
+}
+
+.status-box.filter-active {
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.2),
+        var(--shadow-inset-bottom),
+        var(--shadow-inset-light);
+    transform: translateY(1px);
+}
+
+.status-box.filter-active.in-progress {
+    border-color: var(--color-in-progress);
+    box-shadow:
+        0 0 8px rgba(21, 128, 61, 0.25),
+        var(--shadow-inset-bottom),
+        var(--shadow-inset-light);
+}
+
+.status-box.filter-active.allhanke {
+    border-color: var(--color-allhanke);
+    box-shadow:
+        0 0 8px rgba(109, 40, 217, 0.25),
+        var(--shadow-inset-bottom),
+        var(--shadow-inset-light);
+}
+
+.status-box.filter-active.overdue {
+    border-color: var(--color-overdue);
+    box-shadow:
+        0 0 8px rgba(220, 38, 38, 0.25),
+        var(--shadow-inset-bottom),
+        var(--shadow-inset-light);
+}
+
+.status-box.filter-active.completed {
+    border-color: var(--color-completed);
+    box-shadow:
+        0 0 8px rgba(100, 116, 139, 0.25),
+        var(--shadow-inset-bottom),
+        var(--shadow-inset-light);
 }
 
 .status-box span {
