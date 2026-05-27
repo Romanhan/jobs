@@ -3,12 +3,12 @@
     gap: 8px;
     flex-wrap: wrap;
     margin-bottom: 4px;
-    padding: 4px 8px;
+    padding: 4px 6px;
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     border-radius: 10px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e2e8f0;
     box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.04),
+        0 1px 3px rgba(0, 0, 0, 0.04),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -85,10 +85,10 @@
 .filter-blank-label input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
-    width: 13px;
-    height: 13px;
-    min-width: 13px;
-    min-height: 13px;
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
     border: 1px solid #94a3b8;
     border-radius: 3px;
     background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
@@ -139,11 +139,11 @@
 .toolbar input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
-    width: 13px;
-    height: 13px;
-    min-width: 13px;
-    min-height: 13px;
-    line-height: 13px;
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+    line-height: 12px;
     box-sizing: border-box;
     border: 1px solid #94a3b8;
     border-radius: 3px;
@@ -266,8 +266,8 @@
 }
 
 .btn-menu {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     border-radius: 6px;
     border: 1px solid #cbd5e1;
     background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
