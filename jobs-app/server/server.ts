@@ -6,8 +6,6 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let lastHeartbeat: number | null = null;
-let shutdownTimer: ReturnType<typeof setTimeout> | null = null;
-
 setInterval(() => {
   if (lastHeartbeat && Date.now() - lastHeartbeat > 10000) Deno.exit(0);
 }, 5000);
@@ -113,11 +111,6 @@ async function handler(req: Request): Promise<Response> {
     }
     if (path === "/api/heartbeat") {
       lastHeartbeat = Date.now();
-      if (shutdownTimer) { clearTimeout(shutdownTimer); shutdownTimer = null; }
-      return new Response("ok");
-    }
-    if (path === "/api/shutdown") {
-      shutdownTimer = setTimeout(() => Deno.exit(0), 2000);
       return new Response("ok");
     }
     return await serveStatic(url);

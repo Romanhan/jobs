@@ -89,13 +89,10 @@ async function init() {
     renderForm();
     updateStats();
 
+    navigator.sendBeacon('/api/heartbeat', '');
     setInterval(() => {
         navigator.sendBeacon('/api/heartbeat', '');
     }, 5000);
-
-    window.addEventListener('beforeunload', () => {
-        navigator.sendBeacon('/api/shutdown', '');
-    });
 
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) return;

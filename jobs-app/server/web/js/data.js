@@ -125,7 +125,7 @@ export function measureTextWidth(text) {
 export function autoCalculateColumnWidths(columns) {
     columns.forEach(col => {
         const label = COLUMN_LABELS[col] || col;
-        columnWidths[col] = measureTextWidth(label);
+        columnWidths[col] = Math.max(measureTextWidth(label) + 12, 60);
     });
 }
 
