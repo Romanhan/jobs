@@ -136,7 +136,6 @@ td:not(:last-child) {
 }
 
 
-
 td.editing textarea {
     min-width: 100%;
     width: auto;
@@ -220,8 +219,6 @@ table .row-indicator {
     position: sticky;
     left: 0;
     z-index: 5;
-    box-shadow:
-        inset -1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
 table thead .row-indicator {
@@ -234,8 +231,11 @@ table thead .row-indicator {
     border-top-left-radius: 10px;
     z-index: 10;
     box-shadow:
-        inset -1px 0 2px rgba(0, 0, 0, 0.05),
         inset 0 -1px 0 var(--border-header);
+}
+
+table td.row-indicator {
+    padding-left: 4px;
 }
 
 table td.sticky-col,

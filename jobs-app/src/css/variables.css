@@ -152,9 +152,9 @@
   --gradient-scrollbar-thumb-hover: linear-gradient(180deg, #64748b 0%, #475569 100%);
   --gradient-today-btn: linear-gradient(180deg, #334155 0%, #1e293b 100%);
   --gradient-today-btn-hover: linear-gradient(180deg, #3b4a5c 0%, #334155 100%);
-  --gradient-menu-item: linear-gradient(180deg, #3b4a5c 0%, #1e293b 100%);
-  --gradient-menu-item-hover: linear-gradient(180deg, #475569 0%, #334155 100%);
-  --gradient-menu-item-active: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  --gradient-menu-item: linear-gradient(180deg, #1e293b 0%, #162032 100%);
+  --gradient-menu-item-hover: linear-gradient(180deg, #243447 0%, #1a2736 100%);
+  --gradient-menu-item-active: linear-gradient(180deg, #162032 0%, #0d1622 100%);
 
   --shadow-app: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
   --shadow-header: 0 2px 6px rgba(0, 0, 0, 0.25);
