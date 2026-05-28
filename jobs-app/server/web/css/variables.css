@@ -1,0 +1,210 @@
+:root {
+  --bg-body: #f8fafc;
+  --bg-app: #ffffff;
+  --bg-table: #ffffff;
+  --bg-cell: #ffffff;
+  --bg-input: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.6);
+  --bg-tooltip: rgba(30, 41, 59, 0.75);
+  --bg-scrollbar-track: #f1f5f9;
+  --bg-modal-content: #ffffff;
+
+  --text-primary: #1e293b;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-header: #334155;
+  --text-on-primary: #ffffff;
+  --text-important: #dc2626;
+  --text-on-success: #ffffff;
+  --text-on-error: #ffffff;
+
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-strong: #94a3b8;
+  --border-table: #eee;
+  --border-header: #cbd5e1;
+  --border-btn-primary: #334155;
+  --border-btn-secondary: #cbd5e1;
+
+  --color-in-progress: #15803d;
+  --color-allhanke: #6d28d9;
+  --color-overdue: #dc2626;
+  --color-completed: #64748b;
+  --color-success: #16a34a;
+
+  --gradient-header: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --gradient-btn-primary: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  --gradient-btn-primary-hover: linear-gradient(180deg, #7a8ba5 0%, #64748b 100%);
+  --gradient-btn-primary-active: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  --gradient-btn-secondary: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  --gradient-btn-secondary-hover: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --gradient-btn-secondary-active: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+  --gradient-th: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  --gradient-checkbox: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --gradient-checkbox-checked: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  --gradient-modal: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --gradient-modal-header: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --gradient-calendar-btn: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --gradient-calendar-selected: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  --gradient-menu: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --gradient-tooltip: linear-gradient(180deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.75) 100%);
+  --gradient-scrollbar-thumb: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  --gradient-scrollbar-thumb-hover: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+  --gradient-today-btn: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --gradient-today-btn-hover: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  --gradient-menu-item: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --gradient-menu-item-hover: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+  --gradient-menu-item-active: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 100%);
+
+  --shadow-app: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-header: 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-toolbar: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-table: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-btn-primary: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-btn-primary-hover: 0 2px 6px rgba(71, 85, 105, 0.25);
+  --shadow-btn-primary-active: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-btn-secondary: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-btn-secondary-active: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-inset-bottom: 0 -1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-inset-menu-item: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  --shadow-inset-icon-hover: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --shadow-inset-btn-primary: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --shadow-inset-btn-secondary: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --shadow-inset-input: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-input-focus: 0 0 0 3px rgba(100, 116, 139, 0.15);
+  --shadow-status-box: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-status-box-hover: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-calendar: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-menu: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-tooltip-popup: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-floating-editor: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  --bg-row-hover: #f8fafc;
+
+  --row-tint-in-progress: rgba(21, 128, 45, 0.05);
+  --row-tint-allhanke: rgba(109, 39, 217, 0.05);
+  --row-tint-overdue: rgba(220, 38, 38, 0.05);
+  --row-tint-completed: rgba(100, 116, 139, 0.05);
+
+  --calendar-icon-filter: none;
+  --calendar-day-hover: #f1f5f9;
+
+  --scrollbar-color: #94a3b8 #f1f5f9;
+
+  --checkbox-check-color: #ffffff;
+  --font-row-size: 12px;
+}
+
+[data-theme="dark"] {
+  --bg-body: #0f172a;
+  --bg-app: #1e293b;
+  --bg-table: #1e293b;
+  --bg-cell: #1e293b;
+  --bg-input: #334155;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-tooltip: rgba(15, 23, 42, 0.95);
+  --bg-scrollbar-track: #1e293b;
+  --bg-modal-content: #1e293b;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-header: #cbd5e1;
+  --text-on-primary: #e2e8f0;
+  --text-important: #f87171;
+  --text-on-success: #ffffff;
+  --text-on-error: #ffffff;
+
+  --border-light: #334155;
+  --border-medium: #475569;
+  --border-strong: #64748b;
+  --border-table: #334155;
+  --border-header: #475569;
+  --border-btn-primary: #0f172a;
+  --border-btn-secondary: #475569;
+
+  --color-in-progress: #4ade80;
+  --color-allhanke: #a78bfa;
+  --color-overdue: #b91c1c;
+  --color-completed: #64748b;
+  --color-success: #059669;
+
+  --gradient-header: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --gradient-btn-primary: linear-gradient(180deg, #475569 0%, #334155 100%);
+  --gradient-btn-primary-hover: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  --gradient-btn-primary-active: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --gradient-btn-secondary: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  --gradient-btn-secondary-hover: linear-gradient(180deg, #3b4a5c 0%, #334155 100%);
+  --gradient-btn-secondary-active: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --gradient-th: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --gradient-checkbox: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  --gradient-checkbox-checked: linear-gradient(180deg, #475569 0%, #334155 100%);
+  --gradient-modal: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --gradient-modal-header: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --gradient-calendar-btn: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  --gradient-calendar-selected: linear-gradient(180deg, #475569 0%, #334155 100%);
+  --gradient-menu: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --gradient-tooltip: linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(0, 0, 0, 0.75) 100%);
+  --gradient-scrollbar-thumb: linear-gradient(180deg, #475569 0%, #334155 100%);
+  --gradient-scrollbar-thumb-hover: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  --gradient-today-btn: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  --gradient-today-btn-hover: linear-gradient(180deg, #3b4a5c 0%, #334155 100%);
+  --gradient-menu-item: linear-gradient(180deg, #1e293b 0%, #162032 100%);
+  --gradient-menu-item-hover: linear-gradient(180deg, #243447 0%, #1a2736 100%);
+  --gradient-menu-item-active: linear-gradient(180deg, #162032 0%, #0d1622 100%);
+
+  --shadow-app: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-header: 0 2px 6px rgba(0, 0, 0, 0.25);
+  --shadow-toolbar: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-table: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-btn-primary: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-btn-primary-hover: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-btn-primary-active: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-btn-secondary: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-btn-secondary-active: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-inset-bottom: 0 -1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-inset-menu-item: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  --shadow-inset-icon-hover: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-inset-btn-primary: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-inset-btn-secondary: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-inset-input: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-input-focus: 0 0 0 3px rgba(100, 116, 139, 0.3);
+  --shadow-status-box: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-status-box-hover: 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-calendar: 0 8px 30px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-menu: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-tooltip-popup: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-floating-editor: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  --bg-row-hover: #243447;
+
+  --row-tint-in-progress: rgba(74, 222, 128, 0.12);
+  --row-tint-allhanke: rgba(167, 139, 250, 0.12);
+  --row-tint-overdue: rgba(248, 113, 113, 0.12);
+  --row-tint-completed: rgba(148, 163, 184, 0.12);
+
+  --calendar-icon-filter: brightness(0) invert(1);
+  --calendar-day-hover: #334155;
+
+  --scrollbar-color: #475569 #1e293b;
+
+  --checkbox-check-color: #ffffff;
+  --font-row-size: 12px;
+}
+
+[data-row-font-size="9"]  { --font-row-size: 9px; }
+[data-row-font-size="10"] { --font-row-size: 10px; }
+[data-row-font-size="11"] { --font-row-size: 11px; }
+[data-row-font-size="12"] { --font-row-size: 12px; }
+[data-row-font-size="13"] { --font-row-size: 13px; }
+[data-row-font-size="14"] { --font-row-size: 14px; }
+[data-row-font-size="15"] { --font-row-size: 15px; }
+[data-row-font-size="16"] { --font-row-size: 16px; }
+[data-row-font-size="17"] { --font-row-size: 17px; }
+[data-row-font-size="18"] { --font-row-size: 18px; }

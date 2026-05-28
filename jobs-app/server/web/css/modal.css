@@ -1,0 +1,194 @@
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-overlay);
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--gradient-modal);
+    padding: 10px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: max-content;
+    box-shadow:
+        var(--shadow-modal),
+        var(--shadow-inset-light);
+    border: 1px solid var(--border-medium);
+}
+
+.modal h2 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 4px 12px 4px 12px;
+    background: var(--gradient-modal-header);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    box-shadow:
+        var(--shadow-status-box),
+        var(--shadow-inset-bottom),
+        var(--shadow-inset-light);
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    font-size: 18px;
+    color: var(--text-muted);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-btn:hover {
+    background: var(--bg-scrollbar-track);
+    border-color: var(--border-medium);
+    color: var(--text-secondary);
+}
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.form-line {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.form-line:last-child {
+    margin-bottom: 0;
+    align-items: center;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group input,
+.form-group select {
+    padding: 3px 6px;
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 14px;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    box-shadow:
+        var(--shadow-inset-input),
+        var(--shadow-input);
+    transition: all 0.15s ease;
+    width: 100%;
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--text-muted);
+    box-shadow:
+        var(--shadow-inset-input),
+        var(--shadow-input-focus);
+}
+
+.date-input {
+    width: 120px;
+    text-align: left;
+    font-feature-settings: "tnum";
+}
+
+.date-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 120px;
+}
+
+.date-input-wrapper .date-input {
+    padding-right: 24px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.calendar-icon-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent url('../icons/calendar.svg') no-repeat center center;
+    background-size: 14px 14px;
+    border: none;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    padding: 2px;
+    pointer-events: auto;
+    opacity: 0.85;
+    filter: var(--calendar-icon-filter);
+    transition: opacity 0.15s ease;
+}
+
+.calendar-icon-btn:hover {
+    opacity: 1;
+}
+
+.input-with-calendar {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+}
+
+.input-with-calendar input {
+    flex: 1;
+    min-width: 0;
+}
+
+.toolbar button:focus-visible,
+.form-group input:focus-visible,
+.form-group select:focus-visible {
+    outline: 2px solid var(--text-muted);
+    outline-offset: 2px;
+}
+
+.form-group input:required {
+    background: var(--bg-input);
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.modal-buttons button {
+    min-width: 70px;
+    height: 24px;
+}

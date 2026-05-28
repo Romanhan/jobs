@@ -1,0 +1,18 @@
+.status-bar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    color: var(--text-on-success);
+    font-size: 14px;
+    z-index: 1000;
+}
+
+.status-bar.success {
+    background: var(--color-success);
+}
+
+.status-bar.error {
+    background: var(--color-overdue);
+}
