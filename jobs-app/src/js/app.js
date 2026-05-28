@@ -74,7 +74,7 @@ async function init() {
         localStorage.setItem('showRowColors', 'true');
     }
     const showRowColors = localStorage.getItem('showRowColors') !== 'false';
-    document.getElementById('menu-row-colors').textContent = (showRowColors ? '✓ ' : '') + 'Värvi read';
+    document.getElementById('menu-row-colors').textContent = showRowColors ? 'Color rows' : 'Color rows ●';
     
     const savedFontSize = localStorage.getItem('fontSize') || '12';
     setRowFontSize(savedFontSize);

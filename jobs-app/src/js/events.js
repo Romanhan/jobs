@@ -412,11 +412,6 @@ export function attachEventListeners() {
                 });
             });
             input.click();
-        } else if (action === 'row-colors') {
-            const showRowColors = localStorage.getItem('showRowColors') !== 'false';
-            localStorage.setItem('showRowColors', showRowColors ? 'false' : 'true');
-            document.getElementById('menu-row-colors').textContent = (!showRowColors ? '✓ ' : '') + 'Värvi read';
-            renderTableBody();
         } else if (action === 'shortcuts') {
             shortcutsPopup.style.display = shortcutsPopup.style.display === 'none' ? 'block' : 'none';
         } else if (action === 'font-size') {
@@ -425,6 +420,11 @@ export function attachEventListeners() {
             document.getElementById('font-size-slider').value = currentSize;
             document.getElementById('font-size-display').textContent = currentSize + ' px';
             popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+        } else if (action === 'row-colors') {
+            const showRowColors = localStorage.getItem('showRowColors') !== 'false';
+            localStorage.setItem('showRowColors', showRowColors ? 'false' : 'true');
+            document.getElementById('menu-row-colors').textContent = showRowColors ? 'Color rows' : 'Color rows ●';
+            renderTableBody();
         }
     });
 

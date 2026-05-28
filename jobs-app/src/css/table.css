@@ -156,8 +156,8 @@ td.editing textarea {
 }
 
 .checkbox {
-    width: calc(var(--font-row-size) * 0.75);
-    height: calc(var(--font-row-size) * 0.75);
+    width: calc(var(--font-row-size) * 1);
+    height: calc(var(--font-row-size) * 1);
     min-width: 0;
     min-height: 0;
 }
@@ -165,8 +165,8 @@ td.editing textarea {
 input[type="checkbox"].checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: calc(var(--font-row-size) * 0.75);
-    height: calc(var(--font-row-size) * 0.75);
+    width: calc(var(--font-row-size) * 1);
+    height: calc(var(--font-row-size) * 1);
     min-width: 0;
     min-height: 0;
     box-sizing: border-box;
@@ -201,10 +201,10 @@ input[type="checkbox"].checkbox:checked::after {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: calc(var(--font-row-size) * 0.18);
-    height: calc(var(--font-row-size) * 0.45);
+    width: calc(var(--font-row-size) * 0.22);
+    height: calc(var(--font-row-size) * 0.55);
     border: solid var(--checkbox-check-color);
-    border-width: 0 calc(var(--font-row-size) * 0.1) calc(var(--font-row-size) * 0.1) 0;
+    border-width: 0 calc(var(--font-row-size) * 0.12) calc(var(--font-row-size) * 0.12) 0;
     transform: translate(-50%, -60%) rotate(45deg);
 }
 
