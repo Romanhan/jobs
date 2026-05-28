@@ -36,6 +36,7 @@
                     <button class="menu-item" data-action="load-csv">Load CSV</button>
                     <button class="menu-item" data-action="shortcuts">Shortcuts</button>
                     <button class="menu-item" data-action="row-colors" id="menu-row-colors">✓ Värvi read</button>
+                    <button class="menu-item" data-action="font-size">Font size</button>
                 </div>
             </div>
         </div>
@@ -79,7 +80,15 @@
             <span class="key">Space</span><span>Märgi / eemalda linnuke</span>
         </div>
     </div>
-    
+
+    <div id="font-size-popup" class="font-size-popup" style="display:none">
+        <div class="font-size-popup-header">Font size</div>
+        <div class="font-size-popup-body">
+            <input type="range" id="font-size-slider" min="9" max="18" value="12" step="1">
+            <span id="font-size-display">12 px</span>
+        </div>
+    </div>
+
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">

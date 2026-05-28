@@ -64,7 +64,7 @@ export function editCell(td, index, col) {
         measureDiv.style.position = 'absolute';
         measureDiv.style.visibility = 'hidden';
         measureDiv.style.whiteSpace = 'nowrap';
-        measureDiv.style.fontSize = '12px';
+        measureDiv.style.fontSize = getComputedStyle(document.documentElement).getPropertyValue('--font-row-size');
         measureDiv.style.fontFamily = window.getComputedStyle(td).fontFamily;
         measureDiv.style.padding = '2px';
         measureDiv.textContent = textToMeasure;
@@ -253,6 +253,12 @@ export function addJob(e) {
 export function handleKeydown(e) {
     const shortcutsPopup = document.getElementById('shortcuts-popup');
     const menuDropdown = document.getElementById('menu-dropdown');
+    const fontPopup = document.getElementById('font-size-popup');
+    if (e.key === 'Escape' && fontPopup && fontPopup.style.display !== 'none') {
+        fontPopup.style.display = 'none';
+        e.preventDefault();
+        return;
+    }
     if (e.key === 'Escape' && shortcutsPopup && shortcutsPopup.style.display !== 'none') {
         shortcutsPopup.style.display = 'none';
         e.preventDefault();
@@ -413,15 +419,31 @@ export function attachEventListeners() {
             renderTableBody();
         } else if (action === 'shortcuts') {
             shortcutsPopup.style.display = shortcutsPopup.style.display === 'none' ? 'block' : 'none';
+        } else if (action === 'font-size') {
+            const popup = document.getElementById('font-size-popup');
+            const currentSize = parseInt(localStorage.getItem('fontSize') || '12');
+            document.getElementById('font-size-slider').value = currentSize;
+            document.getElementById('font-size-display').textContent = currentSize + ' px';
+            popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
         }
     });
-    
+
+    document.getElementById('font-size-slider').addEventListener('input', function() {
+        const size = this.value;
+        document.getElementById('font-size-display').textContent = size + ' px';
+        setRowFontSize(size);
+    });
+
     document.addEventListener('click', function(e) {
         if (menuDropdown.style.display !== 'none' && !menuDropdown.contains(e.target) && e.target !== menuBtn) {
             closeMenu();
         }
         if (shortcutsPopup.style.display !== 'none' && !shortcutsPopup.contains(e.target) && e.target !== menuBtn) {
             shortcutsPopup.style.display = 'none';
+        }
+        const fontPopup = document.getElementById('font-size-popup');
+        if (fontPopup.style.display !== 'none' && !fontPopup.contains(e.target) && e.target !== menuBtn && e.target.getAttribute('data-action') !== 'font-size') {
+            fontPopup.style.display = 'none';
         }
     });
 

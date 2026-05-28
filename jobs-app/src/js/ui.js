@@ -139,7 +139,7 @@ export function renderTableBody() {
         const showRowColors = localStorage.getItem('showRowColors') !== 'false';
         const statusClass = status && showRowColors ? 'row-' + status : '';
         html += '<tr class="' + (valmis ? 'done-row ' : '') + statusClass + '" data-index="' + index + '">';
-        html += '<td class="row-indicator">' + (status ? '<span class="status-dot status-dot--' + status + '"></span>' : '') + '</td>';
+        html += '<td class="row-indicator"><span class="cell-inner">' + (status ? '<span class="status-dot status-dot--' + status + '"></span>' : '') + '</span></td>';
         
         COLUMNS.forEach(col => {
             const value = job[col];
@@ -153,12 +153,12 @@ export function renderTableBody() {
             
             const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
             if (isCheckbox) {
-                html += '<td class="' + stickyClass + '" style="min-width: ' + width + 'px"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></td>';
+                html += '<td class="' + stickyClass + '" style="min-width: ' + width + 'px"><span class="cell-inner"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></span></td>';
             } else {
                 const rawValue = isDate ? formatDate(value) : (value || '');
                 const displayValue = isDate ? rawValue : renderMarkdown(rawValue);
                 const tooltipValue = rawValue.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '">' + displayValue + '</td>';
+                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
             }
         });
         html += '</tr>';

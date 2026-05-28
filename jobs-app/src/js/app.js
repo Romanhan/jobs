@@ -1,5 +1,5 @@
 import { loadData, loadFromFileLegacy, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, pushUndo } from './data.js';
-import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter } from './ui.js';
+import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
@@ -12,6 +12,15 @@ function setTheme(theme) {
         document.getElementById('btn-theme').innerHTML = '<span class="icon-moon">&#9790;</span>';
     }
     localStorage.setItem('theme', theme);
+}
+
+function setRowFontSize(size) {
+    document.documentElement.setAttribute('data-row-font-size', size);
+    localStorage.setItem('fontSize', size);
+    document.getElementById('font-size-display').textContent = size + ' px';
+    document.getElementById('font-size-slider').value = size;
+    renderTableBody();
+    updateStickyPositions();
 }
 
 setSelectDateCallback((rowIndex, colName, dateStr) => {
@@ -67,6 +76,9 @@ async function init() {
     const showRowColors = localStorage.getItem('showRowColors') !== 'false';
     document.getElementById('menu-row-colors').textContent = (showRowColors ? '✓ ' : '') + 'Värvi read';
     
+    const savedFontSize = localStorage.getItem('fontSize') || '12';
+    setRowFontSize(savedFontSize);
+    
     const dataResult = loadData();
     if (dataResult) {
         if (dataResult.status === 'fixed') {
@@ -102,6 +114,7 @@ setUpForm();
 setUpButtons();
 
 window.toggleField = toggleField;
+window.setRowFontSize = setRowFontSize;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.renderTableBody = renderTableBody;

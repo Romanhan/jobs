@@ -274,6 +274,47 @@
     color: var(--text-muted);
 }
 
+.font-size-popup {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    z-index: 900;
+    background: var(--gradient-modal);
+    border: 1px solid var(--border-medium);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-menu), var(--shadow-inset-light);
+    min-width: 180px;
+}
+
+.font-size-popup-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.font-size-popup-body {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#font-size-slider {
+    flex: 1;
+    accent-color: var(--text-muted);
+    height: 4px;
+    cursor: pointer;
+}
+
+#font-size-display {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 40px;
+    text-align: right;
+}
+
 .btn-menu {
     width: 24px;
     height: 24px;
