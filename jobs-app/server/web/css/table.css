@@ -7,9 +7,10 @@
 }
 
 table {
-    width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    table-layout: fixed;
+    width: 100%;
     background: var(--bg-table);
     border-radius: 10px;
     overflow: visible;
@@ -51,6 +52,7 @@ th {
     padding: 4px 2px;
     border-bottom: 2px solid var(--border-header);
     box-shadow: inset 0 -1px 0 var(--border-header);
+    overflow: hidden;
 }
 
 th .resize-handle {
@@ -103,7 +105,6 @@ td {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 150px;
     background: var(--bg-cell);
     color: var(--text-secondary);
     transition: background 0.1s ease;

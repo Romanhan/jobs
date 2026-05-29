@@ -44,6 +44,15 @@ export function renderTable() {
     const showHidden = document.getElementById('show-hidden-dates')?.checked;
     const hiddenColumns = getHiddenColumns();
     
+    const existingColgroup = document.querySelector('colgroup');
+    if (existingColgroup) existingColgroup.remove();
+    
+    const colgroup = document.createElement('colgroup');
+    const indicatorCol = document.createElement('col');
+    indicatorCol.style.width = '16px';
+    colgroup.appendChild(indicatorCol);
+    
+    let totalWidth = 16;
     const ths = [];
     COLUMNS.forEach(col => {
         const isHidden = HIDDEN_COLS.includes(col) && !showHidden;
@@ -56,7 +65,14 @@ export function renderTable() {
         const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
         const widths = getColumnWidths();
         const width = widths[col] || 40;
-        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="min-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
+        totalWidth += width;
+        
+        const colEl = document.createElement('col');
+        colEl.dataset.col = col;
+        colEl.style.width = width + 'px';
+        colgroup.appendChild(colEl);
+        
+        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
     
     for (let i = ths.length - 1; i >= 0; i--) {
@@ -70,6 +86,8 @@ export function renderTable() {
     ths.forEach(th => { html += th.html; });
     html += '</tr>';
     thead.innerHTML = html;
+    thead.parentNode.insertBefore(colgroup, thead);
+    document.getElementById('jobs-table').style.width = totalWidth + 'px';
     renderTableBody();
     updateStickyPositions();
 }
@@ -153,12 +171,12 @@ export function renderTableBody() {
             
             const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
             if (isCheckbox) {
-                html += '<td class="' + stickyClass + '" style="min-width: ' + width + 'px"><span class="cell-inner"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></span></td>';
+                html += '<td class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px"><span class="cell-inner"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></span></td>';
             } else {
                 const rawValue = isDate ? formatDate(value) : (value || '');
                 const displayValue = isDate ? rawValue : renderMarkdown(rawValue);
                 const tooltipValue = rawValue.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
+                html += '<td tabindex="0" class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
             }
         });
         html += '</tr>';
@@ -294,7 +312,15 @@ export function sortBy(col) {
         sortColumn = col;
         sortDirection = 'asc';
     }
-    renderTable();
+    document.querySelectorAll('thead th').forEach(th => {
+        th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
+    });
+    const th = document.querySelector('thead th[data-col="' + col + '"]');
+    if (th) {
+        th.classList.add('sorted', sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+    }
+    renderTableBody();
+    updateStickyPositions();
 }
 
 export function startResize(e, th) {
@@ -306,13 +332,21 @@ export function startResize(e, th) {
     let didResize = false;
     const startX = e.pageX, startWidth = th.offsetWidth;
     const col = th.getAttribute('data-col');
+    const table = document.getElementById('jobs-table');
+    const colEl = document.querySelector('col[data-col="' + col + '"]');
+    const initialColWidth = parseInt(colEl?.style.width || '40', 10);
+    const initialTableWidth = parseInt(table.style.width, 10) || 0;
 
     function doResize(ev) {
         window._isResizing = true;
         didResize = true;
         const diff = ev.pageX - startX;
         const newWidth = Math.max(4, startWidth + diff);
+        th.style.width = newWidth + 'px';
         th.style.minWidth = newWidth + 'px';
+        th.style.maxWidth = newWidth + 'px';
+        if (colEl) colEl.style.width = newWidth + 'px';
+        table.style.width = (initialTableWidth - initialColWidth + newWidth) + 'px';
         setColumnWidth(col, newWidth);
     }
 

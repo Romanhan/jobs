@@ -94,23 +94,31 @@ let hiddenColumns = {};
 export function loadColumnWidths() {
     columnWidths = {};
     const saved = localStorage.getItem('jobsColumnWidths');
-    if (saved) { try { columnWidths = JSON.parse(saved); } catch (e) { columnWidths = {}; } }
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (typeof parsed === 'object' && parsed !== null) {
+                Object.keys(parsed).forEach(col => {
+                    const w = Number(parsed[col]);
+                    if (!isNaN(w) && w > 0) columnWidths[col] = w;
+                });
+            }
+        } catch (e) { /* ignore */ }
+    }
 }
 
-export function autoCalculateColumnWidths(columns, jobsData) {
+export function autoCalculateColumnWidths(columns) {
+    const checkboxCols = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
     columns.forEach(col => {
-        const headerWidth = measureTextWidth(COLUMN_LABELS[col] || col);
-        let maxWidth = headerWidth;
-        if (jobsData && jobsData.length > 0) {
-            for (let i = 0; i < Math.min(jobsData.length, 200); i++) {
-                const val = jobsData[i][col];
-                if (val !== undefined && val !== null && val !== '' && val !== false) {
-                    const w = measureTextWidth(String(val));
-                    if (w > maxWidth) maxWidth = w;
-                }
+        if (columnWidths[col] === undefined) {
+            if (col === 'Töö Nr') {
+                columnWidths[col] = 78;
+            } else if (checkboxCols.includes(col)) {
+                columnWidths[col] = 40;
+            } else {
+                columnWidths[col] = 64;
             }
         }
-        columnWidths[col] = Math.max(maxWidth + 14, 70);
     });
 }
 
@@ -124,16 +132,6 @@ export function getColumnWidths() {
 
 export function setColumnWidth(col, width) {
     columnWidths[col] = width;
-}
-
-export function measureTextWidth(text) {
-    const div = document.createElement('div');
-    div.style.cssText = 'position:absolute;visibility:hidden;font:600 11px/1 system-ui,sans-serif;white-space:nowrap';
-    div.textContent = text;
-    document.body.appendChild(div);
-    const width = div.offsetWidth;
-    document.body.removeChild(div);
-    return width;
 }
 
 export function loadHiddenColumns() {

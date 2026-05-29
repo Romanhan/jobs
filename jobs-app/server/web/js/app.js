@@ -87,9 +87,10 @@ async function init() {
         showStatus('Serveriga ühendamine ebaõnnestus', 'error');
     }
 
-    if (Object.keys(getColumnWidths()).length === 0) {
-        autoCalculateColumnWidths(COLUMNS, getJobs());
-    }
+    autoCalculateColumnWidths(COLUMNS);
+    saveColumnWidths();
+
+    document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
 
     renderTable();
     renderForm();

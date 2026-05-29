@@ -87,7 +87,7 @@ async function serveStatic(url: URL): Promise<Response> {
     const content = await Deno.readTextFile(filePath);
     return new Response(content, {
       status: 200,
-      headers: { "Content-Type": contentType },
+      headers: { "Content-Type": contentType, "Cache-Control": "no-store" },
     });
   } catch {
     return new Response("Not Found", { status: 404 });
