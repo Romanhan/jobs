@@ -1,4 +1,5 @@
-import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, pushUndo, pollChanges } from './data.js';
+import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, pushUndo, pollChanges, autoCalculateColumnWidths } from './data.js';
+import { COLUMNS } from './config.js';
 import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
@@ -85,6 +86,11 @@ async function init() {
     } else {
         showStatus('Serveriga ühendamine ebaõnnestus', 'error');
     }
+
+    if (Object.keys(getColumnWidths()).length === 0) {
+        autoCalculateColumnWidths(COLUMNS, getJobs());
+    }
+
     renderTable();
     renderForm();
     updateStats();

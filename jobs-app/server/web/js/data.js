@@ -95,9 +95,23 @@ export function loadColumnWidths() {
     columnWidths = {};
     const saved = localStorage.getItem('jobsColumnWidths');
     if (saved) { try { columnWidths = JSON.parse(saved); } catch (e) { columnWidths = {}; } }
-    if (Object.keys(columnWidths).length === 0) {
-        autoCalculateColumnWidths(COLUMNS);
-    }
+}
+
+export function autoCalculateColumnWidths(columns, jobsData) {
+    columns.forEach(col => {
+        const headerWidth = measureTextWidth(COLUMN_LABELS[col] || col);
+        let maxWidth = headerWidth;
+        if (jobsData && jobsData.length > 0) {
+            for (let i = 0; i < Math.min(jobsData.length, 200); i++) {
+                const val = jobsData[i][col];
+                if (val !== undefined && val !== null && val !== '' && val !== false) {
+                    const w = measureTextWidth(String(val));
+                    if (w > maxWidth) maxWidth = w;
+                }
+            }
+        }
+        columnWidths[col] = Math.max(maxWidth + 14, 70);
+    });
 }
 
 export function saveColumnWidths() {
@@ -120,13 +134,6 @@ export function measureTextWidth(text) {
     const width = div.offsetWidth;
     document.body.removeChild(div);
     return width;
-}
-
-export function autoCalculateColumnWidths(columns) {
-    columns.forEach(col => {
-        const label = COLUMN_LABELS[col] || col;
-        columnWidths[col] = Math.max(measureTextWidth(label) + 12, 60);
-    });
 }
 
 export function loadHiddenColumns() {
