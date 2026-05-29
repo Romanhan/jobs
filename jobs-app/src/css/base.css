@@ -6,7 +6,7 @@ button {
     font-family: inherit;
     height: 24px;
     padding: 0 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -16,41 +16,36 @@ button {
 }
 
 .btn-primary {
-    background: var(--gradient-btn-primary);
-    color: var(--text-on-primary);
-    border: 1px solid var(--border-btn-primary);
-    box-shadow:
-        var(--shadow-btn-primary),
-        var(--shadow-inset-btn-primary);
+    background: var(--surface-btn-primary);
+    color: #ffffff;
+    border: none;
+    box-shadow: var(--shadow-btn-primary);
 }
 
 .btn-primary:hover {
-    background: var(--gradient-btn-primary-hover);
+    background: var(--surface-btn-primary-hover);
     box-shadow: var(--shadow-btn-primary-hover);
 }
 
 .btn-primary:active {
-    background: var(--gradient-btn-primary-active);
+    background: var(--surface-btn-primary-active);
     box-shadow: var(--shadow-btn-primary-active);
     transform: translateY(1px);
 }
 
 .btn-secondary {
-    background: var(--gradient-btn-secondary);
+    background: var(--surface-btn-secondary);
     color: var(--text-secondary);
-    border: 1px solid var(--border-btn-secondary);
-    box-shadow:
-        var(--shadow-btn-secondary),
-        var(--shadow-inset-btn-secondary);
+    border: none;
+    box-shadow: var(--shadow-btn-secondary);
 }
 
 .btn-secondary:hover {
-    background: var(--gradient-btn-secondary-hover);
-    border-color: var(--border-strong);
+    background: var(--surface-btn-secondary-hover);
 }
 
 .btn-secondary:active {
-    background: var(--gradient-btn-secondary-active);
+    background: var(--surface-btn-secondary-active);
     box-shadow: var(--shadow-btn-secondary-active);
     transform: translateY(1px);
 }
@@ -66,8 +61,8 @@ body {
 .app-container {
     height: calc(100vh - 16px);
     overflow: auto;
-    border: 1px solid var(--border-medium);
-    border-radius: 10px;
+    border: none;
+    border-radius: var(--radius-lg);
     background: var(--bg-app);
     box-shadow: var(--shadow-app);
     padding: 4px;

@@ -10,14 +10,14 @@
 
 ::-webkit-scrollbar-track {
     background: var(--bg-scrollbar-track);
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--gradient-scrollbar-thumb);
-    border-radius: 4px;
+    background: var(--surface-scrollbar-thumb);
+    border-radius: var(--radius-xs);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--gradient-scrollbar-thumb-hover);
+    background: var(--surface-scrollbar-thumb-hover);
 }
