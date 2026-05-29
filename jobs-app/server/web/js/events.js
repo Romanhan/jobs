@@ -80,7 +80,7 @@ export function editCell(td, index, col) {
             popupWidth = Math.min(textWidth + 8, maxPopupWidth);
         }
         if (isDate) {
-            popupWidth += 18;
+            popupWidth = Math.max(popupWidth, Math.max(textWidth, 60) + 2 + 22 + 8);
         }
         floatingEditor.style.width = popupWidth + 'px';
         if (isDate) {

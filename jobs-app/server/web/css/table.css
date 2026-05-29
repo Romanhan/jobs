@@ -369,7 +369,11 @@ body.modal-open .row-indicator {
     font-size: 12px;
     line-height: 1;
     flex-shrink: 0;
-    background-position: center 1px;
+    background-position: center center;
+}
+
+.floating-editor.date-editor .calendar-edit-btn {
+    align-self: center;
 }
 
 .status-dot {
