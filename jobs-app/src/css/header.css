@@ -78,22 +78,6 @@
     transform: translateY(1px);
 }
 
-.status-box.filter-active.in-progress {
-    box-shadow: 0 0 0 2px var(--color-in-progress), 0 0 12px var(--color-in-progress), 0 0 28px rgba(0,0,0,0.08), var(--shadow-pressed);
-}
-
-.status-box.filter-active.allhanke {
-    box-shadow: 0 0 0 2px var(--color-allhanke), 0 0 12px var(--color-allhanke), 0 0 28px rgba(0,0,0,0.08), var(--shadow-pressed);
-}
-
-.status-box.filter-active.overdue {
-    box-shadow: 0 0 0 2px var(--color-overdue), 0 0 12px var(--color-overdue), 0 0 28px rgba(0,0,0,0.08), var(--shadow-pressed);
-}
-
-.status-box.filter-active.completed {
-    box-shadow: 0 0 0 2px var(--color-completed), 0 0 12px var(--color-completed), 0 0 28px rgba(0,0,0,0.08), var(--shadow-pressed);
-}
-
 .status-box span {
     font-size: 14px;
     font-weight: 700;

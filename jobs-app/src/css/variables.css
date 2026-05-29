@@ -49,7 +49,7 @@
   --surface-btn-secondary: #eef0f4;
   --surface-btn-secondary-hover: #e6eaee;
   --surface-btn-secondary-active: #dce0e6;
-  --surface-th: #e8ecf0;
+  --surface-th: #dce0e6;
   --surface-checkbox: #eef0f4;
   --surface-checkbox-checked: #6abf9e;
   --surface-modal: #eef0f4;
@@ -66,16 +66,16 @@
   --surface-menu-item-hover: #e6eaee;
   --surface-menu-item-active: #dce0e6;
 
-  --shadow-extruded-sm: -3px -3px 8px rgba(255,255,255,0.9), 4px 4px 12px rgba(0,0,0,0.30);
-  --shadow-extruded-md: -5px -5px 12px rgba(255,255,255,0.9), 6px 6px 16px rgba(0,0,0,0.32);
-  --shadow-extruded-lg: -8px -8px 18px rgba(255,255,255,0.9), 10px 10px 22px rgba(0,0,0,0.35);
-  --shadow-extruded-xl: -12px -12px 24px rgba(255,255,255,0.9), 14px 14px 30px rgba(0,0,0,0.38);
-  --shadow-inset: inset 2px 2px 8px rgba(0,0,0,0.28), inset -3px -3px 8px rgba(255,255,255,0.8);
-  --shadow-pressed: inset 3px 3px 8px rgba(0,0,0,0.32), inset -3px -3px 8px rgba(255,255,255,0.7);
+  --shadow-extruded-sm: -2px -2px 5px rgba(255,255,255,0.9), 3px 3px 7px rgba(0,0,0,0.25);
+  --shadow-extruded-md: -3px -3px 8px rgba(255,255,255,0.9), 4px 4px 10px rgba(0,0,0,0.28);
+  --shadow-extruded-lg: -4px -4px 10px rgba(255,255,255,0.9), 6px 6px 14px rgba(0,0,0,0.30);
+  --shadow-extruded-xl: -6px -6px 14px rgba(255,255,255,0.9), 8px 8px 18px rgba(0,0,0,0.32);
+  --shadow-inset: inset 1px 1px 4px rgba(0,0,0,0.20), inset -2px -2px 5px rgba(255,255,255,0.8);
+  --shadow-pressed: inset 2px 2px 5px rgba(0,0,0,0.25), inset -2px -2px 5px rgba(255,255,255,0.7);
   --shadow-focus: 0 0 0 3px rgba(106, 191, 158, 0.3);
-  --shadow-elevated: 0 8px 28px rgba(0,0,0,0.30), 0 -6px 16px rgba(0,0,0,0.18);
-  --shadow-pill: -2px -2px 4px rgba(255,255,255,0.85), 3px 3px 8px rgba(0,0,0,0.25);
-  --shadow-pill-hover: -3px -3px 6px rgba(255,255,255,0.85), 4px 4px 10px rgba(0,0,0,0.30);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.22), 0 -3px 10px rgba(0,0,0,0.10);
+  --shadow-pill: -2px -2px 4px rgba(255,255,255,0.85), 2px 2px 5px rgba(0,0,0,0.20);
+  --shadow-pill-hover: -2px -2px 5px rgba(255,255,255,0.85), 3px 3px 7px rgba(0,0,0,0.25);
 
   --shadow-app: var(--shadow-extruded-md);
   --shadow-header: var(--shadow-extruded-sm);
@@ -97,7 +97,7 @@
   --shadow-input-focus: var(--shadow-focus);
   --shadow-status-box: var(--shadow-pill);
   --shadow-status-box-hover: var(--shadow-pill-hover);
-  --shadow-modal: var(--shadow-extruded-xl);
+  --shadow-modal: var(--shadow-elevated);
   --shadow-calendar: var(--shadow-extruded-md);
   --shadow-menu: var(--shadow-extruded-md);
   --shadow-tooltip-popup: var(--shadow-extruded-sm);
@@ -181,16 +181,16 @@
   --surface-menu-item-hover: #2a2e36;
   --surface-menu-item-active: #1a1d23;
 
-  --shadow-extruded-sm: -3px -3px 8px rgba(255,255,255,0.05), 4px 4px 12px rgba(0,0,0,0.55);
-  --shadow-extruded-md: -5px -5px 12px rgba(255,255,255,0.05), 6px 6px 16px rgba(0,0,0,0.65);
-  --shadow-extruded-lg: -8px -8px 18px rgba(255,255,255,0.05), 10px 10px 22px rgba(0,0,0,0.65);
-  --shadow-extruded-xl: -12px -12px 24px rgba(255,255,255,0.05), 14px 14px 30px rgba(0,0,0,0.70);
-  --shadow-inset: inset 2px 2px 8px rgba(0,0,0,0.55), inset -3px -3px 8px rgba(255,255,255,0.05);
-  --shadow-pressed: inset 3px 3px 8px rgba(0,0,0,0.60), inset -3px -3px 8px rgba(255,255,255,0.05);
+  --shadow-extruded-sm: -2px -2px 5px rgba(255,255,255,0.05), 3px 3px 7px rgba(0,0,0,0.50);
+  --shadow-extruded-md: -3px -3px 8px rgba(255,255,255,0.05), 4px 4px 10px rgba(0,0,0,0.55);
+  --shadow-extruded-lg: -4px -4px 10px rgba(255,255,255,0.05), 6px 6px 14px rgba(0,0,0,0.55);
+  --shadow-extruded-xl: -6px -6px 14px rgba(255,255,255,0.05), 8px 8px 18px rgba(0,0,0,0.60);
+  --shadow-inset: inset 1px 1px 4px rgba(0,0,0,0.45), inset -2px -2px 5px rgba(255,255,255,0.05);
+  --shadow-pressed: inset 2px 2px 5px rgba(0,0,0,0.50), inset -2px -2px 5px rgba(255,255,255,0.05);
   --shadow-focus: 0 0 0 3px rgba(126, 200, 179, 0.25);
-  --shadow-elevated: 0 8px 28px rgba(0,0,0,0.65), 0 -6px 16px rgba(0,0,0,0.30);
-  --shadow-pill: -2px -2px 4px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,0,0,0.55);
-  --shadow-pill-hover: -3px -3px 6px rgba(255,255,255,0.04), 4px 4px 10px rgba(0,0,0,0.60);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.55), 0 -3px 10px rgba(0,0,0,0.20);
+  --shadow-pill: -2px -2px 4px rgba(255,255,255,0.04), 2px 2px 5px rgba(0,0,0,0.50);
+  --shadow-pill-hover: -2px -2px 5px rgba(255,255,255,0.04), 3px 3px 7px rgba(0,0,0,0.55);
 
   --bg-row-hover: #2a2e36;
 

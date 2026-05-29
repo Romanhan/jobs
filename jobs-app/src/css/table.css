@@ -4,7 +4,12 @@
     max-width: 100%;
     border-radius: var(--radius-md);
     border: none;
-    box-shadow: var(--shadow-inset);
+    border-left: 1px solid var(--border-medium);
+    border-right: 1px solid var(--border-medium);
+    box-shadow:
+        inset 8px 0 12px -8px rgba(0,0,0,0.10),
+        inset -8px 0 12px -8px rgba(0,0,0,0.10),
+        var(--shadow-inset);
 }
 
 table {
@@ -131,7 +136,7 @@ td:focus {
 
 th:not(:last-child),
 td:not(:last-child) {
-    border-right: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-medium);
 }
 
 td.editing textarea {
@@ -227,10 +232,15 @@ table td.row-indicator {
     padding-left: 4px;
 }
 
-table td.sticky-col,
-table th.sticky-col {
+table td.sticky-col {
     position: sticky;
     background: var(--bg-table);
+    z-index: 2;
+}
+
+table th.sticky-col {
+    position: sticky;
+    background: var(--surface-th);
     z-index: 2;
 }
 
