@@ -1,5 +1,5 @@
 :root {
-  --bg-body: #dce0e6;
+  --bg-body: #bcc2ca;
   --bg-app: #eef0f4;
   --bg-table: #eef0f4;
   --bg-cell: transparent;
@@ -78,9 +78,6 @@
   --shadow-pill-hover: -2px -2px 5px rgba(255,255,255,0.85), 3px 3px 7px rgba(0,0,0,0.25);
 
   --shadow-app: var(--shadow-extruded-md);
-  --shadow-header: var(--shadow-extruded-sm);
-  --shadow-toolbar: var(--shadow-extruded-sm);
-  --shadow-table: var(--shadow-extruded-sm);
   --shadow-btn-primary: var(--shadow-extruded-sm);
   --shadow-btn-primary-hover: var(--shadow-extruded-md);
   --shadow-btn-primary-active: var(--shadow-pressed);
@@ -120,7 +117,7 @@
 }
 
 [data-theme="dark"] {
-  --bg-body: #1a1d23;
+  --bg-body: #0e1015;
   --bg-app: #22262e;
   --bg-table: #22262e;
   --bg-cell: transparent;

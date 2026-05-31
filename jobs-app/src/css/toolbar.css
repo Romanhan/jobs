@@ -2,12 +2,11 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 4px;
-    padding: 6px 8px;
+    margin-bottom: 0;
+    padding: 6px 8px 12px;
     background: var(--surface-header);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     border: none;
-    box-shadow: var(--shadow-toolbar);
 }
 
 .toolbar label {
@@ -130,7 +129,6 @@
     align-items: center;
     gap: 12px;
     padding-right: 16px;
-    border-right: 1px solid var(--border-medium);
 }
 
 .toolbar input[type="checkbox"] {

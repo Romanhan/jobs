@@ -1,15 +1,12 @@
 .table-wrap {
     overflow-x: auto;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
     max-width: 100%;
     border-radius: var(--radius-md);
     border: none;
-    border-left: 1px solid var(--border-medium);
-    border-right: 1px solid var(--border-medium);
-    box-shadow:
-        inset 8px 0 12px -8px rgba(0,0,0,0.10),
-        inset -8px 0 12px -8px rgba(0,0,0,0.10),
-        var(--shadow-inset);
+    box-shadow: var(--shadow-extruded-sm);
 }
 
 table {
@@ -17,9 +14,8 @@ table {
     border-collapse: separate;
     border-spacing: 0;
     background: var(--bg-table);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     overflow: visible;
-    box-shadow: var(--shadow-table);
 }
 
 th:has(input[type="checkbox"].checkbox) {
