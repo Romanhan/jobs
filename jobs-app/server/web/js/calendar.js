@@ -86,18 +86,19 @@ function handleCalendarClickOutside(e) {
     if (popup && (calendarCellTd || calendarPopup)) {
         if (!popup.contains(e.target)) {
             closeCalendarPopup();
-            if (editingCell && editingCell.isDate) {
+            const cell = editingCellGetter ? editingCellGetter() : null;
+            if (cell && cell.isDate) {
                 finishEditing();
             }
         }
     }
 }
 
-let editingCell = null;
+let editingCellGetter = null;
 let finishEditing = null;
 
 export function setEditingCellState(getter, setter) {
-    editingCell = getter;
+    editingCellGetter = getter;
     finishEditing = setter;
 }
 

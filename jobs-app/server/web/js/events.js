@@ -2,7 +2,7 @@ import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
-import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit } from './calendar.js';
+import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
 let editingCell = null;
 
@@ -150,6 +150,7 @@ export function editCell(td, index, col) {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
     editingCell = { td, index, col, isDate };
+    setEditingCellState(() => editingCell, finishEditing);
     td.style.visibility = 'hidden';
     td.classList.add('editing');
 }
@@ -176,6 +177,7 @@ export function saveEdited(input, index, col) {
         editingCell = null;
     }
 
+    setEditingCellState(null, null);
     doAutoSave(jobsArr);
     renderTableBody();
     updateStats();
@@ -190,6 +192,7 @@ export function finishEditing() {
         editingCell.td.classList.remove('editing');
     }
     editingCell = null;
+    setEditingCellState(null, null);
 }
 
 export function toggleField(index, col, value) {
