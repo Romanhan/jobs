@@ -30,7 +30,12 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
   try {
     await file.lock(true);
     await file.write(new TextEncoder().encode(JSON.stringify(jobs)));
-    await file.unlock();
+  } finally {
+    try {
+      await file.unlock();
+    } catch {
+      // ignore
+    }
     file.close();
   }
   const stat = await Deno.stat(DATA_FILE);
