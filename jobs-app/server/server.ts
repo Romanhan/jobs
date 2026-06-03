@@ -147,4 +147,5 @@ try {
   Deno.serve({ port: PORT, hostname: "127.0.0.1" }, handler);
 } catch (e) {
   Deno.writeTextFileSync("error.log", `${e}\n${(e as Error)?.stack || ""}`);
+  Deno.exit(1);
 }
