@@ -138,9 +138,18 @@ export function renderTableBody() {
             if (!isEmptyA && isEmptyB) return -1;
             
             if (typeof valA === 'boolean') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
-            else if (DATE_COLS.includes(sortColumn)) { 
-                const dateA = valA ? new Date(valA).getTime() : 0;
-                const dateB = valB ? new Date(valB).getTime() : 0;
+            else if (DATE_COLS.includes(sortColumn)) {
+                let cleanA = valA, cleanB = valB;
+                if (/^\d{2}\.\d{2}\.\d{4}$/.test(cleanA)) {
+                    const p = cleanA.split('.');
+                    cleanA = `${p[2]}-${p[1]}-${p[0]}`;
+                }
+                if (/^\d{2}\.\d{2}\.\d{4}$/.test(cleanB)) {
+                    const p = cleanB.split('.');
+                    cleanB = `${p[2]}-${p[1]}-${p[0]}`;
+                }
+                const dateA = cleanA ? new Date(cleanA).getTime() : 0;
+                const dateB = cleanB ? new Date(cleanB).getTime() : 0;
                 valA = isNaN(dateA) ? 0 : dateA;
                 valB = isNaN(dateB) ? 0 : dateB;
             }
