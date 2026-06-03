@@ -41,6 +41,9 @@ export function editCell(td, index, col) {
         } else {
             finishEditing();
         }
+        const colEscaped = col.replace(/'/g, "\\'");
+        td = document.querySelector(`#table-body tr[data-index="${index}"] td[data-col="${colEscaped}"]`);
+        if (!td) return;
     }
     const job = getJobs()[index];
     const value = job[col] || '';
