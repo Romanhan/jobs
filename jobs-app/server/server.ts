@@ -42,7 +42,11 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
   const file = await Deno.open(DATA_FILE, { create: true, write: true, truncate: true });
   try {
     await file.lock(true);
-    await file.write(new TextEncoder().encode(JSON.stringify(jobs)));
+    const data = new TextEncoder().encode(JSON.stringify(jobs));
+    let written = 0;
+    while (written < data.length) {
+      written += await file.write(data.subarray(written));
+    }
   } finally {
     try {
       await file.unlock();
