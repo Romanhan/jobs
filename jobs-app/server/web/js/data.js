@@ -3,6 +3,7 @@ import { convertSaabunudDates, parseCSVLine, parseCSVLines, fixColumnKeys } from
 
 export let jobs = [];
 let lastSavedTimestamp = 0;
+let isLoaded = false;
 let undoStack = [];
 const MAX_UNDO = 50;
 
@@ -41,6 +42,7 @@ export async function loadData() {
         }
         const data = await res.json();
         jobs = data.jobs || [];
+        isLoaded = true;
         lastSavedTimestamp = data.modified || Date.now();
         clearUndo();
         const count = convertSaabunudDates(jobs);
@@ -58,6 +60,7 @@ export async function loadFromFileLegacy() {
 }
 
 export async function autoSave() {
+    if (!isLoaded) return;
     try {
         const res = await fetch('/api/data', {
             method: 'POST',
@@ -259,6 +262,7 @@ export function loadFromFile(file) {
                 }
 
                 jobs = newJobs;
+                isLoaded = true;
                 clearUndo();
                 autoSave();
                 resolve({ count: jobs.length, jobs });
