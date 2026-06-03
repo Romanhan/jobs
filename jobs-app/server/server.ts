@@ -13,14 +13,27 @@ setInterval(() => {
 async function handleGetData(corsHeaders: Record<string, string>): Promise<Response> {
   try {
     const stat = await Deno.stat(DATA_FILE);
-    const content = await Deno.readTextFile(DATA_FILE);
-    const jobs = JSON.parse(content);
+    let content;
+    try {
+      content = await Deno.readTextFile(DATA_FILE);
+    } catch {
+      return new Response("Failed to read data file", { status: 500, headers: corsHeaders });
+    }
+    let jobs;
+    try {
+      jobs = JSON.parse(content);
+    } catch {
+      return new Response("Invalid JSON in data file", { status: 500, headers: corsHeaders });
+    }
     return Response.json({
       modified: stat.mtime?.getTime() || Date.now(),
       jobs,
     }, { headers: corsHeaders });
-  } catch {
-    return Response.json({ modified: 0, jobs: [] }, { headers: corsHeaders });
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound) {
+      return Response.json({ modified: 0, jobs: [] }, { headers: corsHeaders });
+    }
+    return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
   }
 }
 
@@ -46,16 +59,30 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
 
 async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promise<Response> {
   const since = parseInt(url.searchParams.get("since") || "0");
+  let stat: Deno.FileInfo;
   try {
-    const stat = await Deno.stat(DATA_FILE);
-    const mtime = stat.mtime?.getTime() || 0;
-    if (mtime > since) {
-      const content = await Deno.readTextFile(DATA_FILE);
-      const jobs = JSON.parse(content);
-      return Response.json({ changed: true, jobs, modified: mtime }, { headers: corsHeaders });
+    stat = await Deno.stat(DATA_FILE);
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound) {
+      return Response.json({ changed: false }, { headers: corsHeaders });
     }
-  } catch {
-    // file not found or invalid JSON — no changes
+    return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
+  }
+  const mtime = stat.mtime?.getTime() || 0;
+  if (mtime > since) {
+    let content;
+    try {
+      content = await Deno.readTextFile(DATA_FILE);
+    } catch {
+      return new Response("Failed to read data file", { status: 500, headers: corsHeaders });
+    }
+    let jobs;
+    try {
+      jobs = JSON.parse(content);
+    } catch {
+      return new Response("Invalid JSON in data file", { status: 500, headers: corsHeaders });
+    }
+    return Response.json({ changed: true, jobs, modified: mtime }, { headers: corsHeaders });
   }
   return Response.json({ changed: false }, { headers: corsHeaders });
 }

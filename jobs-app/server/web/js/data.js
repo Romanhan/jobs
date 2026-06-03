@@ -35,6 +35,10 @@ export function clearUndo() {
 export async function loadData() {
     try {
         const res = await fetch('/api/data');
+        if (!res.ok) {
+            console.error('Server error:', res.status, await res.text());
+            return { status: 'error', count: jobs.length, jobs };
+        }
         const data = await res.json();
         jobs = data.jobs || [];
         lastSavedTimestamp = data.modified || Date.now();
@@ -43,8 +47,9 @@ export async function loadData() {
         if (count > 0) await autoSave();
         return { status: 'loaded', count: jobs.length, jobs };
     } catch (e) {
-        jobs = [];
-        return { status: 'error', count: 0, jobs };
+        console.error('Failed to load data:', e);
+        // Keep existing jobs on error — don't silently clear data
+        return { status: 'error', count: jobs.length, jobs };
     }
 }
 
