@@ -221,7 +221,7 @@
     z-index: 900;
     background: var(--surface-menu);
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: 14px 16px;
     box-shadow: var(--shadow-menu);
     min-width: 250px;
@@ -241,7 +241,7 @@
     background: var(--bg-scrollbar-track);
     color: var(--text-secondary);
     padding: 2px 7px;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-sm);
     font-size: 11px;
     border: none;
     text-align: center;
@@ -260,7 +260,7 @@
     z-index: 900;
     background: var(--surface-menu);
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: 14px 16px;
     box-shadow: var(--shadow-menu);
     min-width: 180px;
@@ -272,7 +272,6 @@
     color: var(--text-secondary);
     margin-bottom: 10px;
 }
-
 .font-size-popup-body {
     display: flex;
     align-items: center;
@@ -327,15 +326,17 @@
     position: absolute;
     top: 100%;
     right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
     z-index: 950;
-    background: var(--surface-menu);
+    background: var(--bg-input);
     border: none;
     border-radius: var(--radius-md);
-    padding: 4px;
-    overflow: hidden;
     box-shadow: var(--shadow-menu);
     min-width: 120px;
     margin-top: 4px;
+    padding: 0;
 }
 
 .menu-item {
@@ -359,18 +360,9 @@
     border-radius: var(--radius-sm);
 }
 
-.menu-item:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: 0;
-    height: 1px;
-    background: var(--border-light);
-}
-
 .menu-item:hover {
     background: var(--surface-menu-item-hover);
+    border-radius: var(--radius-sm);
     box-shadow: var(--shadow-extruded-sm);
 }
 

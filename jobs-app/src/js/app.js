@@ -74,7 +74,7 @@ async function init() {
         localStorage.setItem('showRowColors', 'true');
     }
     const showRowColors = localStorage.getItem('showRowColors') !== 'false';
-    document.getElementById('menu-row-colors').textContent = showRowColors ? 'Color rows' : 'Color rows ●';
+    document.getElementById('menu-row-colors').innerHTML = showRowColors ? 'Color rows <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--color-primary);vertical-align:middle;margin-left:6px"></span>' : 'Color rows';
     
     const savedFontSize = localStorage.getItem('fontSize') || '12';
     setRowFontSize(savedFontSize);
