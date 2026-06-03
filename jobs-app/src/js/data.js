@@ -1,5 +1,5 @@
 import { COLUMNS, COLUMN_LABELS, DATE_COLS } from './config.js';
-import { convertSaabunudDates, parseCSVLine, fixColumnKeys, autoSave as doAutoSave } from './utils.js';
+import { convertSaabunudDates, parseCSVLine, parseCSVLines, fixColumnKeys, autoSave as doAutoSave } from './utils.js';
 
 export let jobs = [];
 
@@ -184,7 +184,7 @@ export function loadFromFile(file) {
                 } else {
                     raw = new TextDecoder('windows-1252').decode(arr);
                 }
-                const lines = raw.split(/\r?\n/).filter(l => l.trim());
+                const lines = parseCSVLines(raw);
                 if (lines.length < 1) throw new Error('Tühi fail');
                 
                 const headerLine = lines[0];

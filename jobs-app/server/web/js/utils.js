@@ -29,6 +29,27 @@ export function convertSaabunudDates(jobsArr) {
     return count;
 }
 
+export function parseCSVLines(raw) {
+    const lines = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (ch === '"') {
+            inQuotes = !inQuotes;
+            current += ch;
+        } else if (ch === '\n' && !inQuotes) {
+            if (current.trim()) lines.push(current);
+            current = '';
+        } else if (ch === '\r' && !inQuotes) {
+        } else {
+            current += ch;
+        }
+    }
+    if (current.trim()) lines.push(current);
+    return lines;
+}
+
 export function parseCSVLine(line) {
     const result = [];
     let current = '';
