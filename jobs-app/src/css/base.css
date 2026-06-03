@@ -78,7 +78,7 @@ h1 {
     white-space: nowrap;
     display: inline-block;
     background: var(--bg-input);
-    padding: 4px 12px;
+    padding: 6px 18px;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-inset);
 }

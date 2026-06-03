@@ -100,7 +100,7 @@
   --shadow-tooltip-popup: var(--shadow-extruded-sm);
   --shadow-floating-editor: var(--shadow-elevated);
 
-  --bg-row-hover: #e6eaee;
+  --bg-row-hover: #dee2e8;
 
   --row-tint-in-progress: rgba(106, 191, 158, 0.12);
   --row-tint-allhanke: rgba(167, 138, 212, 0.12);
@@ -121,10 +121,10 @@
   --bg-app: #22262e;
   --bg-table: #22262e;
   --bg-cell: transparent;
-  --bg-input: #22262e;
+  --bg-input: #1a1d23;
   --bg-overlay: rgba(0, 0, 0, 0.5);
   --bg-tooltip: rgba(26, 29, 35, 0.75);
-  --bg-scrollbar-track: #2a2e36;
+  --bg-scrollbar-track: #1a1d23;
   --bg-modal-content: #22262e;
 
   --text-primary: #e2e6ec;
@@ -199,7 +199,7 @@
   --calendar-icon-filter: brightness(0) invert(1);
   --calendar-day-hover: #2a2e36;
 
-  --scrollbar-color: #3a3e48 #2a2e36;
+  --scrollbar-color: #3a3e48 #1a1d23;
 
   --checkbox-check-color: #22262e;
   --font-row-size: 12px;
