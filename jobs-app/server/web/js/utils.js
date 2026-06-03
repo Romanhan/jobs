@@ -72,8 +72,8 @@ export function fixColumnKeys(data) {
 }
 
 export function renderMarkdown(text) {
-    if (!text) return '';
-    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (text === undefined || text === null) return '';
+    let html = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/!!(.+?)!!/g, '<span class="text-important">$1</span>');
     html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
