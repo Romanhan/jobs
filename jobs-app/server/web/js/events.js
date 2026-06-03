@@ -34,7 +34,14 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
 });
 
 export function editCell(td, index, col) {
-    if (editingCell) finishEditing();
+    if (editingCell) {
+        const activeInput = document.querySelector('.floating-editor textarea');
+        if (activeInput) {
+            saveEdited(activeInput, editingCell.index, editingCell.col);
+        } else {
+            finishEditing();
+        }
+    }
     const job = getJobs()[index];
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
