@@ -243,9 +243,9 @@ export function loadFromFile(file) {
                             else if (val.toUpperCase() === 'FALSE') val = false;
                             else val = false;
                         } else if (DATE_COLS.includes(col) && val) {
-                            const m = val.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+                            const m = val.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
                             if (m) {
-                                val = m[3] + '-' + m[2] + '-' + m[1];
+                                val = m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
                             }
                         }
                         job[col] = val;
