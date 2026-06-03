@@ -39,9 +39,10 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
 
 async function handlePostData(req: Request, corsHeaders: Record<string, string>): Promise<Response> {
   const jobs = await req.json();
-  const file = await Deno.open(DATA_FILE, { create: true, write: true, truncate: true });
+  const file = await Deno.open(DATA_FILE, { create: true, write: true });
   try {
     await file.lock(true);
+    await file.truncate(0);
     const data = new TextEncoder().encode(JSON.stringify(jobs));
     let written = 0;
     while (written < data.length) {
