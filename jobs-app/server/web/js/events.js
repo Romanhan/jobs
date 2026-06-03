@@ -155,7 +155,7 @@ export function editCell(td, index, col) {
 }
 
 export function saveEdited(input, index, col) {
-    if (!editingCell) return;
+    if (!editingCell || editingCell.index !== index || editingCell.col !== col) return;
     pushUndo();
     let value = input.value;
     if (DATE_COLS.includes(col) && value) {
