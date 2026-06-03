@@ -9,7 +9,6 @@ let calendarSelectedDate = null;
 let calendarCellTd = null;
 let calendarRowIndex = null;
 let calendarColName = null;
-let ignoreNextClick = false;
 
 export function positionCalendarPopup(anchorEl) {
     const popup = document.getElementById('calendar-popup');
@@ -74,14 +73,9 @@ export function closeCalendarPopup() {
     calendarRowIndex = null;
     calendarColName = null;
     calendarEditingInput = null;
-    ignoreNextClick = false;
 }
 
 function handleCalendarClickOutside(e) {
-    if (ignoreNextClick) {
-        ignoreNextClick = false;
-        return;
-    }
     const popup = document.getElementById('calendar-popup');
     if (popup && (calendarCellTd || calendarPopup)) {
         if (!popup.contains(e.target)) {
@@ -232,8 +226,9 @@ export function openDateCalendarDirect(td, index, col, currentValue, anchorEl) {
     renderCalendar();
     positionCalendarPopup(anchorEl || td);
     
-    document.addEventListener('click', handleCalendarClickOutside);
-    ignoreNextClick = true;
+    setTimeout(() => {
+        document.addEventListener('click', handleCalendarClickOutside);
+    }, 0);
 }
 
 let selectDateCalendarDirectCallback = null;
