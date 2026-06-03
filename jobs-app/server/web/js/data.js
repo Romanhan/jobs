@@ -156,7 +156,7 @@ export function saveCSV() {
     const headerRow = COLUMNS.join(';');
     const rows = jobs.map(job => {
         return COLUMNS.map(col => {
-            let val = job[col] !== undefined ? job[col] : '';
+            let val = (job[col] !== undefined && job[col] !== null) ? job[col] : '';
             if (val === true) val = 'TRUE';
             else if (val === false) val = 'FALSE';
             else if (typeof val === 'string') {
