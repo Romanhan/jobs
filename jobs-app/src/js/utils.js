@@ -36,8 +36,17 @@ export function parseCSVLines(raw) {
     for (let i = 0; i < raw.length; i++) {
         const ch = raw[i];
         if (ch === '"') {
-            inQuotes = !inQuotes;
-            current += ch;
+            if (inQuotes && raw[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else if (!inQuotes) {
+                const isBoundary = i === 0 || raw[i - 1] === ';' || raw[i - 1] === '\n' || raw[i - 1] === '\r';
+                if (isBoundary) inQuotes = true;
+                current += '"';
+            } else {
+                inQuotes = false;
+                current += '"';
+            }
         } else if (ch === '\n' && !inQuotes) {
             if (current.trim()) lines.push(current);
             current = '';
