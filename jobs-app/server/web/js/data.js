@@ -1,7 +1,13 @@
 import { COLUMNS, COLUMN_LABELS, DATE_COLS } from './config.js';
-import { convertSaabunudDates, parseCSVLine, parseCSVLines, fixColumnKeys, autoSave as doAutoSave } from './utils.js';
+import { convertSaabunudDates, parseCSVLine, parseCSVLines, fixColumnKeys } from './utils.js';
 
 export let jobs = [];
+let lastSavedTimestamp = 0;
+let isLoaded = false;
+let inFlightSaves = 0;
+let isPolling = false;
+let undoStack = [];
+const MAX_UNDO = 50;
 
 export function setJobs(newJobs) {
     jobs = newJobs;
@@ -10,9 +16,6 @@ export function setJobs(newJobs) {
 export function getJobs() {
     return jobs;
 }
-
-let undoStack = [];
-const MAX_UNDO = 50;
 
 export function pushUndo() {
     try {
@@ -32,54 +35,79 @@ export function clearUndo() {
     undoStack = [];
 }
 
-export function loadData() {
-    const saved = localStorage.getItem('jobsData');
-    if (saved) {
-        try {
-            jobs = JSON.parse(saved);
-            clearUndo();
-            const firstJob = jobs[0] || {};
-            const hasLeadingSpaces = Object.keys(firstJob).some(k => k !== k.trim());
-            if (hasLeadingSpaces) {
-                jobs = fixColumnKeys(jobs);
-                const count = convertSaabunudDates(jobs);
-                autoSave(jobs);
-                return { status: 'fixed', count, jobs };
-            } else {
-                const count = convertSaabunudDates(jobs);
-                if (count > 0) autoSave(jobs);
-                return { status: 'loaded', count: jobs.length, jobs };
-            }
-        } catch (e) {
-            jobs = [];
-            return { status: 'error', count: 0, jobs };
+export async function loadData() {
+    try {
+        const res = await fetch('/api/data');
+        if (!res.ok) {
+            console.error('Server error:', res.status, await res.text());
+            return { status: 'error', count: jobs.length, jobs };
         }
+        const data = await res.json();
+        jobs = data.jobs || [];
+        isLoaded = true;
+        lastSavedTimestamp = data.modified || Date.now();
+        clearUndo();
+        const count = convertSaabunudDates(jobs);
+        if (count > 0) await autoSave();
+        return { status: 'loaded', count: jobs.length, jobs };
+    } catch (e) {
+        console.error('Failed to load data:', e);
+        // Keep existing jobs on error — don't silently clear data
+        return { status: 'error', count: jobs.length, jobs };
     }
-    return null;
 }
 
 export async function loadFromFileLegacy() {
+    return null;
+}
+
+export async function autoSave() {
+    if (!isLoaded) return;
+    inFlightSaves++;
     try {
-        const res = await fetch('jobs_data.json');
+        const res = await fetch('/api/data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jobs)
+        });
+        if (!res.ok) {
+            throw new Error("Server error: " + res.status);
+        }
         const data = await res.json();
-        jobs = fixColumnKeys(data);
-        clearUndo();
-        convertSaabunudDates(jobs);
-        autoSave(jobs);
-        return { status: 'legacy', count: jobs.length, jobs };
+        lastSavedTimestamp = data.modified || Date.now();
     } catch (e) {
-        return null;
+        console.error('Salvestamine ebaõnnestus', e);
+    } finally {
+        inFlightSaves--;
     }
 }
 
-export function autoSave() {
-    doAutoSave(jobs);
+export async function pollChanges() {
+    if (inFlightSaves > 0 || isPolling) return false;
+    isPolling = true;
+    try {
+        const res = await fetch('/api/poll?since=' + lastSavedTimestamp);
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (data.changed && data.jobs) {
+            jobs = data.jobs;
+            convertSaabunudDates(jobs);
+            lastSavedTimestamp = data.modified || Date.now();
+            clearUndo();
+            return true;
+        }
+        return false;
+    } catch {
+        return false;
+    } finally {
+        isPolling = false;
+    }
 }
 
 export function addJob(job) {
     pushUndo();
     jobs.push(job);
-    autoSave(jobs);
+    autoSave();
 }
 
 let columnWidths = {};
@@ -88,10 +116,32 @@ let hiddenColumns = {};
 export function loadColumnWidths() {
     columnWidths = {};
     const saved = localStorage.getItem('jobsColumnWidths');
-    if (saved) { try { columnWidths = JSON.parse(saved); } catch (e) { columnWidths = {}; } }
-    if (Object.keys(columnWidths).length === 0) {
-        autoCalculateColumnWidths(COLUMNS);
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (typeof parsed === 'object' && parsed !== null) {
+                Object.keys(parsed).forEach(col => {
+                    const w = Number(parsed[col]);
+                    if (!isNaN(w) && w > 0) columnWidths[col] = w;
+                });
+            }
+        } catch (e) { /* ignore */ }
     }
+}
+
+export function autoCalculateColumnWidths(columns) {
+    const checkboxCols = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud', 'Töötlus allhankes'];
+    columns.forEach(col => {
+        if (columnWidths[col] === undefined) {
+            if (col === 'Töö Nr') {
+                columnWidths[col] = 78;
+            } else if (checkboxCols.includes(col)) {
+                columnWidths[col] = 40;
+            } else {
+                columnWidths[col] = 64;
+            }
+        }
+    });
 }
 
 export function saveColumnWidths() {
@@ -104,23 +154,6 @@ export function getColumnWidths() {
 
 export function setColumnWidth(col, width) {
     columnWidths[col] = width;
-}
-
-export function measureTextWidth(text) {
-    const div = document.createElement('div');
-    div.style.cssText = 'position:absolute;visibility:hidden;font:600 11px/1 system-ui,sans-serif;white-space:nowrap';
-    div.textContent = text;
-    document.body.appendChild(div);
-    const width = div.offsetWidth;
-    document.body.removeChild(div);
-    return width;
-}
-
-export function autoCalculateColumnWidths(columns) {
-    columns.forEach(col => {
-        const label = COLUMN_LABELS[col] || col;
-        columnWidths[col] = measureTextWidth(label);
-    });
 }
 
 export function loadHiddenColumns() {
@@ -145,7 +178,7 @@ export function saveCSV() {
     const headerRow = COLUMNS.join(';');
     const rows = jobs.map(job => {
         return COLUMNS.map(col => {
-            let val = job[col] !== undefined ? job[col] : '';
+            let val = (job[col] !== undefined && job[col] !== null) ? job[col] : '';
             if (val === true) val = 'TRUE';
             else if (val === false) val = 'FALSE';
             else if (typeof val === 'string') {
@@ -155,7 +188,7 @@ export function saveCSV() {
                 }
             }
             val = String(val).replace(/"/g, '""');
-            if (val.includes(';') || val.includes('"') || val.includes('\n')) {
+            if (val.includes(';') || val.includes('"') || val.includes('\n') || val.includes('\r')) {
                 val = '"' + val + '"';
             }
             return val;
@@ -182,17 +215,21 @@ export function loadFromFile(file) {
                 if (arr[0] === 0xEF && arr[1] === 0xBB && arr[2] === 0xBF) {
                     raw = new TextDecoder('utf-8').decode(arr.slice(3));
                 } else {
-                    raw = new TextDecoder('windows-1252').decode(arr);
+                    try {
+                        raw = new TextDecoder('utf-8', { fatal: true }).decode(arr);
+                    } catch {
+                        raw = new TextDecoder('windows-1252').decode(arr);
+                    }
                 }
                 const lines = parseCSVLines(raw);
                 if (lines.length < 1) throw new Error('Tühi fail');
-                
+
                 const headerLine = lines[0];
                 const headers = parseCSVLine(headerLine);
-                
+
                 const colMap = {};
                 const usedIndices = new Set();
-                
+
                 headers.forEach((h, i) => {
                     const key = h.trim().replace(/^"|"$/g, '');
                     const normKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -205,7 +242,7 @@ export function loadFromFile(file) {
                         usedIndices.add(i);
                     }
                 });
-                
+
                 let posIdx = 0;
                 COLUMNS.forEach(col => {
                     if (colMap[col] === undefined) {
@@ -217,34 +254,33 @@ export function loadFromFile(file) {
                         posIdx++;
                     }
                 });
-                
+
                 const newJobs = [];
                 for (let i = 1; i < lines.length; i++) {
                     const values = parseCSVLine(lines[i]);
                     const job = {};
                     COLUMNS.forEach(col => {
                         const idx = colMap[col];
-                        let val = (idx !== undefined && values[idx] !== undefined) ? values[idx] : '';
-                        val = val.replace(/^"|"$/g, '').replace(/""/g, '"');
-                        
+                        const val = (idx !== undefined && values[idx] !== undefined) ? values[idx] : '';
+
                         if (col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes') {
-                            if (val.toUpperCase() === 'TRUE') val = true;
-                            else if (val.toUpperCase() === 'FALSE') val = false;
-                            else val = false;
+                            const upper = val.toUpperCase();
+                            val = (upper === 'TRUE' || upper === '1' || upper === 'JAH' || upper === 'YES');
                         } else if (DATE_COLS.includes(col) && val) {
-                            const m = val.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+                            const m = val.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
                             if (m) {
-                                val = m[3] + '-' + m[2] + '-' + m[1];
+                                val = m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
                             }
                         }
                         job[col] = val;
                     });
                     if (job['Töö Nr']) newJobs.push(job);
                 }
-                
+
                 jobs = newJobs;
+                isLoaded = true;
                 clearUndo();
-                autoSave(jobs);
+                autoSave();
                 resolve({ count: jobs.length, jobs });
             } catch (err) {
                 reject(err);

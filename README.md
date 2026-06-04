@@ -1,6 +1,6 @@
 # Tööde Haldus App
 
-A skeuomorphic job management app — replaces Excel spreadsheets with an intuitive web interface. Built with vanilla HTML, CSS, and JavaScript. No dependencies, no build step.
+A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets with an intuitive web interface. Built with vanilla HTML, CSS, and JavaScript. No dependencies, no build step.
 
 ![App Screenshot](screenshot2.png)
 
@@ -10,10 +10,10 @@ A skeuomorphic job management app — replaces Excel spreadsheets with an intuit
 - **Inline editing** — click any cell to edit
 - **Auto-date** — check "Alustatud" / "Valmis" sets date automatically
 - **Status indicators** — colored dots show Töös / Allhanke / Hilinenud / Valmis
-- **Row highlighting** — green tint for in-progress, purple for allhanke, red for overdue
+- **Row tinting** — colored status tinting by job state
 - **Filters** — by Töö Nr, by Täitmise koht, show completed/allhanke
 - **CSV import/export** — save to shared folder, load from CSV
 - **Text formatting** — bold (**), important (!!), strikethrough (~~) in cells
 - **Undo** (Ctrl+Z), keyboard shortcuts
 - **Column resize & sorting** — click header to sort, drag resize handles
-- **Skeuomorphic design** — slate-gray palette, gradients, beveled buttons, depth shadows
+- **Soft neumorphic design** — matte off-white palette, mint accent, extruded dual-shadow system, inset pressed states

@@ -1,4 +1,5 @@
-import { loadData, loadFromFileLegacy, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, pushUndo } from './data.js';
+import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths } from './data.js';
+import { COLUMNS } from './config.js';
 import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
@@ -64,48 +65,52 @@ async function init() {
 
     loadColumnWidths();
     loadHiddenColumns();
-    
+
     const showHidden = localStorage.getItem('showHiddenDates');
     if (showHidden === 'true') {
         document.getElementById('show-hidden-dates').checked = true;
     }
-    
+
     if (localStorage.getItem('showRowColors') === null) {
         localStorage.setItem('showRowColors', 'true');
     }
     const showRowColors = localStorage.getItem('showRowColors') !== 'false';
-    document.getElementById('menu-row-colors').innerHTML = showRowColors ? 'Color rows <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--color-primary);vertical-align:middle;margin-left:6px"></span>' : 'Color rows';
-    
+    document.getElementById('menu-row-colors').textContent = showRowColors ? 'Color rows' : 'Color rows ●';
+
     const savedFontSize = localStorage.getItem('fontSize') || '12';
     setRowFontSize(savedFontSize);
-    
-    const dataResult = loadData();
-    if (dataResult) {
-        if (dataResult.status === 'fixed') {
-            showStatus('Andmed parandatud! (' + dataResult.count + ' tööd)', 'success');
-        } else if (dataResult.status === 'loaded') {
-            showStatus('Andmed taastatud! (' + dataResult.count + ' tööd)', 'success');
-        } else if (dataResult.status === 'error') {
-            showStatus('Viga andmete laadimisel', 'error');
-        }
-        renderTable();
-        renderForm();
-        updateStats();
+
+    const dataResult = await loadData();
+    if (dataResult && dataResult.status === 'loaded') {
+        showStatus('Andmed laetud! (' + dataResult.count + ' tööd)', 'success');
     } else {
-        try {
-            const result = await loadFromFileLegacy();
-            if (result) {
-                showStatus('Andmed laetud! (' + result.count + ' tööd)', 'success');
-            } else {
-                showStatus('Kasuta "Laadi" nupu andmete laadimiseks!', 'success');
-            }
-        } catch (e) {
-            showStatus('Kasuta "Laadi" nupu andmete laadimiseks!', 'success');
-        }
-        renderTable();
-        renderForm();
-        updateStats();
+        showStatus('Serveriga ühendamine ebaõnnestus', 'error');
     }
+
+    autoCalculateColumnWidths(COLUMNS);
+    saveColumnWidths();
+
+    document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
+
+    renderTable();
+    renderForm();
+    updateStats();
+
+    fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
+    setInterval(() => {
+        fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
+    }, 5000);
+
+    setInterval(async () => {
+        if (document.querySelector('.floating-editor')) return;
+        try {
+            const changed = await pollChanges();
+            if (changed) {
+                renderTableBody();
+                updateStats();
+            }
+        } catch {}
+    }, 2000);
 }
 
 attachSortListener();
@@ -133,7 +138,7 @@ function setUpButtons() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         setTheme(isDark ? 'light' : 'dark');
     });
-    
+
     document.getElementById('filter-nr').addEventListener('input', filterTable);
     document.getElementById('filter-koht').addEventListener('input', filterTable);
     document.getElementById('show-blank-koht').addEventListener('change', filterTable);

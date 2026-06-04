@@ -1,5 +1,5 @@
 :root {
-  --bg-body: #a8acb4;
+  --bg-body: #b4b8c0;
   --bg-app: #eef0f4;
   --bg-table: #eef0f4;
   --bg-cell: transparent;
@@ -117,7 +117,7 @@
 }
 
 [data-theme="dark"] {
-  --bg-body: #000105;
+  --bg-body: #0b0d11;
   --bg-app: #22262e;
   --bg-table: #22262e;
   --bg-cell: transparent;

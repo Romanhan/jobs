@@ -10,7 +10,6 @@ let calendarCellTd = null;
 let calendarRowIndex = null;
 let calendarColName = null;
 
-
 export function positionCalendarPopup(anchorEl) {
     const popup = document.getElementById('calendar-popup');
     if (!popup) return;
@@ -43,8 +42,8 @@ export function openDateCalendar(inputEl, currentValue, callback, anchorEl) {
     const formattedValue = formatDate(currentValue || '');
     if (formattedValue && /^\d{2}\.\d{2}\.\d{4}$/.test(formattedValue)) {
         const parts = formattedValue.split('.');
-        year = parseInt(parts[2]);
-        month = parseInt(parts[1]) - 1;
+        year = parseInt(parts[2], 10);
+        month = parseInt(parts[1], 10) - 1;
     }
 
     calendarCurrentYear = year;
@@ -54,15 +53,15 @@ export function openDateCalendar(inputEl, currentValue, callback, anchorEl) {
     const popup = document.createElement('div');
     popup.className = 'calendar-popup active';
     popup.id = 'calendar-popup';
+    popup.addEventListener('mousedown', e => e.preventDefault());
 
     document.body.appendChild(popup);
     renderCalendar();
     positionCalendarPopup(anchorEl || inputEl);
     
-    setTimeout(() => {
-        document.addEventListener('click', handleCalendarClickOutside);
-    }, 0);
+    document.addEventListener('click', handleCalendarClickOutside);
 }
+
 export function closeCalendarPopup() {
     const popup = document.getElementById('calendar-popup');
     if (popup) {
@@ -86,7 +85,7 @@ function handleCalendarClickOutside(e) {
         if (!popup.contains(e.target)) {
             closeCalendarPopup();
             const cell = editingCellGetter ? editingCellGetter() : null;
-            if (cell && cell.isDate && typeof finishEditing === 'function') {
+            if (cell && cell.isDate) {
                 finishEditing();
             }
         }
@@ -114,7 +113,7 @@ export function renderCalendar() {
     html += '</div>';
     
     html += '<div class="calendar-weekdays">';
-    const weekdays = ['E', 'K', 'T', 'N', 'R', 'L', 'P'];
+    const weekdays = ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
     weekdays.forEach(day => {
         html += '<span class="calendar-weekday">' + day + '</span>';
     });
@@ -234,8 +233,8 @@ export function openDateCalendarDirect(td, index, col, currentValue, anchorEl) {
     const formattedValue = formatDate(currentValue || '');
     if (formattedValue && /^\d{2}\.\d{2}\.\d{4}$/.test(formattedValue)) {
         const parts = formattedValue.split('.');
-        year = parseInt(parts[2]);
-        month = parseInt(parts[1]) - 1;
+        year = parseInt(parts[2], 10);
+        month = parseInt(parts[1], 10) - 1;
     }
 
     calendarCurrentYear = year;
@@ -245,6 +244,7 @@ export function openDateCalendarDirect(td, index, col, currentValue, anchorEl) {
     const popup = document.createElement('div');
     popup.className = 'calendar-popup active';
     popup.id = 'calendar-popup';
+    popup.addEventListener('mousedown', e => e.preventDefault());
 
     document.body.appendChild(popup);
     renderCalendar();
@@ -281,3 +281,5 @@ export function selectDateCalendarDirect(dateStr) {
     }
     closeCalendarPopup();
 }
+
+

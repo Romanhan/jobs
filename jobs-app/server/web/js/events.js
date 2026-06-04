@@ -27,15 +27,24 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
     cell.td.style.visibility = '';
     cell.td.classList.remove('editing');
     editingCell = null;
-
-    setEditingCellState(null, null);
+    
     doAutoSave(jobsArr);
     renderTableBody();
     updateStats();
 });
 
 export function editCell(td, index, col) {
-    if (editingCell) finishEditing();
+    if (editingCell) {
+        const activeInput = document.querySelector('.floating-editor textarea');
+        if (activeInput) {
+            saveEdited(activeInput, editingCell.index, editingCell.col);
+        } else {
+            finishEditing();
+        }
+        const colEscaped = col.replace(/'/g, "\\'");
+        td = document.querySelector(`#table-body tr[data-index="${index}"] td[data-col="${colEscaped}"]`);
+        if (!td) return;
+    }
     const job = getJobs()[index];
     const value = job[col] || '';
     const isDate = DATE_COLS.includes(col);
@@ -81,7 +90,7 @@ export function editCell(td, index, col) {
             popupWidth = Math.min(textWidth + 8, maxPopupWidth);
         }
         if (isDate) {
-            popupWidth += 18;
+            popupWidth = Math.max(popupWidth, Math.max(textWidth, 60) + 2 + 22 + 8);
         }
         floatingEditor.style.width = popupWidth + 'px';
         if (isDate) {
@@ -103,7 +112,7 @@ export function editCell(td, index, col) {
         calBtn.onmousedown = function(e) {
             e.preventDefault();
             e.stopPropagation();
-            openDateCalendarDirect(td, index, col.replace(/'/g, "\\'"), input.value, calBtn);
+            openDateCalendarDirect(td, index, col, input.value, calBtn);
         };
         floatingEditor.appendChild(calBtn);
     }
@@ -153,7 +162,7 @@ export function editCell(td, index, col) {
 }
 
 export function saveEdited(input, index, col) {
-    if (!editingCell) return;
+    if (!editingCell || editingCell.index !== index || editingCell.col !== col) return;
     pushUndo();
     let value = input.value;
     if (DATE_COLS.includes(col) && value) {
@@ -161,7 +170,13 @@ export function saveEdited(input, index, col) {
             const [d, m] = value.split('.');
             value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
         }
-        value = parseDate(value);
+        const parsed = parseDate(value);
+        if (parsed && !/^\d{4}-\d{2}-\d{2}$/.test(parsed)) {
+            showStatus('Vigane kuupäeva vorming (Kasuta: PP.KK.AAAA)', 'error');
+            finishEditing();
+            return;
+        }
+        value = parsed;
     }
     const jobsArr = getJobs();
     jobsArr[index][col] = value;
@@ -194,7 +209,8 @@ export function finishEditing() {
 
 export function toggleField(index, col, value) {
     pushUndo();
-    const today = new Date().toISOString().split('T')[0];
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const jobsArr = getJobs();
     if (col === 'Valmis') jobsArr[index]['Valmis kpv'] = value ? today : '';
     if (col === 'Alustatud') jobsArr[index]['Alustamise kpv'] = value ? today : '';
@@ -257,7 +273,7 @@ export function addJob(e) {
     if (hasError) return;
     
     const d = new Date();
-    const today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     job['Info sisestamise kuupäev'] = today;
     
     doAddJob(job);
@@ -287,6 +303,8 @@ export function handleKeydown(e) {
         return;
     }
     if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && !document.getElementById('modal').classList.contains('active')) {
+        const active = document.activeElement;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
         e.preventDefault();
         if (undo()) {
             if (editingCell) finishEditing();
@@ -305,11 +323,15 @@ export function handleKeydown(e) {
         const dateStr = dd + '.' + mm + '.' + yyyy;
         if (editingCell) {
             const input = document.querySelector('.floating-editor textarea');
-            if (input) input.value = dateStr;
+            if (input) {
+                input.value = dateStr;
+                input.dispatchEvent(new Event('input'));
+            }
         } else if (document.getElementById('modal').classList.contains('active')) {
             const active = document.activeElement;
             if (active && active.tagName === 'INPUT' && active.closest('#add-form')) {
                 active.value = dateStr;
+                active.dispatchEvent(new Event('input'));
             }
         }
         return;
@@ -412,11 +434,8 @@ export function attachEventListeners() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.csv,.txt';
-            input.style.display = 'none';
-            document.body.appendChild(input);
             input.addEventListener('change', function(e) {
                 const file = e.target.files[0];
-                document.body.removeChild(input);
                 if (!file) return;
                 showStatus('Laen...', 'success');
                 doLoadFromFile(file).then(result => {
@@ -440,7 +459,7 @@ export function attachEventListeners() {
         } else if (action === 'row-colors') {
             const showRowColors = localStorage.getItem('showRowColors') !== 'false';
             localStorage.setItem('showRowColors', showRowColors ? 'false' : 'true');
-            document.getElementById('menu-row-colors').innerHTML = localStorage.getItem('showRowColors') !== 'false' ? 'Color rows <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--color-primary);vertical-align:middle;margin-left:6px"></span>' : 'Color rows';
+            document.getElementById('menu-row-colors').textContent = showRowColors ? 'Color rows' : 'Color rows ●';
             renderTableBody();
         }
     });
@@ -459,7 +478,7 @@ export function attachEventListeners() {
             shortcutsPopup.style.display = 'none';
         }
         const fontPopup = document.getElementById('font-size-popup');
-        if (fontPopup.style.display !== 'none' && !fontPopup.contains(e.target) && e.target !== menuBtn && e.target.getAttribute('data-action') !== 'font-size') {
+        if (fontPopup.style.display !== 'none' && !fontPopup.contains(e.target) && e.target !== menuBtn && e.target.getAttribute?.('data-action') !== 'font-size') {
             fontPopup.style.display = 'none';
         }
     });
