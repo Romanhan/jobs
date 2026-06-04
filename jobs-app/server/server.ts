@@ -51,22 +51,13 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
   if (!Array.isArray(jobs) || !jobs.every(j => j && typeof j === 'object' && typeof (j as Record<string, unknown>)['Töö Nr'] === 'string')) {
     return new Response("Invalid job data", { status: 400, headers: corsHeaders });
   }
-  const file = await Deno.open(DATA_FILE, { create: true, write: true });
+  const tempFile = `${DATA_FILE}.tmp`;
   try {
-    await file.lock(true);
-    await file.truncate(0);
-    const data = new TextEncoder().encode(JSON.stringify(jobs));
-    let written = 0;
-    while (written < data.length) {
-      written += await file.write(data.subarray(written));
-    }
-  } finally {
-    try {
-      await file.unlock();
-    } catch {
-      // ignore
-    }
-    file.close();
+    await Deno.writeTextFile(tempFile, JSON.stringify(jobs));
+    await Deno.rename(tempFile, DATA_FILE);
+  } catch (e) {
+    console.error("Failed to write data file:", e);
+    return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
   }
   const stat = await Deno.stat(DATA_FILE);
   return Response.json({
