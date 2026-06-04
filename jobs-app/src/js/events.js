@@ -233,19 +233,28 @@ export function addJob(e) {
     const job = {};
     COLUMNS.forEach(col => job[col] = '');
     
+    let hasError = false;
     FORM_FIELDS.forEach(f => {
         const col = f.col;
         const input = form.querySelector('[name="' + col + '"]');
         if (input && input.value) {
             let val = input.value;
-            if (DATE_COLS.includes(col) && /^\d{1,2}\.\d{1,2}$/.test(val)) {
-                const [d, m] = val.split('.');
-                val = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
+            if (DATE_COLS.includes(col)) {
+                if (/^\d{1,2}\.\d{1,2}$/.test(val)) {
+                    const [d, m] = val.split('.');
+                    val = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
+                }
                 val = parseDate(val);
+                if (val && !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+                    showStatus('Vigane kuupäev: ' + f.label, 'error');
+                    hasError = true;
+                    return;
+                }
             }
             job[col] = val;
         }
     });
+    if (hasError) return;
     
     const today = new Date().toISOString().split('T')[0];
     job['Info sisestamise kuupäev'] = today;

@@ -248,6 +248,7 @@ export function addJob(e) {
     const job = {};
     COLUMNS.forEach(col => job[col] = '');
     
+    let hasError = false;
     FORM_FIELDS.forEach(f => {
         const col = f.col;
         const input = form.querySelector('[name="' + col + '"]');
@@ -259,10 +260,16 @@ export function addJob(e) {
                     val = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
                 }
                 val = parseDate(val);
+                if (val && !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+                    showStatus('Vigane kuupäev: ' + f.label, 'error');
+                    hasError = true;
+                    return;
+                }
             }
             job[col] = val;
         }
     });
+    if (hasError) return;
     
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
