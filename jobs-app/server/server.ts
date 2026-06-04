@@ -112,15 +112,30 @@ const CORS = {
 async function serveStatic(url: URL): Promise<Response> {
   let path = url.pathname;
   if (path === "/") path = "/index.html";
-  if (path.includes("..")) return new Response("Forbidden", { status: 403 });
 
-  const filePath = import.meta.dirname + "/web" + path;
-  const dot = filePath.lastIndexOf(".");
-  const ext = dot >= 0 ? filePath.substring(dot) : "";
+  // decodeURIComponent handles percent-encoded traversals like %2e%2e%2f
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  const baseDir = import.meta.dirname + "/web";
+  const baseUrl = new URL("file://" + baseDir + "/");
+  // URL pathname normalizes .. segments, handling decoded and literal traversals
+  const resolved = new URL(path.replace(/\\/g, "/").replace(/^\//, ""), baseUrl);
+  const resolvedPath = resolved.pathname;
+
+  if (!resolvedPath.startsWith(baseUrl.pathname)) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  const dot = resolvedPath.lastIndexOf(".");
+  const ext = dot >= 0 ? resolvedPath.substring(dot) : "";
   const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
   try {
-    const content = await Deno.readFile(filePath);
+    const content = await Deno.readFile(resolvedPath);
     return new Response(content, {
       status: 200,
       headers: { "Content-Type": contentType, "Cache-Control": "no-store" },
