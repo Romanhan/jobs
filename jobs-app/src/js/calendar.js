@@ -86,7 +86,7 @@ function handleCalendarClickOutside(e) {
         if (!popup.contains(e.target)) {
             closeCalendarPopup();
             const cell = editingCellGetter ? editingCellGetter() : null;
-            if (cell && cell.isDate) {
+            if (cell && cell.isDate && typeof finishEditing === 'function') {
                 finishEditing();
             }
         }
