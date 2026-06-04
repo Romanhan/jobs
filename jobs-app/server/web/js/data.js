@@ -179,7 +179,7 @@ export function saveCSV() {
                 }
             }
             val = String(val).replace(/"/g, '""');
-            if (val.includes(';') || val.includes('"') || val.includes('\n')) {
+            if (val.includes(';') || val.includes('"') || val.includes('\n') || val.includes('\r')) {
                 val = '"' + val + '"';
             }
             return val;
