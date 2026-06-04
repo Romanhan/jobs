@@ -203,7 +203,8 @@ export function finishEditing() {
 
 export function toggleField(index, col, value) {
     pushUndo();
-    const today = new Date().toISOString().split('T')[0];
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const jobsArr = getJobs();
     if (col === 'Valmis') jobsArr[index]['Valmis kpv'] = value ? today : '';
     if (col === 'Alustatud') jobsArr[index]['Alustamise kpv'] = value ? today : '';
