@@ -37,7 +37,7 @@ export function parseCSVLines(raw) {
         const ch = raw[i];
         if (ch === '"') {
             if (inQuotes && raw[i + 1] === '"') {
-                current += '"';
+                current += '""';
                 i++;
             } else if (!inQuotes) {
                 const isBoundary = i === 0 || raw[i - 1] === ';' || raw[i - 1] === '\n' || raw[i - 1] === '\r';
