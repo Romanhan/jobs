@@ -112,7 +112,7 @@ export function editCell(td, index, col) {
         calBtn.onmousedown = function(e) {
             e.preventDefault();
             e.stopPropagation();
-            openDateCalendarDirect(td, index, col.replace(/'/g, "\\'"), input.value, calBtn);
+            openDateCalendarDirect(td, index, col, input.value, calBtn);
         };
         floatingEditor.appendChild(calBtn);
     }
