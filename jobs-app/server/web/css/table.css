@@ -1,22 +1,21 @@
 .table-wrap {
     overflow-x: auto;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
     max-width: 100%;
-    border-radius: 10px;
-    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    border: none;
+    box-shadow: var(--shadow-extruded-sm);
 }
 
 table {
+    width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    table-layout: fixed;
-    width: 100%;
     background: var(--bg-table);
-    border-radius: 10px;
+    border-radius: 0;
     overflow: visible;
-    box-shadow:
-        var(--shadow-table),
-        var(--shadow-inset-light);
 }
 
 th:has(input[type="checkbox"].checkbox) {
@@ -42,7 +41,7 @@ td {
 th {
     position: sticky;
     top: 0;
-    background: var(--gradient-th);
+    background: var(--surface-th);
     font-weight: 600;
     font-size: 11px;
     color: var(--text-header);
@@ -50,9 +49,8 @@ th {
     white-space: nowrap;
     user-select: none;
     padding: 4px 2px;
-    border-bottom: 2px solid var(--border-header);
-    box-shadow: inset 0 -1px 0 var(--border-header);
-    overflow: hidden;
+    border-bottom: 1px solid var(--border-header);
+    box-shadow: none;
 }
 
 th .resize-handle {
@@ -80,7 +78,7 @@ th.wrap-header .resize-handle {
 }
 
 th:hover {
-    background: var(--bg-scrollbar-track);
+    background: var(--bg-row-hover);
 }
 
 th.sorted::after {
@@ -105,6 +103,7 @@ td {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 150px;
     background: var(--bg-cell);
     color: var(--text-secondary);
     transition: background 0.1s ease;
@@ -126,16 +125,15 @@ td:hover {
 }
 
 td:focus {
-    outline: 2px solid var(--text-muted);
+    outline: 2px solid var(--color-primary);
     outline-offset: -1px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
 }
 
 th:not(:last-child),
 td:not(:last-child) {
-    border-right: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-medium);
 }
-
 
 td.editing textarea {
     min-width: 100%;
@@ -144,20 +142,20 @@ td.editing textarea {
     font-size: var(--font-row-size);
     font-family: inherit;
     padding: 4px;
-    border: 2px solid var(--text-muted);
-    border-radius: 6px;
+    border: none;
+    border-radius: var(--radius-sm);
     resize: both;
     background: var(--bg-input);
     color: var(--text-secondary);
-    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+    box-shadow: var(--shadow-inset-input), var(--shadow-focus);
     overflow: hidden;
     white-space: pre-wrap;
     word-wrap: break-word;
 }
 
 .checkbox {
-    width: calc(var(--font-row-size) * 1);
-    height: calc(var(--font-row-size) * 1);
+    width: calc(var(--font-row-size) * 1.1);
+    height: calc(var(--font-row-size) * 1.1);
     min-width: 0;
     min-height: 0;
 }
@@ -165,35 +163,27 @@ td.editing textarea {
 input[type="checkbox"].checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: calc(var(--font-row-size) * 1);
-    height: calc(var(--font-row-size) * 1);
+    width: calc(var(--font-row-size) * 1.1);
+    height: calc(var(--font-row-size) * 1.1);
     min-width: 0;
     min-height: 0;
     box-sizing: border-box;
-    border: 1px solid var(--border-strong);
+    border: none;
     border-radius: 50%;
-    background: var(--gradient-checkbox);
+    background: var(--surface-checkbox);
     cursor: pointer;
     position: relative;
-    box-shadow:
-        var(--shadow-inset-input),
-        var(--shadow-input);
+    box-shadow: var(--shadow-inset-input);
     transition: all 0.15s ease;
 }
 
 input[type="checkbox"].checkbox:hover {
-    border-color: var(--text-muted);
-    box-shadow:
-        inset 0 1px 2px rgba(0, 0, 0, 0.05),
-        0 1px 3px rgba(0, 0, 0, 0.05);
+    filter: brightness(0.97);
 }
 
 input[type="checkbox"].checkbox:checked {
-    background: var(--gradient-checkbox-checked);
-    border-color: var(--border-btn-primary);
-    box-shadow:
-        inset 0 1px 2px rgba(0, 0, 0, 0.15),
-        0 1px 2px rgba(0, 0, 0, 0.1);
+    background: var(--surface-checkbox-checked);
+    box-shadow: var(--shadow-pressed);
 }
 
 input[type="checkbox"].checkbox:checked::after {
@@ -201,8 +191,8 @@ input[type="checkbox"].checkbox:checked::after {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: calc(var(--font-row-size) * 0.22);
-    height: calc(var(--font-row-size) * 0.55);
+    width: calc(var(--font-row-size) * 0.25);
+    height: calc(var(--font-row-size) * 0.6);
     border: solid var(--checkbox-check-color);
     border-width: 0 calc(var(--font-row-size) * 0.12) calc(var(--font-row-size) * 0.12) 0;
     transform: translate(-50%, -60%) rotate(45deg);
@@ -228,21 +218,26 @@ table thead .row-indicator {
     max-width: 16px;
     padding: 0 !important;
     margin: 0 !important;
-    background: var(--gradient-th);
-    border-top-left-radius: 10px;
+    background: var(--surface-th);
+    border-top-left-radius: var(--radius-md);
     z-index: 10;
-    box-shadow:
-        inset 0 -1px 0 var(--border-header);
+    box-shadow: none;
 }
 
 table td.row-indicator {
     padding-left: 4px;
 }
 
-table td.sticky-col,
+table td.sticky-col {
+    position: sticky;
+    background: var(--bg-table);
+    z-index: 2;
+}
+
 table th.sticky-col {
     position: sticky;
-    z-index: 1;
+    background: var(--surface-th);
+    z-index: 2;
 }
 
 body.modal-open table td.sticky-col,
@@ -303,18 +298,16 @@ body.modal-open .row-indicator {
     display: none;
     position: fixed;
     z-index: 99999;
-    background: var(--gradient-tooltip);
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
-    color: #f1f5f9;
+    background: var(--surface-tooltip);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    color: #e2e6ec;
     font-size: 11px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #0f172a;
-    box-shadow:
-        var(--shadow-tooltip-popup),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    border: none;
+    box-shadow: var(--shadow-tooltip-popup);
     pointer-events: none;
     white-space: nowrap;
     line-height: 1.4;
@@ -327,9 +320,9 @@ body.modal-open .row-indicator {
 .floating-editor {
     position: fixed;
     z-index: 1000;
-    background: var(--bg-cell);
-    border: 2px solid var(--text-muted);
-    border-radius: 6px;
+    background: var(--bg-input);
+    border: none;
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-floating-editor);
     padding: 2px;
 }
@@ -369,11 +362,7 @@ body.modal-open .row-indicator {
     font-size: 12px;
     line-height: 1;
     flex-shrink: 0;
-    background-position: center center;
-}
-
-.floating-editor.date-editor .calendar-edit-btn {
-    align-self: center;
+    background-position: center 1px;
 }
 
 .status-dot {

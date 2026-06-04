@@ -17,15 +17,13 @@
 }
 
 .modal-content {
-    background: var(--gradient-modal);
-    padding: 10px;
-    border-radius: 12px;
+    background: var(--surface-modal);
+    padding: 12px;
+    border-radius: var(--radius-lg);
     width: 90%;
     max-width: max-content;
-    box-shadow:
-        var(--shadow-modal),
-        var(--shadow-inset-light);
-    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-modal);
+    border: none;
 }
 
 .modal h2 {
@@ -38,20 +36,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding: 4px 12px 4px 12px;
-    background: var(--gradient-modal-header);
-    border: 1px solid var(--border-medium);
-    border-radius: 6px;
-    box-shadow:
-        var(--shadow-status-box),
-        var(--shadow-inset-bottom),
-        var(--shadow-inset-light);
+    margin-bottom: 14px;
+    padding: 6px 14px 6px 14px;
+    background: var(--surface-modal-header);
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-extruded-sm);
 }
 
 .modal-close-btn {
     background: transparent;
-    border: 1px solid transparent;
+    border: none;
     font-size: 18px;
     color: var(--text-muted);
     width: 24px;
@@ -59,11 +54,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: var(--radius-xs);
 }
 
 .modal-close-btn:hover {
     background: var(--bg-scrollbar-track);
-    border-color: var(--border-medium);
     color: var(--text-secondary);
 }
 
@@ -93,16 +88,14 @@
 
 .form-group input,
 .form-group select {
-    padding: 3px 6px;
-    border: 1px solid var(--border-medium);
-    border-radius: 6px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     line-height: 14px;
     background: var(--bg-input);
     color: var(--text-secondary);
-    box-shadow:
-        var(--shadow-inset-input),
-        var(--shadow-input);
+    box-shadow: var(--shadow-inset-input);
     transition: all 0.15s ease;
     width: 100%;
 }
@@ -115,10 +108,7 @@
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--text-muted);
-    box-shadow:
-        var(--shadow-inset-input),
-        var(--shadow-input-focus);
+    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus);
 }
 
 .date-input {
@@ -152,7 +142,7 @@
     height: 18px;
     padding: 2px;
     pointer-events: auto;
-    opacity: 0.85;
+    opacity: 0.6;
     filter: var(--calendar-icon-filter);
     transition: opacity 0.15s ease;
 }
@@ -175,8 +165,7 @@
 .toolbar button:focus-visible,
 .form-group input:focus-visible,
 .form-group select:focus-visible {
-    outline: 2px solid var(--text-muted);
-    outline-offset: 2px;
+    box-shadow: var(--shadow-input-focus), var(--shadow-inset-input);
 }
 
 .form-group input:required {
