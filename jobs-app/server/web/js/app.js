@@ -96,9 +96,9 @@ async function init() {
     renderForm();
     updateStats();
 
-    navigator.sendBeacon('/api/heartbeat', '');
+    fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
     setInterval(() => {
-        navigator.sendBeacon('/api/heartbeat', '');
+        fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
     }, 5000);
 
     setInterval(async () => {
