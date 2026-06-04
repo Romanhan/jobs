@@ -79,7 +79,7 @@ export function closeCalendarPopup() {
 function handleCalendarClickOutside(e) {
     const popup = document.getElementById('calendar-popup');
     if (popup && (calendarCellTd || calendarPopup)) {
-        if (e.target === calendarEditingInput || e.target === calendarPopup || e.target.closest('.calendar-edit-btn') || e.target.closest('.calendar-icon-btn')) {
+        if (e.target === calendarEditingInput || e.target === calendarPopup || e.target.closest?.('.calendar-edit-btn') || e.target.closest?.('.calendar-icon-btn')) {
             return;
         }
         if (!popup.contains(e.target)) {
