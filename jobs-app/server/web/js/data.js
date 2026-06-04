@@ -207,7 +207,11 @@ export function loadFromFile(file) {
                 if (arr[0] === 0xEF && arr[1] === 0xBB && arr[2] === 0xBF) {
                     raw = new TextDecoder('utf-8').decode(arr.slice(3));
                 } else {
-                    raw = new TextDecoder('windows-1252').decode(arr);
+                    try {
+                        raw = new TextDecoder('utf-8', { fatal: true }).decode(arr);
+                    } catch {
+                        raw = new TextDecoder('windows-1252').decode(arr);
+                    }
                 }
                 const lines = parseCSVLines(raw);
                 if (lines.length < 1) throw new Error('Tühi fail');
