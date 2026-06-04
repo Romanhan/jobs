@@ -188,14 +188,18 @@ const run = Deno.build.os === "windows" ? ["cmd.exe", "/c", "start", url]
   : ["xdg-open", url];
 
 try {
-  new Deno.Command(run[0], { args: run.slice(1), stdin: "null", stdout: "null", stderr: "null" }).spawn();
+  Deno.serve({
+    port: PORT,
+    hostname: "127.0.0.1",
+    onListen() {
+      try {
+        new Deno.Command(run[0], { args: run.slice(1), stdin: "null", stdout: "null", stderr: "null" }).spawn();
+      } catch (e) {
+        Deno.writeTextFileSync("error.log", "Browser open failed: " + e);
+      }
+    }
+  }, handler);
 } catch (e) {
-  Deno.writeTextFileSync("error.log", `Browser open failed: ${e}`);
-}
-
-try {
-  Deno.serve({ port: PORT, hostname: "127.0.0.1" }, handler);
-} catch (e) {
-  Deno.writeTextFileSync("error.log", `${e}\n${(e as Error)?.stack || ""}`);
+  Deno.writeTextFileSync("error.log", e + "\n" + ((e as Error)?.stack || ""));
   Deno.exit(1);
 }
