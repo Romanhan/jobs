@@ -288,6 +288,8 @@ export function handleKeydown(e) {
         return;
     }
     if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && !document.getElementById('modal').classList.contains('active')) {
+        const active = document.activeElement;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
         e.preventDefault();
         if (undo()) {
             if (editingCell) finishEditing();
