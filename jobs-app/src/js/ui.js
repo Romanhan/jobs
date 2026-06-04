@@ -125,9 +125,9 @@ export function renderTableBody() {
                     const p = cleanA.split('.');
                     cleanA = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
                 }
-                if (/^\d{2}\.\d{2}\.\d{4}$/.test(cleanB)) {
+                if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(cleanB)) {
                     const p = cleanB.split('.');
-                    cleanB = `${p[2]}-${p[1]}-${p[0]}`;
+                    cleanB = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
                 }
                 const dateA = cleanA ? new Date(cleanA).getTime() : 0;
                 const dateB = cleanB ? new Date(cleanB).getTime() : 0;
