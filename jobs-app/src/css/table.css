@@ -117,7 +117,7 @@ td {
     font-size: var(--font-row-size);
     line-height: 1;
     vertical-align: top;
-    padding: 0.05em 0;
+    padding: 0.02em 0;
 }
 
 td:hover {
