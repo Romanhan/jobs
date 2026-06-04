@@ -308,11 +308,15 @@ export function handleKeydown(e) {
         const dateStr = dd + '.' + mm + '.' + yyyy;
         if (editingCell) {
             const input = document.querySelector('.floating-editor textarea');
-            if (input) input.value = dateStr;
+            if (input) {
+                input.value = dateStr;
+                input.dispatchEvent(new Event('input'));
+            }
         } else if (document.getElementById('modal').classList.contains('active')) {
             const active = document.activeElement;
             if (active && active.tagName === 'INPUT' && active.closest('#add-form')) {
                 active.value = dateStr;
+                active.dispatchEvent(new Event('input'));
             }
         }
         return;
