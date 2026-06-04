@@ -57,6 +57,11 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
     await Deno.rename(tempFile, DATA_FILE);
   } catch (e) {
     console.error("Failed to write data file:", e);
+    try {
+      await Deno.remove(tempFile);
+    } catch {
+      // Ignore cleanup errors
+    }
     return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
   }
   const stat = await Deno.stat(DATA_FILE);
