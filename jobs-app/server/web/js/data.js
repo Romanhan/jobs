@@ -70,6 +70,9 @@ export async function autoSave() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(jobs)
         });
+        if (!res.ok) {
+            throw new Error("Server error: " + res.status);
+        }
         const data = await res.json();
         lastSavedTimestamp = data.modified || Date.now();
     } catch (e) {
