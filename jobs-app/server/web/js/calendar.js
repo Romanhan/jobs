@@ -113,7 +113,7 @@ export function renderCalendar() {
     html += '</div>';
     
     html += '<div class="calendar-weekdays">';
-    const weekdays = ['E', 'K', 'T', 'N', 'R', 'L', 'P'];
+    const weekdays = ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
     weekdays.forEach(day => {
         html += '<span class="calendar-weekday">' + day + '</span>';
     });
