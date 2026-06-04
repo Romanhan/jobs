@@ -236,7 +236,7 @@ export function addJob(e) {
     let hasError = false;
     FORM_FIELDS.forEach(f => {
         const col = f.col;
-        const input = form.querySelector('[name="' + col + '"]');
+        const input = form.elements[col];
         if (input && input.value) {
             let val = input.value;
             if (DATE_COLS.includes(col)) {
