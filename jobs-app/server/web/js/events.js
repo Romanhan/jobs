@@ -171,7 +171,7 @@ export function saveEdited(input, index, col) {
             value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
         }
         const parsed = parseDate(value);
-        if (parsed && !/^\\d{4}-\\d{2}-\\d{2}$/.test(parsed)) {
+        if (parsed && !/^\d{4}-\d{2}-\d{2}$/.test(parsed)) {
             showStatus('Vigane kuupäeva vorming (Kasuta: PP.KK.AAAA)', 'error');
             finishEditing();
             return;
