@@ -4,6 +4,7 @@ import { convertSaabunudDates, parseCSVLine, parseCSVLines, fixColumnKeys } from
 export let jobs = [];
 let lastSavedTimestamp = 0;
 let isLoaded = false;
+let inFlightSaves = 0;
 let undoStack = [];
 const MAX_UNDO = 50;
 
@@ -61,6 +62,7 @@ export async function loadFromFileLegacy() {
 
 export async function autoSave() {
     if (!isLoaded) return;
+    inFlightSaves++;
     try {
         const res = await fetch('/api/data', {
             method: 'POST',
@@ -71,10 +73,13 @@ export async function autoSave() {
         lastSavedTimestamp = data.modified || Date.now();
     } catch (e) {
         console.error('Salvestamine ebaõnnestus', e);
+    } finally {
+        inFlightSaves--;
     }
 }
 
 export async function pollChanges() {
+    if (inFlightSaves > 0) return false;
     try {
         const res = await fetch('/api/poll?since=' + lastSavedTimestamp);
         const data = await res.json();
