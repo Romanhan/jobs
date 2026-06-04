@@ -75,8 +75,6 @@ export function closeCalendarPopup() {
     calendarRowIndex = null;
     calendarColName = null;
     calendarEditingInput = null;
-}
-
 function handleCalendarClickOutside(e) {
     const popup = document.getElementById('calendar-popup');
     if (popup && (calendarCellTd || calendarPopup)) {
