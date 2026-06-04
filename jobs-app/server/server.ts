@@ -39,13 +39,14 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
 
 async function handlePostData(req: Request, corsHeaders: Record<string, string>): Promise<Response> {
   const contentLength = req.headers.get("content-length");
-  if (contentLength && parseInt(contentLength, 10) > 5 * 1024 * 1024) {
+  if (!contentLength) {
+    return new Response("Length Required", { status: 411, headers: corsHeaders });
+  }
+  const size = parseInt(contentLength, 10);
+  if (isNaN(size) || size > 5 * 1024 * 1024) {
     return new Response("Payload too large", { status: 413, headers: corsHeaders });
   }
   const body = await req.bytes();
-  if (body.length > 5 * 1024 * 1024) {
-    return new Response("Payload too large", { status: 413, headers: corsHeaders });
-  }
   let jobs: unknown;
   try {
     jobs = JSON.parse(new TextDecoder().decode(body));
