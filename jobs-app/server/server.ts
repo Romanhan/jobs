@@ -51,7 +51,7 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
   if (!Array.isArray(jobs) || !jobs.every(j => j && typeof j === 'object' && typeof (j as Record<string, unknown>)['Töö Nr'] === 'string')) {
     return new Response("Invalid job data", { status: 400, headers: corsHeaders });
   }
-  const tempFile = `${DATA_FILE}.tmp`;
+  const tempFile = DATA_FILE + "." + Math.random().toString(36).slice(2) + ".tmp";
   try {
     await Deno.writeTextFile(tempFile, JSON.stringify(jobs));
     await Deno.rename(tempFile, DATA_FILE);
