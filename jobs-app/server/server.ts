@@ -133,8 +133,7 @@ async function serveStatic(url: URL): Promise<Response> {
     return new Response("Bad Request", { status: 400 });
   }
 
-  const baseDir = import.meta.dirname + "/web";
-  const baseUrl = new URL("file:///" + baseDir.replace(/\\/g, "/") + "/");
+  const baseUrl = new URL("web/", import.meta.url);
   // URL pathname normalizes .. segments, handling decoded and literal traversals
   const resolved = new URL(path.replace(/\\/g, "/").replace(/^\//, ""), baseUrl);
   const resolvedPath = resolved.pathname;
