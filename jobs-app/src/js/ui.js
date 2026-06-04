@@ -210,6 +210,10 @@ export function updateStickyPositions() {
 
 export function renderForm() {
     const grid = document.getElementById('form-grid');
+    const modalButtons = document.querySelector('.modal-buttons');
+    if (modalButtons && grid.contains(modalButtons)) {
+        document.getElementById('add-form').appendChild(modalButtons);
+    }
     let html = '';
     
     const lines = {};
@@ -261,7 +265,6 @@ grid.innerHTML = html;
         
         // Move buttons to last form-line
         const lastFormLine = grid.querySelector('.form-line:last-child');
-        const modalButtons = document.querySelector('.modal-buttons');
         if (lastFormLine && modalButtons) {
             lastFormLine.appendChild(modalButtons);
         }
