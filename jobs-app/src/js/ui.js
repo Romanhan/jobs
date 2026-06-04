@@ -121,9 +121,9 @@ export function renderTableBody() {
             if (typeof valA === 'boolean') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
             else if (DATE_COLS.includes(sortColumn)) {
                 let cleanA = valA, cleanB = valB;
-                if (/^\d{2}\.\d{2}\.\d{4}$/.test(cleanA)) {
+                if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(cleanA)) {
                     const p = cleanA.split('.');
-                    cleanA = `${p[2]}-${p[1]}-${p[0]}`;
+                    cleanA = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
                 }
                 if (/^\d{2}\.\d{2}\.\d{4}$/.test(cleanB)) {
                     const p = cleanB.split('.');
