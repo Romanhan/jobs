@@ -63,7 +63,7 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
 }
 
 async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promise<Response> {
-  const since = parseInt(url.searchParams.get("since") || "0");
+  const since = parseInt(url.searchParams.get("since") || "0", 10);
   let stat: Deno.FileInfo;
   try {
     stat = await Deno.stat(DATA_FILE);
