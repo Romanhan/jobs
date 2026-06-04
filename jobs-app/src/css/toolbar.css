@@ -90,7 +90,7 @@
     border: none;
     border-radius: var(--radius-round);
     background: var(--surface-checkbox);
-    box-shadow: var(--shadow-pill);
+    box-shadow: var(--shadow-pressed);
     cursor: pointer;
     vertical-align: middle;
     margin: 0;
@@ -103,7 +103,7 @@
 }
 
 .filter-blank-label input[type="checkbox"]:focus-visible {
-    box-shadow: var(--shadow-pill), var(--shadow-focus);
+    box-shadow: var(--shadow-pressed), var(--shadow-focus);
 }
 
 .filter-blank-label input[type="checkbox"]:checked {
@@ -142,7 +142,7 @@
     border: none;
     border-radius: var(--radius-round);
     background: var(--surface-checkbox);
-    box-shadow: var(--shadow-pill);
+    box-shadow: var(--shadow-pressed);
     cursor: pointer;
     vertical-align: middle;
     margin: 0;
@@ -155,7 +155,7 @@
 }
 
 .toolbar input[type="checkbox"]:focus-visible {
-    box-shadow: var(--shadow-pill), var(--shadow-focus);
+    box-shadow: var(--shadow-pressed), var(--shadow-focus);
 }
 
 .toolbar input[type="checkbox"]:checked {
