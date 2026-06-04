@@ -47,12 +47,17 @@ th {
     color: var(--text-header);
     cursor: pointer;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     user-select: none;
     padding: 4px 2px;
     border-bottom: 1px solid var(--border-header);
     box-shadow: none;
+}
+
+.header-label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 th .resize-handle {
@@ -71,6 +76,10 @@ th:hover .resize-handle {
 }
 
 th.wrap-header {
+    white-space: normal;
+}
+
+th.wrap-header .header-label {
     white-space: normal;
 }
 

@@ -79,7 +79,7 @@ export function renderTable() {
         colEl.style.width = width + 'px';
         colgroup.appendChild(colEl);
         
-        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '">' + label + '<div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
+        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '"><span class="header-label">' + label + '</span><div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
     
     for (let i = ths.length - 1; i >= 0; i--) {
