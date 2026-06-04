@@ -75,7 +75,7 @@ export function parseCSVLine(line) {
                 current += ch;
             }
         } else {
-            if (ch === '"') {
+            if (ch === '"' && current.length === 0) {
                 inQuotes = true;
             } else if (ch === ';') {
                 result.push(current);
