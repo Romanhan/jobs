@@ -267,9 +267,9 @@ export function renderForm() {
         });
         html += '</div>';
     });
-    
-grid.innerHTML = html;
-        
+
+        grid.innerHTML = html;
+
         // Add calendar button click handlers for date inputs
         document.querySelectorAll('.calendar-icon-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -283,7 +283,7 @@ grid.innerHTML = html;
                 }
             });
         });
-        
+
         // Move buttons to last form-line
         const lastFormLine = grid.querySelector('.form-line:last-child');
         const modalButtons = document.querySelector('.modal-buttons');
