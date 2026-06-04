@@ -53,6 +53,7 @@ export function openDateCalendar(inputEl, currentValue, callback, anchorEl) {
     const popup = document.createElement('div');
     popup.className = 'calendar-popup active';
     popup.id = 'calendar-popup';
+    popup.addEventListener('mousedown', e => e.preventDefault());
 
     document.body.appendChild(popup);
     renderCalendar();
