@@ -478,7 +478,7 @@ export function attachEventListeners() {
             shortcutsPopup.style.display = 'none';
         }
         const fontPopup = document.getElementById('font-size-popup');
-        if (fontPopup.style.display !== 'none' && !fontPopup.contains(e.target) && e.target !== menuBtn && e.target.getAttribute('data-action') !== 'font-size') {
+        if (fontPopup.style.display !== 'none' && !fontPopup.contains(e.target) && e.target !== menuBtn && e.target.getAttribute?.('data-action') !== 'font-size') {
             fontPopup.style.display = 'none';
         }
     });
