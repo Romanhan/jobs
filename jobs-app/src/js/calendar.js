@@ -9,7 +9,7 @@ let calendarSelectedDate = null;
 let calendarCellTd = null;
 let calendarRowIndex = null;
 let calendarColName = null;
-let ignoreNextClick = false;
+
 
 export function positionCalendarPopup(anchorEl) {
     const popup = document.getElementById('calendar-popup');
@@ -59,9 +59,10 @@ export function openDateCalendar(inputEl, currentValue, callback, anchorEl) {
     renderCalendar();
     positionCalendarPopup(anchorEl || inputEl);
     
-    document.addEventListener('click', handleCalendarClickOutside);
+    setTimeout(() => {
+        document.addEventListener('click', handleCalendarClickOutside);
+    }, 0);
 }
-
 export function closeCalendarPopup() {
     const popup = document.getElementById('calendar-popup');
     if (popup) {
@@ -74,14 +75,9 @@ export function closeCalendarPopup() {
     calendarRowIndex = null;
     calendarColName = null;
     calendarEditingInput = null;
-    ignoreNextClick = false;
 }
 
 function handleCalendarClickOutside(e) {
-    if (ignoreNextClick) {
-        ignoreNextClick = false;
-        return;
-    }
     const popup = document.getElementById('calendar-popup');
     if (popup && (calendarCellTd || calendarPopup)) {
         if (!popup.contains(e.target)) {
@@ -109,9 +105,9 @@ export function renderCalendar() {
     const monthNames = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
     
     let html = '<div class="calendar-header">';
-    html += '<button class="calendar-header-btn" onclick="event.stopPropagation();changeMonth(-1)">◀</button>';
+    html += '<button class="calendar-header-btn" data-action="prev-month">◀</button>';
     html += '<span class="calendar-month-year">' + monthNames[calendarCurrentMonth] + ' ' + calendarCurrentYear + '</span>';
-    html += '<button class="calendar-header-btn" onclick="event.stopPropagation();changeMonth(1)">▶</button>';
+    html += '<button class="calendar-header-btn" data-action="next-month">▶</button>';
     html += '</div>';
     
     html += '<div class="calendar-weekdays">';
@@ -138,14 +134,14 @@ export function renderCalendar() {
         const dayStr = String(day).padStart(2, '0') + '.' + String(prevDate.getMonth() + 1).padStart(2, '0') + '.' + prevDate.getFullYear();
         const isSelected = dayStr === calendarSelectedDate;
         const isToday = dayStr === todayStr;
-        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
+        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
     }
     
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayStr = String(day).padStart(2, '0') + '.' + String(calendarCurrentMonth + 1).padStart(2, '0') + '.' + calendarCurrentYear;
         const isSelected = dayStr === calendarSelectedDate;
         const isToday = dayStr === todayStr;
-        html += '<span class="calendar-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
+        html += '<span class="calendar-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
     }
     
     const totalCells = startDay + lastDay.getDate();
@@ -155,13 +151,32 @@ export function renderCalendar() {
         const dayStr = String(day).padStart(2, '0') + '.' + String(nextDate.getMonth() + 1).padStart(2, '0') + '.' + nextDate.getFullYear();
         const isSelected = dayStr === calendarSelectedDate;
         const isToday = dayStr === todayStr;
-        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '" onclick="event.stopPropagation();selectDateCalendar(\'' + dayStr + '\')">' + day + '</span>';
+        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
     }
     
     html += '</div>';
-    html += '<button class="calendar-today-btn" onclick="event.stopPropagation();selectTodayCalendar()">Täna</button>';
+    html += '<button class="calendar-today-btn" data-action="today">Täna</button>';
     
     popup.innerHTML = html;
+
+    popup.querySelector('[data-action="prev-month"]')?.addEventListener('click', e => {
+        e.stopPropagation();
+        changeMonth(-1);
+    });
+    popup.querySelector('[data-action="next-month"]')?.addEventListener('click', e => {
+        e.stopPropagation();
+        changeMonth(1);
+    });
+    popup.querySelector('[data-action="today"]')?.addEventListener('click', e => {
+        e.stopPropagation();
+        selectTodayCalendar();
+    });
+    popup.querySelectorAll('.calendar-day[data-date]').forEach(el => {
+        el.addEventListener('click', e => {
+            e.stopPropagation();
+            selectDateCalendar(el.dataset.date);
+        });
+    });
 }
 
 export function changeMonth(delta) {
@@ -232,8 +247,9 @@ export function openDateCalendarDirect(td, index, col, currentValue, anchorEl) {
     renderCalendar();
     positionCalendarPopup(anchorEl || td);
     
-    document.addEventListener('click', handleCalendarClickOutside);
-    ignoreNextClick = true;
+    setTimeout(() => {
+        document.addEventListener('click', handleCalendarClickOutside);
+    }, 0);
 }
 
 let selectDateCalendarDirectCallback = null;
@@ -262,7 +278,3 @@ export function selectDateCalendarDirect(dateStr) {
     }
     closeCalendarPopup();
 }
-
-window.selectTodayCalendar = selectTodayCalendar;
-window.changeMonth = changeMonth;
-window.selectDateCalendar = selectDateCalendar;

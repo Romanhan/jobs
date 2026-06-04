@@ -144,7 +144,10 @@ export function editCell(td, index, col) {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
     editingCell = { td, index, col, isDate };
-    setEditingCellState(() => editingCell, finishEditing);
+    const onCalendarClose = isDate
+        ? () => saveEdited(input, index, col)
+        : finishEditing;
+    setEditingCellState(() => editingCell, onCalendarClose);
     td.style.visibility = 'hidden';
     td.classList.add('editing');
 }
