@@ -47,6 +47,8 @@ th {
     color: var(--text-header);
     cursor: pointer;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     user-select: none;
     padding: 4px 2px;
     border-bottom: 1px solid var(--border-header);
