@@ -252,9 +252,8 @@ export function loadFromFile(file) {
                         val = val.replace(/^"|"$/g, '').replace(/""/g, '"');
 
                         if (col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes') {
-                            if (val.toUpperCase() === 'TRUE') val = true;
-                            else if (val.toUpperCase() === 'FALSE') val = false;
-                            else val = false;
+                            const upper = val.toUpperCase();
+                            val = (upper === 'TRUE' || upper === '1' || upper === 'JAH' || upper === 'YES');
                         } else if (DATE_COLS.includes(col) && val) {
                             const m = val.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
                             if (m) {
