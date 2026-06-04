@@ -28,8 +28,6 @@ export function getStatusFilter() {
 
 export function getStatus(job) {
     if (job['Valmis']) return 'completed';
-    if (job['Töötlus allhankes']) return 'allhanke';
-    if (job['Alustatud']) return 'in-progress';
     const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
     if (deadlineStr) {
         const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -43,6 +41,8 @@ export function getStatus(job) {
         }
         if (!isNaN(deadline) && deadline < today) return 'overdue';
     }
+    if (job['Töötlus allhankes']) return 'allhanke';
+    if (job['Alustatud']) return 'in-progress';
     return null;
 }
 
