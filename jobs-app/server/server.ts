@@ -48,7 +48,7 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
   } catch {
     return new Response("Invalid JSON", { status: 400, headers: corsHeaders });
   }
-  if (!Array.isArray(jobs) || !jobs.every(j => j && typeof j === 'object' && typeof j['Töö Nr'] === 'string')) {
+  if (!Array.isArray(jobs) || !jobs.every(j => j && typeof j === 'object' && typeof (j as Record<string, unknown>)['Töö Nr'] === 'string')) {
     return new Response("Invalid job data", { status: 400, headers: corsHeaders });
   }
   const file = await Deno.open(DATA_FILE, { create: true, write: true });
