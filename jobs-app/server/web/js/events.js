@@ -459,7 +459,7 @@ export function attachEventListeners() {
         } else if (action === 'row-colors') {
             const showRowColors = localStorage.getItem('showRowColors') !== 'false';
             localStorage.setItem('showRowColors', showRowColors ? 'false' : 'true');
-            document.getElementById('menu-row-colors').textContent = showRowColors ? 'Color rows' : 'Color rows ●';
+            document.getElementById('menu-row-colors').innerHTML = localStorage.getItem('showRowColors') !== 'false' ? 'Color rows <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--color-primary);vertical-align:middle;margin-left:6px"></span>' : 'Color rows';
             renderTableBody();
         }
     });
