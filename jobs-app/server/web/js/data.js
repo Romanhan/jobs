@@ -5,6 +5,7 @@ export let jobs = [];
 let lastSavedTimestamp = 0;
 let isLoaded = false;
 let inFlightSaves = 0;
+let isPolling = false;
 let undoStack = [];
 const MAX_UNDO = 50;
 
@@ -79,7 +80,8 @@ export async function autoSave() {
 }
 
 export async function pollChanges() {
-    if (inFlightSaves > 0) return false;
+    if (inFlightSaves > 0 || isPolling) return false;
+    isPolling = true;
     try {
         const res = await fetch('/api/poll?since=' + lastSavedTimestamp);
         const data = await res.json();
@@ -93,6 +95,8 @@ export async function pollChanges() {
         return false;
     } catch {
         return false;
+    } finally {
+        isPolling = false;
     }
 }
 
