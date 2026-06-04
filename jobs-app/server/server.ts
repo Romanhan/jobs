@@ -38,7 +38,19 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
 }
 
 async function handlePostData(req: Request, corsHeaders: Record<string, string>): Promise<Response> {
-  const jobs = await req.json();
+  const body = await req.bytes();
+  if (body.length > 5 * 1024 * 1024) {
+    return new Response("Payload too large", { status: 413, headers: corsHeaders });
+  }
+  let jobs: unknown;
+  try {
+    jobs = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return new Response("Invalid JSON", { status: 400, headers: corsHeaders });
+  }
+  if (!Array.isArray(jobs) || !jobs.every(j => j && typeof j === 'object' && typeof j['Töö Nr'] === 'string')) {
+    return new Response("Invalid job data", { status: 400, headers: corsHeaders });
+  }
   const file = await Deno.open(DATA_FILE, { create: true, write: true });
   try {
     await file.lock(true);
