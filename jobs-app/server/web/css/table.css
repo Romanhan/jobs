@@ -173,7 +173,7 @@ input[type="checkbox"].checkbox {
     background: var(--surface-checkbox);
     cursor: pointer;
     position: relative;
-    box-shadow: var(--shadow-inset-input);
+    box-shadow: var(--shadow-pill);
     transition: all 0.15s ease;
 }
 
