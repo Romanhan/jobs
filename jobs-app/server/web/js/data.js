@@ -85,6 +85,7 @@ export async function pollChanges() {
         const data = await res.json();
         if (data.changed && data.jobs) {
             jobs = data.jobs;
+            convertSaabunudDates(jobs);
             lastSavedTimestamp = data.modified || Date.now();
             clearUndo();
             return true;
