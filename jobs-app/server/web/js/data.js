@@ -87,6 +87,7 @@ export async function pollChanges() {
     isPolling = true;
     try {
         const res = await fetch('/api/poll?since=' + lastSavedTimestamp);
+        if (!res.ok) return false;
         const data = await res.json();
         if (data.changed && data.jobs) {
             jobs = data.jobs;
