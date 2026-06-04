@@ -42,8 +42,8 @@ export function openDateCalendar(inputEl, currentValue, callback, anchorEl) {
     const formattedValue = formatDate(currentValue || '');
     if (formattedValue && /^\d{2}\.\d{2}\.\d{4}$/.test(formattedValue)) {
         const parts = formattedValue.split('.');
-        year = parseInt(parts[2]);
-        month = parseInt(parts[1]) - 1;
+        year = parseInt(parts[2], 10);
+        month = parseInt(parts[1], 10) - 1;
     }
 
     calendarCurrentYear = year;
