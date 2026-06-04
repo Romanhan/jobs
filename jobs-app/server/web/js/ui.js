@@ -33,9 +33,15 @@ export function getStatus(job) {
     const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
     if (deadlineStr) {
         const today = new Date(); today.setHours(0, 0, 0, 0);
-        const parts = deadlineStr.split('-');
-        const deadline = new Date(parts[0], parts[1] - 1, parts[2]);
-        if (deadline < today) return 'overdue';
+        let deadline;
+        if (deadlineStr.includes('.')) {
+            const parts = deadlineStr.split('.');
+            deadline = new Date(parts[2], parts[1] - 1, parts[0]);
+        } else {
+            const parts = deadlineStr.split('-');
+            deadline = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+        if (!isNaN(deadline) && deadline < today) return 'overdue';
     }
     return null;
 }
