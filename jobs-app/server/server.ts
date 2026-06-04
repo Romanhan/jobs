@@ -138,7 +138,7 @@ async function serveStatic(url: URL): Promise<Response> {
   const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
   try {
-    const content = await Deno.readFile(resolvedPath);
+    const content = await Deno.readFile(resolved);
     return new Response(content, {
       status: 200,
       headers: { "Content-Type": contentType, "Cache-Control": "no-store" },
