@@ -419,11 +419,8 @@ export function attachEventListeners() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.csv,.txt';
-            input.style.display = 'none';
-            document.body.appendChild(input);
             input.addEventListener('change', function(e) {
                 const file = e.target.files[0];
-                document.body.removeChild(input);
                 if (!file) return;
                 showStatus('Laen...', 'success');
                 doLoadFromFile(file).then(result => {
