@@ -261,7 +261,7 @@ export function loadFromFile(file) {
                     const job = {};
                     COLUMNS.forEach(col => {
                         const idx = colMap[col];
-                        const val = (idx !== undefined && values[idx] !== undefined) ? values[idx] : '';
+                        let val = (idx !== undefined && values[idx] !== undefined) ? values[idx] : '';
 
                         if (col === 'Valmis' || col === 'Alustatud' || col === 'Töötlus Lõpetatud' || col === 'Töötlus allhankes') {
                             const upper = val.toUpperCase();
