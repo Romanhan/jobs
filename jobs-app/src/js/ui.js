@@ -166,7 +166,7 @@ export function renderTableBody() {
             } else {
                 const rawValue = isDate ? formatDate(value) : (value || '');
                 const displayValue = isDate ? rawValue : renderMarkdown(rawValue);
-                const tooltipValue = rawValue.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                const tooltipValue = String(rawValue).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 html += '<td tabindex="0" class="' + stickyClass + '" style="min-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
             }
         });
