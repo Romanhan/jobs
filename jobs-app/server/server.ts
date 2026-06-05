@@ -26,9 +26,9 @@ setInterval(() => {
   if (Date.now() - lastHeartbeat > 10000) Deno.exit(0);
 }, 5000);
 
-async function logError(msg: string) {
+function logError(msg: string) {
   try {
-    await Deno.writeTextFile("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
+    Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
   } catch {}
 }
 
