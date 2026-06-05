@@ -39,13 +39,8 @@ async function ensureDataFile(): Promise<void> {
     const content = await Deno.readTextFile(DATA_FILE);
     JSON.parse(content); // validate JSON
   } catch (e) {
-    if (e instanceof Deno.errors.NotFound || e instanceof SyntaxError) {
-      // File missing or invalid JSON → create empty array silently
+    if (e instanceof Deno.errors.NotFound) {
       await Deno.writeTextFile(DATA_FILE, "[]");
-      // Only log when we repaired corrupted/invalid JSON, not on first run
-      if (!(e instanceof Deno.errors.NotFound)) {
-        logError(`Data file was invalid JSON, replaced with empty list`);
-      }
     } else {
       throw e;
     }
@@ -232,7 +227,11 @@ async function handler(req: Request): Promise<Response> {
 async function startServer() {
   try {
     await ensureDataFile();
-  } catch {}
+  } catch (e) {
+    logError(`Data file error: ${e}`);
+    console.error(`  ⛔ Viga: Andmefail ${DATA_FILE} on vigane - kontrollige faili`);
+    Deno.exit(1);
+  }
 
   const actualUrl = `http://localhost:${PORT}`;
   console.log("");
