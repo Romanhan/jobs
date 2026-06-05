@@ -243,10 +243,12 @@ async function startServer() {
 
   const abortController = new AbortController();
 
-  Deno.addSignalListener("SIGINT", () => {
-    console.log("\n  Server suletakse...");
-    abortController.abort();
-  });
+  if (Deno.build.os !== "windows") {
+    Deno.addSignalListener("SIGINT", () => {
+      console.log("\n  Server suletakse...");
+      abortController.abort();
+    });
+  }
 
   for (let port = PORT; port < PORT + MAX_PORT_RETRIES; port++) {
     try {
