@@ -233,10 +233,8 @@ async function startServer() {
     Deno.exit(1);
   }
 
-  const actualUrl = `http://localhost:${PORT}`;
   console.log("");
   console.log(`  Tööde Haldus — Server`);
-  console.log(`  Ava: ${actualUrl}`);
   console.log(`  Andmed: ${DATA_FILE}`);
   console.log("  Sulge: Ctrl+C");
   console.log("");
