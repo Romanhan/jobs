@@ -38,9 +38,13 @@ td {
     white-space: nowrap;
 }
 
-th {
+thead {
     position: sticky;
     top: 0;
+    z-index: 5;
+}
+
+th {
     background: var(--surface-th);
     font-weight: 600;
     font-size: 11px;
