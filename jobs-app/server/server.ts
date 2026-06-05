@@ -282,8 +282,16 @@ async function startServer() {
       Deno.exit(0);
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
-      if (port === PORT + MAX_PORT_RETRIES - 1) {
-        logError(`All ports ${PORT}-${PORT + MAX_PORT_RETRIES - 1} in use: ${e}`);
+      if (e instanceof Deno.errors.AddrInUse) {
+        if (port >= PORT + MAX_PORT_RETRIES - 1) {
+          const lastPort = PORT + MAX_PORT_RETRIES - 1;
+          console.error(`  ⛔ Viga: Kõik pordid vahemikus ${PORT}-${lastPort} on hõivatud.`);
+          logError(`All ports from ${PORT} to ${lastPort} are in use.`);
+          Deno.exit(1);
+        }
+      } else {
+        console.error(`  ⛔ Viga serveri käivitamisel: ${e}`);
+        logError(`Failed to start server: ${e}`);
         Deno.exit(1);
       }
     }
