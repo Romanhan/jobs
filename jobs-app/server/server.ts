@@ -29,7 +29,7 @@ setInterval(() => {
 function logError(msg: string) {
   try {
     Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
-  } catch {}
+  } catch (e) { console.error("Failed to write to error.log:", e); }
 }
 
 async function ensureDataFile(): Promise<void> {
