@@ -40,6 +40,10 @@ async function ensureDataFile(): Promise<void> {
     JSON.parse(content); // validate JSON
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
+      const dir = DATA_FILE.includes("/") || DATA_FILE.includes("\\") ? DATA_FILE.replace(/[\/\\][^\/\\]+$/, "") : null;
+      if (dir) {
+        await Deno.mkdir(dir, { recursive: true });
+      }
       await Deno.writeTextFile(DATA_FILE, "[]");
     } else {
       throw e;
