@@ -14,6 +14,10 @@ for (let i = 0; i < args.length; i++) {
 
 let lastHeartbeat: number = Date.now();
 
+setInterval(() => {
+  if (Date.now() - lastHeartbeat > 10000) Deno.exit(0);
+}, 5000);
+
 function logError(msg: string) {
   try {
     Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
@@ -217,57 +221,42 @@ async function handler(req: Request): Promise<Response> {
   }
 }
 
-const url = `http://localhost:${PORT}`;
-
-function printBanner() {
-  console.log("");
-  console.log("  ╔══════════════════════════════╗");
-  console.log("  ║   Tööde Haldus — Server       ║");
-  console.log("  ╚══════════════════════════════╝");
-  console.log(`  Andmed: ${DATA_FILE}`);
-  console.log(`  Otsitava pordivahemik: ${PORT}-${PORT + MAX_PORT_RETRIES - 1}`);
-}
-
-async function verifyServer(port: number): Promise<boolean> {
-  try {
-    const res = await fetch(`http://127.0.0.1:${port}/api/heartbeat`, { method: "POST" });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 async function startServer() {
-  printBanner();
+  try {
+    await ensureDataFile();
+  } catch {}
+
+  const actualUrl = `http://localhost:${PORT}`;
+  console.log("");
+  console.log(`  Tööde Haldus — Server`);
+  console.log(`  Ava: ${actualUrl}`);
+  console.log(`  Andmed: ${DATA_FILE}`);
+  console.log("  Sulge: Ctrl+C");
+  console.log("");
 
   const abortController = new AbortController();
 
   Deno.addSignalListener("SIGINT", () => {
     console.log("\n  Server suletakse...");
     abortController.abort();
-    Deno.exit(0);
   });
 
   for (let port = PORT; port < PORT + MAX_PORT_RETRIES; port++) {
-    process.stdout.write(`  Proovin pordi ${port}... `);
     try {
-      Deno.serve({
+      const server = Deno.serve({
         port,
         hostname: "127.0.0.1",
         signal: abortController.signal,
         onListen() {
-          const actualUrl = `http://localhost:${port}`;
-          console.log("Õnnestus!");
-          console.log("");
-          console.log(`  ✅ Server töötab!`);
-          console.log(`  🌐 Ava: ${actualUrl}`);
-          console.log(`  ❌ Sulge: Ctrl+C`);
+          const url = `http://localhost:${port}`;
+          console.log(`  ✅ Server töötab pordil ${port}`);
+          console.log(`  🌐 Ava: ${url}`);
           console.log("");
 
           if (Deno.build.os === "windows") {
             try {
               new Deno.Command("cmd.exe", {
-                args: ["/c", "start", "", actualUrl],
+                args: ["/c", "start", "", url],
                 stdout: "null", stderr: "null"
               }).spawn();
             } catch (e) {
@@ -276,15 +265,12 @@ async function startServer() {
           }
         }
       }, handler);
-      return;
+
+      await server.finished;
+      Deno.exit(0);
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
-      console.log("Hõivatud");
       if (port === PORT + MAX_PORT_RETRIES - 1) {
-        console.error("");
-        console.error("  ⛔ Viga: kõik pordid on hõivatud!");
-        console.error(`  ${PORT}-${PORT + MAX_PORT_RETRIES - 1} — proovige --port pordiga`);
-        console.error("");
         logError(`All ports ${PORT}-${PORT + MAX_PORT_RETRIES - 1} in use: ${e}`);
         Deno.exit(1);
       }
