@@ -94,21 +94,23 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
     return new Response("Invalid job data", { status: 400, headers: corsHeaders });
   }
 
-  const tempFile = DATA_FILE + "." + Math.random().toString(36).slice(2) + ".tmp";
   for (let attempt = 0; attempt < MAX_SAVE_RETRIES; attempt++) {
+    let tempFile: string | undefined;
     try {
+      tempFile = await Deno.makeTempFile({ prefix: DATA_FILE, suffix: ".tmp" });
       await Deno.writeTextFile(tempFile, JSON.stringify(jobs));
       await Deno.rename(tempFile, DATA_FILE);
       break;
     } catch (e) {
+      if (tempFile) {
+        try { await Deno.remove(tempFile); } catch {}
+      }
       if (attempt === MAX_SAVE_RETRIES - 1) {
         logError(`Save failed after ${MAX_SAVE_RETRIES} retries: ${e}`);
-        try { await Deno.remove(tempFile); } catch {}
         return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
       }
       const delay = SAVE_RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
       await new Promise(r => setTimeout(r, delay));
-      try { await Deno.remove(tempFile); } catch {}
     }
   }
   const stat = await Deno.stat(DATA_FILE);
