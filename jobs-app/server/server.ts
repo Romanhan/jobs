@@ -1,14 +1,44 @@
-const PORT = 8080;
+const DEFAULT_PORT = 8080;
+const MAX_PORT_RETRIES = 10;
+const MAX_SAVE_RETRIES = 8;
+const SAVE_RETRY_BASE_DELAY_MS = 50;
+
 let DATA_FILE = "jobs_data.json";
 const args = Deno.args;
+let PORT = DEFAULT_PORT;
+
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--data" && i + 1 < args.length) DATA_FILE = args[i + 1];
+  if (args[i] === "--port" && i + 1 < args.length) PORT = parseInt(args[i + 1], 10);
 }
 
 let lastHeartbeat: number = Date.now();
-setInterval(() => {
-  if (lastHeartbeat && Date.now() - lastHeartbeat > 10000) Deno.exit(0);
-}, 5000);
+
+function logError(msg: string) {
+  try {
+    Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
+  } catch {}
+}
+
+async function ensureDataFile(): Promise<void> {
+  try {
+    const stat = await Deno.stat(DATA_FILE);
+    if (!stat.isFile) throw new Error("Not a file");
+    const content = await Deno.readTextFile(DATA_FILE);
+    JSON.parse(content); // validate JSON
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound || e instanceof SyntaxError) {
+      // File missing or invalid JSON → create empty array silently
+      await Deno.writeTextFile(DATA_FILE, "[]");
+      // Only log when we repaired corrupted/invalid JSON, not on first run
+      if (!(e instanceof Deno.errors.NotFound)) {
+        logError(`Data file was invalid JSON, replaced with empty list`);
+      }
+    } else {
+      throw e;
+    }
+  }
+}
 
 async function handleGetData(corsHeaders: Record<string, string>): Promise<Response> {
   try {
@@ -56,18 +86,23 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
   if (!Array.isArray(jobs) || !jobs.every(j => j && typeof j === 'object' && typeof (j as Record<string, unknown>)['Töö Nr'] === 'string')) {
     return new Response("Invalid job data", { status: 400, headers: corsHeaders });
   }
+
   const tempFile = DATA_FILE + "." + Math.random().toString(36).slice(2) + ".tmp";
-  try {
-    await Deno.writeTextFile(tempFile, JSON.stringify(jobs));
-    await Deno.rename(tempFile, DATA_FILE);
-  } catch (e) {
-    console.error("Failed to write data file:", e);
+  for (let attempt = 0; attempt < MAX_SAVE_RETRIES; attempt++) {
     try {
-      await Deno.remove(tempFile);
-    } catch {
-      // Ignore cleanup errors
+      await Deno.writeTextFile(tempFile, JSON.stringify(jobs));
+      await Deno.rename(tempFile, DATA_FILE);
+      break;
+    } catch (e) {
+      if (attempt === MAX_SAVE_RETRIES - 1) {
+        logError(`Save failed after ${MAX_SAVE_RETRIES} retries: ${e}`);
+        try { await Deno.remove(tempFile); } catch {}
+        return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
+      }
+      const delay = SAVE_RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
+      await new Promise(r => setTimeout(r, delay));
+      try { await Deno.remove(tempFile); } catch {}
     }
-    return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
   }
   const stat = await Deno.stat(DATA_FILE);
   return Response.json({
@@ -126,15 +161,14 @@ async function serveStatic(url: URL): Promise<Response> {
   let path = url.pathname;
   if (path === "/") path = "/index.html";
 
-  // decodeURIComponent handles percent-encoded traversals like %2e%2e%2f
   try {
     path = decodeURIComponent(path);
   } catch {
     return new Response("Bad Request", { status: 400 });
   }
 
+  // Use import.meta.url base - works for both --include (embedded) and dev (filesystem)
   const baseUrl = new URL("web/", import.meta.url);
-  // URL pathname normalizes .. segments, handling decoded and literal traversals
   const resolved = new URL(path.replace(/\\/g, "/").replace(/^\//, ""), baseUrl);
   const resolvedPath = resolved.pathname;
 
@@ -178,46 +212,84 @@ async function handler(req: Request): Promise<Response> {
     }
     return await serveStatic(url);
   } catch (e) {
-    console.error("Error:", e);
+    logError(`Handler error: ${e}`);
     return new Response("Internal Server Error", { status: 500 });
   }
 }
 
 const url = `http://localhost:${PORT}`;
 
-console.log("");
-console.log("  Tööde Haldus — Server käivitatud");
-console.log(`  Ava: ${url}`);
-console.log(`  Andmed: ${DATA_FILE}`);
-console.log("  Sulge: Ctrl+C");
-console.log("");
-
-const run = Deno.build.os === "windows" ? ["cmd.exe", "/c", "start", url]
-  : Deno.build.os === "darwin" ? ["open", url]
-  : ["xdg-open", url];
-
-if (Deno.build.os === "windows") {
-  try {
-    new Deno.Command("cmd.exe", {
-      args: ["/c", `for /f "tokens=5" %a in ('netstat -ano ^| findstr :${PORT} ^| findstr LISTENING') do taskkill /f /pid %a 2>nul`],
-      stdout: "null", stderr: "null"
-    }).outputSync();
-  } catch {}
+function printBanner() {
+  console.log("");
+  console.log("  ╔══════════════════════════════╗");
+  console.log("  ║   Tööde Haldus — Server       ║");
+  console.log("  ╚══════════════════════════════╝");
+  console.log(`  Andmed: ${DATA_FILE}`);
+  console.log(`  Otsitava pordivahemik: ${PORT}-${PORT + MAX_PORT_RETRIES - 1}`);
 }
 
-try {
-  Deno.serve({
-    port: PORT,
-    hostname: "127.0.0.1",
-    onListen() {
-      try {
-        new Deno.Command(run[0], { args: run.slice(1), stdin: "null", stdout: "null", stderr: "null" }).spawn();
-      } catch (e) {
-        Deno.writeTextFileSync("error.log", "Browser open failed: " + e);
+async function verifyServer(port: number): Promise<boolean> {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/heartbeat`, { method: "POST" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function startServer() {
+  printBanner();
+
+  const abortController = new AbortController();
+
+  Deno.addSignalListener("SIGINT", () => {
+    console.log("\n  Server suletakse...");
+    abortController.abort();
+    Deno.exit(0);
+  });
+
+  for (let port = PORT; port < PORT + MAX_PORT_RETRIES; port++) {
+    process.stdout.write(`  Proovin pordi ${port}... `);
+    try {
+      Deno.serve({
+        port,
+        hostname: "127.0.0.1",
+        signal: abortController.signal,
+        onListen() {
+          const actualUrl = `http://localhost:${port}`;
+          console.log("Õnnestus!");
+          console.log("");
+          console.log(`  ✅ Server töötab!`);
+          console.log(`  🌐 Ava: ${actualUrl}`);
+          console.log(`  ❌ Sulge: Ctrl+C`);
+          console.log("");
+
+          if (Deno.build.os === "windows") {
+            try {
+              new Deno.Command("cmd.exe", {
+                args: ["/c", "start", "", actualUrl],
+                stdout: "null", stderr: "null"
+              }).spawn();
+            } catch (e) {
+              logError(`Browser open failed: ${e}`);
+            }
+          }
+        }
+      }, handler);
+      return;
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
+      console.log("Hõivatud");
+      if (port === PORT + MAX_PORT_RETRIES - 1) {
+        console.error("");
+        console.error("  ⛔ Viga: kõik pordid on hõivatud!");
+        console.error(`  ${PORT}-${PORT + MAX_PORT_RETRIES - 1} — proovige --port pordiga`);
+        console.error("");
+        logError(`All ports ${PORT}-${PORT + MAX_PORT_RETRIES - 1} in use: ${e}`);
+        Deno.exit(1);
       }
     }
-  }, handler);
-} catch (e) {
-  Deno.writeTextFileSync("error.log", e + "\n" + ((e as Error)?.stack || ""));
-  Deno.exit(1);
+  }
 }
+
+startServer();
