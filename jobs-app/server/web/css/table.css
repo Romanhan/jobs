@@ -41,7 +41,7 @@ td {
 thead {
     position: sticky;
     top: 0;
-    z-index: 5;
+    z-index: 15;
 }
 
 th {
@@ -241,6 +241,7 @@ table thead .row-indicator {
 
 table td.row-indicator {
     padding-left: 4px;
+    background: var(--bg-table);
 }
 
 table td.sticky-col {
