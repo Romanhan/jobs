@@ -196,6 +196,15 @@ const run = Deno.build.os === "windows" ? ["cmd.exe", "/c", "start", url]
   : Deno.build.os === "darwin" ? ["open", url]
   : ["xdg-open", url];
 
+if (Deno.build.os === "windows") {
+  try {
+    new Deno.Command("cmd.exe", {
+      args: ["/c", `for /f "tokens=5" %a in ('netstat -ano ^| findstr :${PORT} ^| findstr LISTENING') do taskkill /f /pid %a 2>nul`],
+      stdout: "null", stderr: "null"
+    }).spawn();
+  } catch {}
+}
+
 try {
   Deno.serve({
     port: PORT,
