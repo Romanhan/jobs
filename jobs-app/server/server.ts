@@ -9,7 +9,15 @@ let PORT = DEFAULT_PORT;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--data" && i + 1 < args.length) DATA_FILE = args[i + 1];
-  if (args[i] === "--port" && i + 1 < args.length) PORT = parseInt(args[i + 1], 10);
+  if (args[i] === "--port" && i + 1 < args.length) {
+    const parsed = parseInt(args[i + 1], 10);
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 65535) {
+      PORT = parsed;
+    } else {
+      console.error(`  ⛔ Viga: Vigane pordi number "${args[i + 1]}" (peab olema vahemikus 0-65535)`);
+      Deno.exit(1);
+    }
+  }
 }
 
 let lastHeartbeat: number = Date.now();
