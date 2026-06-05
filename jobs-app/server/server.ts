@@ -5,7 +5,7 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === "--data" && i + 1 < args.length) DATA_FILE = args[i + 1];
 }
 
-let lastHeartbeat: number | null = null;
+let lastHeartbeat: number = Date.now();
 setInterval(() => {
   if (lastHeartbeat && Date.now() - lastHeartbeat > 10000) Deno.exit(0);
 }, 5000);
