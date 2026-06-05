@@ -281,7 +281,7 @@ async function startServer() {
       await server.finished;
       Deno.exit(0);
     } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") return;
+      if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
       if (port === PORT + MAX_PORT_RETRIES - 1) {
         logError(`All ports ${PORT}-${PORT + MAX_PORT_RETRIES - 1} in use: ${e}`);
         Deno.exit(1);
