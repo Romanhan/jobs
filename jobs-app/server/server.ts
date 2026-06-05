@@ -13,7 +13,7 @@ for (let i = 0; i < args.length; i++) {
     if (!isNaN(parsed) && parsed >= 0 && parsed <= 65535) {
       PORT = parsed;
     } else {
-      console.error(`  ⛔ Viga: Vigane pordi number "${args[i + 1]}" (peab olema vahemikus 0-65535)`);
+      logError(`Invalid port number "${args[i + 1]}" (must be 0-65535)`);
       Deno.exit(1);
     }
   }
@@ -25,10 +25,10 @@ setInterval(() => {
   if (Date.now() - lastActivity > 1800000) Deno.exit(0);
 }, 60000);
 
-async function logError(msg: string): Promise<void> {
+function logError(msg: string) {
   try {
-    await Deno.writeTextFile("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
-  } catch (e) { console.error("Failed to write to error.log:", e); }
+    Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
+  } catch {}
 }
 
 async function ensureDataFile(): Promise<void> {
@@ -236,21 +236,13 @@ async function startServer() {
     await ensureDataFile();
   } catch (e) {
     logError(`Data file error: ${e}`);
-    console.error(`  ⛔ Viga: Andmefail ${DATA_FILE} on vigane - kontrollige faili`);
     Deno.exit(1);
   }
-
-  console.log("");
-  console.log(`  Tööde Haldus — Server`);
-  console.log(`  Andmed: ${DATA_FILE}`);
-  console.log("  Sulge: Ctrl+C");
-  console.log("");
 
   const abortController = new AbortController();
 
   if (Deno.build.os !== "windows") {
     Deno.addSignalListener("SIGINT", () => {
-      console.log("\n  Server suletakse...");
       abortController.abort();
     });
   }
@@ -262,9 +254,6 @@ async function startServer() {
       signal: abortController.signal,
       onListen() {
         const url = `http://localhost:${PORT}`;
-        console.log(`  ✅ Server töötab pordil ${PORT}`);
-        console.log(`  🌐 Ava: ${url}`);
-        console.log("");
 
         let command: string[];
         if (Deno.build.os === "windows") {
@@ -291,11 +280,9 @@ async function startServer() {
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
     if (e instanceof Deno.errors.AddrInUse) {
-      console.error(`  ⛔ Viga: Port ${PORT} on hõivatud`);
       logError(`Port ${PORT} in use`);
       Deno.exit(1);
     }
-    console.error(`  ⛔ Viga serveri käivitamisel: ${e}`);
     logError(`Failed to start server: ${e}`);
     Deno.exit(1);
   }
