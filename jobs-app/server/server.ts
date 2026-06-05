@@ -260,15 +260,22 @@ async function startServer() {
           console.log(`  🌐 Ava: ${url}`);
           console.log("");
 
+          let command: string[];
           if (Deno.build.os === "windows") {
-            try {
-              new Deno.Command("cmd.exe", {
-                args: ["/c", "start", "", url],
-                stdout: "null", stderr: "null"
-              }).spawn();
-            } catch (e) {
-              logError(`Browser open failed: ${e}`);
-            }
+            command = ["cmd.exe", "/c", "start", "", url];
+          } else if (Deno.build.os === "darwin") {
+            command = ["open", url];
+          } else {
+            command = ["xdg-open", url];
+          }
+          try {
+            new Deno.Command(command[0], {
+              args: command.slice(1),
+              stdout: "null",
+              stderr: "null"
+            }).spawn();
+          } catch (e) {
+            logError(`Browser open failed: ${e}`);
           }
         }
       }, handler);
