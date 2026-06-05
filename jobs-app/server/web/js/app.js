@@ -96,10 +96,9 @@ async function init() {
     renderForm();
     updateStats();
 
-    fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
-    setInterval(() => {
-        fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
-    }, 5000);
+    window.addEventListener('beforeunload', () => {
+        navigator.sendBeacon('/api/exit');
+    });
 
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) return;

@@ -1,5 +1,4 @@
 const DEFAULT_PORT = 8080;
-const MAX_PORT_RETRIES = 10;
 const MAX_SAVE_RETRIES = 8;
 const SAVE_RETRY_BASE_DELAY_MS = 50;
 
@@ -20,11 +19,11 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-let lastHeartbeat: number = Date.now();
+let lastActivity: number = Date.now();
 
 setInterval(() => {
-  if (Date.now() - lastHeartbeat > 10000) Deno.exit(0);
-}, 5000);
+  if (Date.now() - lastActivity > 1800000) Deno.exit(0);
+}, 60000);
 
 async function logError(msg: string): Promise<void> {
   try {
@@ -206,6 +205,7 @@ async function serveStatic(url: URL): Promise<Response> {
 }
 
 async function handler(req: Request): Promise<Response> {
+  lastActivity = Date.now();
   const url = new URL(req.url);
   const path = url.pathname;
 
@@ -220,8 +220,8 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
-    if (path === "/api/heartbeat") {
-      lastHeartbeat = Date.now();
+    if (path === "/api/exit") {
+      setTimeout(() => Deno.exit(0), 100);
       return new Response("ok");
     }
     return await serveStatic(url);
@@ -255,55 +255,49 @@ async function startServer() {
     });
   }
 
-  for (let port = PORT; port < PORT + MAX_PORT_RETRIES; port++) {
-    try {
-      const server = Deno.serve({
-        port,
-        hostname: "127.0.0.1",
-        signal: abortController.signal,
-        onListen() {
-          const url = `http://localhost:${port}`;
-          console.log(`  ✅ Server töötab pordil ${port}`);
-          console.log(`  🌐 Ava: ${url}`);
-          console.log("");
+  try {
+    const server = Deno.serve({
+      port: PORT,
+      hostname: "127.0.0.1",
+      signal: abortController.signal,
+      onListen() {
+        const url = `http://localhost:${PORT}`;
+        console.log(`  ✅ Server töötab pordil ${PORT}`);
+        console.log(`  🌐 Ava: ${url}`);
+        console.log("");
 
-          let command: string[];
-          if (Deno.build.os === "windows") {
-            command = ["cmd.exe", "/c", "start", "", url];
-          } else if (Deno.build.os === "darwin") {
-            command = ["open", url];
-          } else {
-            command = ["xdg-open", url];
-          }
-          try {
-            new Deno.Command(command[0], {
-              args: command.slice(1),
-              stdout: "null",
-              stderr: "null"
-            }).spawn();
-          } catch (e) {
-            logError(`Browser open failed: ${e}`);
-          }
+        let command: string[];
+        if (Deno.build.os === "windows") {
+          command = ["cmd.exe", "/c", "start", "", url];
+        } else if (Deno.build.os === "darwin") {
+          command = ["open", url];
+        } else {
+          command = ["xdg-open", url];
         }
-      }, handler);
-
-      await server.finished;
-      Deno.exit(0);
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
-      if (e instanceof Deno.errors.AddrInUse) {
-        if (port >= PORT + MAX_PORT_RETRIES - 1) {
-          const lastPort = PORT + MAX_PORT_RETRIES - 1;
-          console.error(`  ⛔ Viga: Kõik pordid vahemikus ${PORT}-${lastPort} on hõivatud.`);
-          logError(`All ports from ${PORT} to ${lastPort} are in use.`);
-          Deno.exit(1);
+        try {
+          new Deno.Command(command[0], {
+            args: command.slice(1),
+            stdout: "null",
+            stderr: "null"
+          }).spawn();
+        } catch (e) {
+          logError(`Browser open failed: ${e}`);
         }
-      } else {
-        console.error(`  ⛔ Viga serveri käivitamisel: ${e}`);
-        logError(`Failed to start server: ${e}`);
-        Deno.exit(1);
       }
+    }, handler);
+
+    await server.finished;
+    Deno.exit(0);
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
+    if (e instanceof Deno.errors.AddrInUse) {
+      console.error(`  ⛔ Viga: Port ${PORT} on hõivatud`);
+      logError(`Port ${PORT} in use`);
+      Deno.exit(1);
     }
+    console.error(`  ⛔ Viga serveri käivitamisel: ${e}`);
+    logError(`Failed to start server: ${e}`);
+    Deno.exit(1);
   }
 }
 
