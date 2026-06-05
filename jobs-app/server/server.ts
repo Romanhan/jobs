@@ -97,7 +97,8 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
   for (let attempt = 0; attempt < MAX_SAVE_RETRIES; attempt++) {
     let tempFile: string | undefined;
     try {
-      tempFile = await Deno.makeTempFile({ prefix: DATA_FILE, suffix: ".tmp" });
+      const dir = DATA_FILE.includes("/") || DATA_FILE.includes("\\") ? DATA_FILE.replace(/[\/\\][^\/\\]+$/, "") : ".";
+      tempFile = await Deno.makeTempFile({ dir, prefix: "jobs_data_temp", suffix: ".tmp" });
       await Deno.writeTextFile(tempFile, JSON.stringify(jobs));
       await Deno.rename(tempFile, DATA_FILE);
       break;
