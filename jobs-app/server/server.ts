@@ -227,10 +227,6 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
-    if (path === "/api/exit") {
-      setTimeout(() => Deno.exit(0), 100);
-      return new Response("ok");
-    }
     return await serveStatic(url);
   } catch (e) {
     logError(`Handler error: ${e}`);
@@ -261,6 +257,11 @@ async function startServer() {
       signal: abortController.signal,
       onListen({ port }) {
         const url = `http://localhost:${port}`;
+        console.log(`Server running on port ${port}`);
+        console.log(`Open: ${url}`);
+        console.log(`Data: ${DATA_FILE}`);
+        console.log(`Close: Ctrl+C`);
+        console.log("");
 
         let command: string[];
         if (Deno.build.os === "windows") {
