@@ -45,6 +45,26 @@ function logError(msg: string) {
   } catch {}
 }
 
+function tryKillPort(port: number): void {
+  try {
+    if (Deno.build.os === "windows") {
+      const result = new Deno.Command("netstat", {
+        args: ["-ano"],
+        stdout: "piped",
+      }).outputSync();
+      const stdout = new TextDecoder().decode(result.stdout);
+      for (const line of stdout.split("\n")) {
+        if (line.includes(`:${port}`) && line.includes("LISTENING")) {
+          const parts = line.trim().split(/\s+/);
+          const pid = parts[parts.length - 1];
+          new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
+          break;
+        }
+      }
+    }
+  } catch {}
+}
+
 async function ensureDataFile(): Promise<void> {
   try {
     const stat = await Deno.stat(DATA_FILE);
@@ -312,8 +332,48 @@ async function startServer() {
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
     if (e instanceof Deno.errors.AddrInUse) {
-      logError(`Port ${PORT} in use`);
-      Deno.exit(1);
+      logError(`Port ${PORT} in use, trying to kill old process...`);
+      tryKillPort(PORT);
+      try {
+        const server = Deno.serve({
+          port: PORT,
+          hostname: "127.0.0.1",
+          signal: abortController.signal,
+          onListen({ port }) {
+            const url = `http://localhost:${port}`;
+            console.log(`Server running on port ${port}`);
+            console.log(`Open: ${url}`);
+            console.log(`Data: ${DATA_FILE}`);
+            console.log(`Close: Ctrl+C`);
+            console.log("");
+
+            let command: string[];
+            if (Deno.build.os === "windows") {
+              command = ["cmd.exe", "/c", "start", "", url];
+            } else if (Deno.build.os === "darwin") {
+              command = ["open", url];
+            } else {
+              command = ["xdg-open", url];
+            }
+            try {
+              new Deno.Command(command[0], {
+                args: command.slice(1),
+                stdin: "null",
+                stdout: "null",
+                stderr: "null"
+              }).spawn();
+            } catch (e) {
+              logError(`Browser open failed: ${e}`);
+            }
+          }
+        }, handler);
+
+        await server.finished;
+        Deno.exit(0);
+      } catch (e2) {
+        logError(`Port ${PORT} still in use after kill attempt`);
+        Deno.exit(1);
+      }
     }
     logError(`Failed to start server: ${e}`);
     Deno.exit(1);
