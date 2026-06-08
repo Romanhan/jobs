@@ -96,9 +96,14 @@ async function init() {
     renderForm();
     updateStats();
 
+    let lastKeepAlive = 0;
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) {
-            fetch('/').catch(() => {});
+            const now = Date.now();
+            if (now - lastKeepAlive > 300000) {
+                lastKeepAlive = now;
+                fetch('/').catch(() => {});
+            }
             return;
         }
         try {
