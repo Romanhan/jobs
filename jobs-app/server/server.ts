@@ -54,11 +54,19 @@ function tryKillPort(port: number): void {
       }).outputSync();
       const stdout = new TextDecoder().decode(result.stdout);
       for (const line of stdout.split("\n")) {
-        if (line.includes(`:${port}`) && line.includes("LISTENING")) {
+        if (line.includes("LISTENING")) {
           const parts = line.trim().split(/\s+/);
-          const pid = parts[parts.length - 1];
-          new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
-          break;
+          if (parts.length >= 5) {
+            const localAddress = parts[1];
+            const lastColon = localAddress.lastIndexOf(":");
+            if (lastColon !== -1) {
+              const localPort = parseInt(localAddress.substring(lastColon + 1), 10);
+              if (localPort === port) {
+                new Deno.Command("taskkill", { args: ["/PID", parts[parts.length - 1], "/F"] }).outputSync();
+                break;
+              }
+            }
+          }
         }
       }
     }
