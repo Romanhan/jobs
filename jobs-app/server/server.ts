@@ -54,7 +54,10 @@ async function ensureDataFile(): Promise<void> {
       try {
         const parsed = JSON.parse(content);
         if (!Array.isArray(parsed)) {
-          await Deno.writeTextFile(DATA_FILE, "[]");
+          throw new Error(
+            `Data file "${DATA_FILE}" does not contain a JSON array. ` +
+            `Fix or delete the file, then restart the server.`
+          );
         }
       } catch (parseErr) {
         throw new Error(
