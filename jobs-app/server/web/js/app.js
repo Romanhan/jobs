@@ -96,7 +96,7 @@ async function init() {
     renderForm();
     updateStats();
 
-    let lastKeepAlive = 0;
+    let lastKeepAlive = Date.now();
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) {
             const now = Date.now();
