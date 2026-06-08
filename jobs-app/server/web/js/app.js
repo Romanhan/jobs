@@ -97,7 +97,10 @@ async function init() {
     updateStats();
 
     setInterval(async () => {
-        if (document.querySelector('.floating-editor')) return;
+        if (document.querySelector('.floating-editor')) {
+            fetch('/').catch(() => {});
+            return;
+        }
         try {
             const changed = await pollChanges();
             if (changed) {
