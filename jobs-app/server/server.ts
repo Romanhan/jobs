@@ -254,6 +254,10 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
+    if (path === "/api/exit") {
+      setTimeout(() => Deno.exit(0), 100);
+      return new Response("ok");
+    }
     return await serveStatic(url);
   } catch (e) {
     logError(`Handler error: ${e}`);
