@@ -27,14 +27,16 @@ setInterval(() => {
   if (Date.now() - lastActivity > 1800000) abortController.abort();
 }, 60000);
 
-if (Deno.build.os !== "windows") {
+try {
   Deno.addSignalListener("SIGINT", () => {
     abortController.abort();
   });
+} catch {}
+try {
   Deno.addSignalListener("SIGTERM", () => {
     abortController.abort();
   });
-}
+} catch {}
 
 function logError(msg: string) {
   console.error(msg);
