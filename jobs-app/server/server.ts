@@ -28,7 +28,7 @@ setInterval(() => {
 function logError(msg: string) {
   console.error(msg);
   try {
-    Deno.writeTextFileSync("error.log", "[" + new Date().toISOString() + "] " + msg + "\n", { append: true });
+    Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
   } catch {}
 }
 
