@@ -96,10 +96,6 @@ async function init() {
     renderForm();
     updateStats();
 
-    window.addEventListener('beforeunload', () => {
-        navigator.sendBeacon('/api/exit');
-    });
-
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) return;
         try {
