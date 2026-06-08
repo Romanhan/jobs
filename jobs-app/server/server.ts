@@ -40,7 +40,10 @@ async function ensureDataFile(): Promise<void> {
     if (content.trim() === "") {
       await Deno.writeTextFile(DATA_FILE, "[]");
     } else {
-      JSON.parse(content); // validate JSON
+      const parsed = JSON.parse(content);
+      if (!Array.isArray(parsed)) {
+        await Deno.writeTextFile(DATA_FILE, "[]");
+      }
     }
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
