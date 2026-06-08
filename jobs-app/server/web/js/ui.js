@@ -117,11 +117,7 @@ export function renderTableBody() {
                 if (getStatus(job) !== statusFilter) return false;
             } else {
                 const valmis = job['Valmis'];
-                if (showCompleted) {
-                    if (!valmis) return false;
-                } else {
-                    if (valmis) return false;
-                }
+                if (!!valmis !== showCompleted) return false;
                 const allhankes = job['Töötlus allhankes'];
                 if (allhankes && !showAllhankes) return false;
             }

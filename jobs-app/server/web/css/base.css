@@ -77,8 +77,9 @@ h1 {
     font-weight: 700;
     white-space: nowrap;
     display: inline-block;
+    line-height: 1;
     background: var(--bg-input);
-    padding: 6px 18px;
-    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    border-radius: 9999px;
     box-shadow: var(--shadow-inset);
 }
