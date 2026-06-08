@@ -351,6 +351,7 @@ async function startServer() {
     if (e instanceof Deno.errors.AddrInUse) {
       logError(`Port ${PORT} in use, trying to kill old process...`);
       tryKillPort(PORT);
+      await new Promise(r => setTimeout(r, 500));
       try {
         const server = Deno.serve({
           port: PORT,
