@@ -53,17 +53,18 @@ async function ensureDataFile(): Promise<void> {
     if (content.trim() === "") {
       await Deno.writeTextFile(DATA_FILE, "[]");
     } else {
+      let parsed: unknown;
       try {
-        const parsed = JSON.parse(content);
-        if (!Array.isArray(parsed)) {
-          throw new Error(
-            `Data file "${DATA_FILE}" does not contain a JSON array. ` +
-            `Fix or delete the file, then restart the server.`
-          );
-        }
-      } catch (parseErr) {
+        parsed = JSON.parse(content);
+      } catch {
         throw new Error(
           `Data file "${DATA_FILE}" contains invalid JSON and cannot be read. ` +
+          `Fix or delete the file, then restart the server.`
+        );
+      }
+      if (!Array.isArray(parsed)) {
+        throw new Error(
+          `Data file "${DATA_FILE}" does not contain a JSON array. ` +
           `Fix or delete the file, then restart the server.`
         );
       }
