@@ -102,7 +102,7 @@ async function init() {
             const now = Date.now();
             if (now - lastKeepAlive > 300000) {
                 lastKeepAlive = now;
-                fetch('/', { method: 'HEAD' }).catch(() => {});
+                fetch('/?t=' + now, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
             }
             return;
         }
