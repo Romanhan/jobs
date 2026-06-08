@@ -293,6 +293,7 @@ async function startServer() {
         try {
           new Deno.Command(command[0], {
             args: command.slice(1),
+            stdin: "null",
             stdout: "null",
             stderr: "null"
           }).spawn();
