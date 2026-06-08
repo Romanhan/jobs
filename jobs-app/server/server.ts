@@ -251,6 +251,9 @@ async function startServer() {
     Deno.addSignalListener("SIGINT", () => {
       abortController.abort();
     });
+    Deno.addSignalListener("SIGTERM", () => {
+      abortController.abort();
+    });
   }
 
   try {
