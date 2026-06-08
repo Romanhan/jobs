@@ -96,13 +96,16 @@ async function init() {
     renderForm();
     updateStats();
 
-    fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
-    setInterval(() => {
-        fetch('/api/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
-    }, 5000);
-
+    let lastKeepAlive = Date.now();
     setInterval(async () => {
-        if (document.querySelector('.floating-editor')) return;
+        if (document.querySelector('.floating-editor')) {
+            const now = Date.now();
+            if (now - lastKeepAlive > 300000) {
+                lastKeepAlive = now;
+                fetch('/?t=' + now, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+            }
+            return;
+        }
         try {
             const changed = await pollChanges();
             if (changed) {
