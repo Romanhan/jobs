@@ -37,7 +37,11 @@ async function ensureDataFile(): Promise<void> {
     const stat = await Deno.stat(DATA_FILE);
     if (!stat.isFile) throw new Error("Not a file");
     const content = await Deno.readTextFile(DATA_FILE);
-    JSON.parse(content); // validate JSON
+    if (content.trim() === "") {
+      await Deno.writeTextFile(DATA_FILE, "[]");
+    } else {
+      JSON.parse(content); // validate JSON
+    }
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
       const dir = DATA_FILE.includes("/") || DATA_FILE.includes("\\") ? DATA_FILE.replace(/[\/\\][^\/\\]+$/, "") : null;
