@@ -21,10 +21,20 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let lastActivity: number = Date.now();
+const abortController = new AbortController();
 
 setInterval(() => {
-  if (Date.now() - lastActivity > 1800000) Deno.exit(0);
+  if (Date.now() - lastActivity > 1800000) abortController.abort();
 }, 60000);
+
+if (Deno.build.os !== "windows") {
+  Deno.addSignalListener("SIGINT", () => {
+    abortController.abort();
+  });
+  Deno.addSignalListener("SIGTERM", () => {
+    abortController.abort();
+  });
+}
 
 function logError(msg: string) {
   console.error(msg);
@@ -244,17 +254,6 @@ async function startServer() {
   } catch (e) {
     logError(`Data file error: ${e}`);
     Deno.exit(1);
-  }
-
-  const abortController = new AbortController();
-
-  if (Deno.build.os !== "windows") {
-    Deno.addSignalListener("SIGINT", () => {
-      abortController.abort();
-    });
-    Deno.addSignalListener("SIGTERM", () => {
-      abortController.abort();
-    });
   }
 
   try {
