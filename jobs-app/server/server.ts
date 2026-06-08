@@ -252,8 +252,8 @@ async function startServer() {
       port: PORT,
       hostname: "127.0.0.1",
       signal: abortController.signal,
-      onListen() {
-        const url = `http://localhost:${PORT}`;
+      onListen({ port }) {
+        const url = `http://localhost:${port}`;
 
         let command: string[];
         if (Deno.build.os === "windows") {
