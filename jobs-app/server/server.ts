@@ -282,8 +282,17 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
-    if (path === "/api/exit") {
-      setTimeout(() => Deno.exit(0), 100);
+    if (path === "/api/exit" && req.method === "POST") {
+      const origin = req.headers.get("origin");
+      const referer = req.headers.get("referer");
+      const isLocal = (!origin || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) &&
+                      (!referer || referer.startsWith("http://localhost:") || referer.startsWith("http://127.0.0.1:"));
+      if (!isLocal) return new Response("Forbidden", { status: 403 });
+
+      const exitTime = Date.now();
+      setTimeout(() => {
+        if (lastActivity <= exitTime) Deno.exit(0);
+      }, 1500);
       return new Response("ok");
     }
     return await serveStatic(url);
