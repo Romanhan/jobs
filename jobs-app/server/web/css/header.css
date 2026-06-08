@@ -55,9 +55,10 @@
     align-items: center;
     gap: 5px;
     padding: 4px 6px;
-    border-radius: 1000px;
+    border-radius: 9999px;
     font-size: 10px;
     font-weight: 600;
+    line-height: 1;
     background: var(--surface-btn-secondary);
     color: var(--text-muted);
     min-width: auto;
