@@ -37,7 +37,6 @@ setSelectDateCallback((rowIndex, colName, dateStr) => {
 
 function attachSortListener() {
     document.querySelector('thead').addEventListener('click', function(e) {
-        if (e.target.tagName === 'SPAN') return;
         const th = e.target.closest('th');
         if (!th) return;
         const col = th.getAttribute('data-col');

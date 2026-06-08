@@ -361,7 +361,7 @@ body.modal-open .row-indicator {
 
 .floating-editor.date-editor {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 2px;
 }
 
@@ -378,7 +378,7 @@ body.modal-open .row-indicator {
     font-size: 12px;
     line-height: 1;
     flex-shrink: 0;
-    background-position: center 1px;
+    background-position: center center;
 }
 
 .status-dot {
