@@ -1,4 +1,4 @@
-const DEFAULT_PORT = 8080;
+const DEFAULT_PORT = 8085;
 const MAX_SAVE_RETRIES = 8;
 const SAVE_RETRY_BASE_DELAY_MS = 50;
 
@@ -9,11 +9,12 @@ let PORT = DEFAULT_PORT;
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--data" && i + 1 < args.length) DATA_FILE = args[i + 1];
   if (args[i] === "--port" && i + 1 < args.length) {
-    const parsed = parseInt(args[i + 1], 10);
-    if (!isNaN(parsed) && parsed >= 0 && parsed <= 65535) {
+    const portStr = args[i + 1];
+    const parsed = Number(portStr);
+    if (Number.isInteger(parsed) && parsed >= 0 && parsed <= 65535 && String(parsed) === portStr) {
       PORT = parsed;
     } else {
-      logError(`Invalid port number "${args[i + 1]}" (must be 0-65535)`);
+      logError(`Invalid port number "${portStr}" (must be 0-65535)`);
       Deno.exit(1);
     }
   }
