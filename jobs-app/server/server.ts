@@ -339,6 +339,15 @@ async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const path = url.pathname;
 
+  // Local-only check for all API endpoints
+  if (path.startsWith("/api/")) {
+    const origin = req.headers.get("origin");
+    const referer = req.headers.get("referer");
+    if ((origin && !isLocalConnection(origin)) || (referer && !isLocalConnection(referer))) {
+      return new Response("Forbidden", { status: 403 });
+    }
+  }
+
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
 
   try {
@@ -351,11 +360,6 @@ async function handler(req: Request): Promise<Response> {
       return await handlePoll(url, CORS);
     }
     if (path === "/api/enter" && req.method === "POST") {
-      const origin = req.headers.get("origin");
-      const referer = req.headers.get("referer");
-      const isLocal = (origin || referer) && (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
-      if (!isLocal) return new Response("Forbidden", { status: 403 });
-
       const tabId = url.searchParams.get("tabId");
       if (tabId) {
         activeTabs.set(tabId, Date.now());
@@ -367,11 +371,6 @@ async function handler(req: Request): Promise<Response> {
       return new Response("ok");
     }
     if (path === "/api/exit" && req.method === "POST") {
-      const origin = req.headers.get("origin");
-      const referer = req.headers.get("referer");
-      const isLocal = (origin || referer) && (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
-      if (!isLocal) return new Response("Forbidden", { status: 403 });
-
       const tabId = url.searchParams.get("tabId");
       if (tabId && activeTabs.delete(tabId)) {
         if (activeTabs.size === 0) {
