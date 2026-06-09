@@ -303,7 +303,7 @@ async function handler(req: Request): Promise<Response> {
       const origin = req.headers.get("origin");
       const referer = req.headers.get("referer");
       const isLocalConnection = (urlStr: string | null) => {
-        if (!urlStr) return true;
+        if (!urlStr) return false;
         try {
           const u = new URL(urlStr);
           return u.hostname === "localhost" || u.hostname === "127.0.0.1";
