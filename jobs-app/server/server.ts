@@ -103,7 +103,9 @@ function tryKillPort(port: number): void {
       const output = new TextDecoder().decode(result.stdout).trim();
       for (const pid of output.split(/\s+/)) {
         if (/^\d+$/.test(pid)) {
-          new Deno.Command("kill", { args: ["-9", pid] }).outputSync();
+          try {
+            Deno.kill(parseInt(pid, 10), "SIGKILL");
+          } catch {}
         }
       }
     }
