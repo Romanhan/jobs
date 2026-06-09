@@ -33,7 +33,7 @@ setInterval(() => {
   const now = Date.now();
   let changed = false;
   for (const [tabId, lastSeen] of activeTabs.entries()) {
-    if (now - lastSeen > 25000) {
+    if (now - lastSeen > 120000) {
       activeTabs.delete(tabId);
       changed = true;
     }
