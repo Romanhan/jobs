@@ -31,12 +31,15 @@ setInterval(() => {
 
 setInterval(() => {
   const now = Date.now();
-  let changed = false;
+  const toDelete: string[] = [];
   for (const [tabId, lastSeen] of activeTabs.entries()) {
     if (now - lastSeen > 120000) {
-      activeTabs.delete(tabId);
-      changed = true;
+      toDelete.push(tabId);
     }
+  }
+  let changed = toDelete.length > 0;
+  for (const tabId of toDelete) {
+    activeTabs.delete(tabId);
   }
   if (changed && activeTabs.size === 0) {
     if (exitTimeout !== undefined) {
