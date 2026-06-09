@@ -285,8 +285,16 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/exit" && req.method === "POST") {
       const origin = req.headers.get("origin");
       const referer = req.headers.get("referer");
-      const isLocal = (!origin || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) &&
-                      (!referer || referer.startsWith("http://localhost:") || referer.startsWith("http://127.0.0.1:"));
+      const isLocalConnection = (urlStr: string | null) => {
+        if (!urlStr) return true;
+        try {
+          const u = new URL(urlStr);
+          return u.hostname === "localhost" || u.hostname === "127.0.0.1";
+        } catch {
+          return false;
+        }
+      };
+      const isLocal = isLocalConnection(origin) && isLocalConnection(referer);
       if (!isLocal) return new Response("Forbidden", { status: 403 });
 
       const exitTime = Date.now();
