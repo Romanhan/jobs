@@ -341,6 +341,7 @@ body.modal-open .row-indicator {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-floating-editor);
     padding: 1px;
+    box-sizing: border-box;
 }
 
 .floating-editor textarea {
