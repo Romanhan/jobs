@@ -96,7 +96,8 @@ async function init() {
     renderForm();
     updateStats();
 
-    fetch('/api/enter', { method: 'POST', keepalive: true }).catch(() => {});
+    const tabId = crypto.randomUUID();
+    fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
 
     let lastKeepAlive = Date.now();
     setInterval(async () => {
@@ -118,7 +119,7 @@ async function init() {
     }, 2000);
 
     window.addEventListener('pagehide', () => {
-        navigator.sendBeacon('/api/exit');
+        navigator.sendBeacon('/api/exit?tabId=' + tabId);
     });
 }
 

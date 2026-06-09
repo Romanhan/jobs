@@ -21,7 +21,8 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let lastActivity: number = Date.now();
-let activeTabs = 0;
+let activeTabs = new Set<string>();
+let exitTimeout: ReturnType<typeof setTimeout> | undefined;
 const abortController = new AbortController();
 
 setInterval(() => {
@@ -298,7 +299,14 @@ async function handler(req: Request): Promise<Response> {
       return await handlePoll(url, CORS);
     }
     if (path === "/api/enter" && req.method === "POST") {
-      activeTabs++;
+      const tabId = url.searchParams.get("tabId");
+      if (tabId) {
+        activeTabs.add(tabId);
+        if (exitTimeout !== undefined) {
+          clearTimeout(exitTimeout);
+          exitTimeout = undefined;
+        }
+      }
       return new Response("ok");
     }
     if (path === "/api/exit" && req.method === "POST") {
@@ -313,13 +321,19 @@ async function handler(req: Request): Promise<Response> {
           return false;
         }
       };
-      const isLocal = isLocalConnection(origin) && isLocalConnection(referer);
+      const isLocal = (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
       if (!isLocal) return new Response("Forbidden", { status: 403 });
 
-      activeTabs = Math.max(0, activeTabs - 1);
-      if (activeTabs === 0) {
-        setTimeout(() => {
-          if (activeTabs === 0) abortController.abort();
+      const tabId = url.searchParams.get("tabId");
+      if (tabId) {
+        activeTabs.delete(tabId);
+      }
+      if (activeTabs.size === 0) {
+        if (exitTimeout !== undefined) {
+          clearTimeout(exitTimeout);
+        }
+        exitTimeout = setTimeout(() => {
+          if (activeTabs.size === 0) abortController.abort();
         }, 5000);
       }
       return new Response("ok");
