@@ -96,7 +96,7 @@ async function init() {
     renderForm();
     updateStats();
 
-    const tabId = crypto.randomUUID?.() ?? Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    const tabId = window.crypto?.randomUUID?.() ?? Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
     fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
 
     let lastKeepAlive = Date.now();
