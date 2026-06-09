@@ -44,24 +44,6 @@
     box-shadow: var(--shadow-extruded-sm);
 }
 
-.modal-close-btn {
-    background: transparent;
-    border: none;
-    font-size: 18px;
-    color: var(--text-muted);
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-xs);
-}
-
-.modal-close-btn:hover {
-    background: var(--bg-scrollbar-track);
-    color: var(--text-secondary);
-}
-
 .form-grid {
     display: flex;
     flex-direction: column;

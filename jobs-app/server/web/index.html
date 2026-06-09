@@ -37,6 +37,7 @@
                     <button class="menu-item" data-action="row-colors" id="menu-row-colors">Color rows</button>
                     <button class="menu-item" data-action="font-size">Font size</button>
                     <button class="menu-item" data-action="shortcuts">Shortcuts</button>
+                    <button class="menu-item" data-action="info">Info</button>
                 </div>
             </div>
         </div>
@@ -89,11 +90,14 @@
         </div>
     </div>
 
+    <div id="info-popup" class="info-popup" style="display:none">
+        <div class="info-grid" id="info-grid"></div>
+    </div>
+
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Lisa uus töö</h2>
-                <button type="button" class="modal-close-btn" id="btn-close-modal">×</button>
             </div>
             <form id="add-form">
                 <div class="form-grid" id="form-grid"></div>

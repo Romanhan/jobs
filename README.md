@@ -17,3 +17,4 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 - **Undo** (Ctrl+Z), keyboard shortcuts
 - **Column resize & sorting** — click header to sort, drag resize handles
 - **Soft neumorphic design** — matte off-white palette, mint accent, extruded dual-shadow system, inset pressed states
+- **Version info** — Menu → Info shows app name, version, author (auto-built from `server/deno.json`)

@@ -1,10 +1,21 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
+import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
 let editingCell = null;
+let tooltipEl = null;
+let tooltipTimeout = null;
+
+function hideTooltip() {
+    if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+    }
+    if (tooltipEl) tooltipEl.classList.remove('visible');
+}
 
 export function setEditingCell(cell) {
     editingCell = cell;
@@ -34,6 +45,8 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
 });
 
 export function editCell(td, index, col) {
+    hideTooltip();
+
     if (editingCell) {
         const activeInput = document.querySelector('.floating-editor textarea');
         if (activeInput) {
@@ -76,7 +89,6 @@ export function editCell(td, index, col) {
         measureDiv.style.whiteSpace = 'nowrap';
         measureDiv.style.fontSize = getComputedStyle(document.documentElement).getPropertyValue('--font-row-size');
         measureDiv.style.fontFamily = window.getComputedStyle(td).fontFamily;
-        measureDiv.style.padding = '2px';
         measureDiv.textContent = textToMeasure;
         document.body.appendChild(measureDiv);
         
@@ -90,11 +102,11 @@ export function editCell(td, index, col) {
             popupWidth = Math.min(textWidth + 8, maxPopupWidth);
         }
         if (isDate) {
-            popupWidth = Math.max(popupWidth, Math.max(textWidth, 60) + 2 + 22 + 8);
+            popupWidth = Math.max(popupWidth, Math.max(textWidth, 60) + 8 + 2 + 22 + 8);
         }
         floatingEditor.style.width = popupWidth + 'px';
         if (isDate) {
-            input.style.width = Math.max(textWidth, 60) + 'px';
+            input.style.width = (Math.max(textWidth, 60) + 8) + 'px';
         }
         if (isDate) {
             input.style.whiteSpace = 'nowrap';
@@ -287,6 +299,7 @@ export function handleKeydown(e) {
     const shortcutsPopup = document.getElementById('shortcuts-popup');
     const menuDropdown = document.getElementById('menu-dropdown');
     const fontPopup = document.getElementById('font-size-popup');
+    const infoPopup = document.getElementById('info-popup');
     if (e.key === 'Escape' && fontPopup && fontPopup.style.display !== 'none') {
         fontPopup.style.display = 'none';
         e.preventDefault();
@@ -294,6 +307,11 @@ export function handleKeydown(e) {
     }
     if (e.key === 'Escape' && shortcutsPopup && shortcutsPopup.style.display !== 'none') {
         shortcutsPopup.style.display = 'none';
+        e.preventDefault();
+        return;
+    }
+    if (e.key === 'Escape' && infoPopup && infoPopup.style.display !== 'none') {
+        infoPopup.style.display = 'none';
         e.preventDefault();
         return;
     }
@@ -411,6 +429,7 @@ export function attachEventListeners() {
     const menuBtn = document.getElementById('btn-menu');
     const menuDropdown = document.getElementById('menu-dropdown');
     const shortcutsPopup = document.getElementById('shortcuts-popup');
+    const infoPopup = document.getElementById('info-popup');
     
     function closeMenu() {
         menuDropdown.style.display = 'none';
@@ -450,6 +469,14 @@ export function attachEventListeners() {
             input.click();
         } else if (action === 'shortcuts') {
             shortcutsPopup.style.display = shortcutsPopup.style.display === 'none' ? 'block' : 'none';
+        } else if (action === 'info') {
+            const grid = document.getElementById('info-grid');
+            if (grid && infoPopup) {
+                grid.innerHTML = '<div class="info-label">Rakendus</div><div class="info-value">' + APP_NAME + '</div>'
+                    + '<div class="info-label">Versioon</div><div class="info-value">' + APP_VERSION + '</div>'
+                    + '<div class="info-label">Autor</div><div class="info-value">' + APP_AUTHOR + '</div>';
+                infoPopup.style.display = infoPopup.style.display === 'none' ? 'block' : 'none';
+            }
         } else if (action === 'font-size') {
             const popup = document.getElementById('font-size-popup');
             const currentSize = parseInt(localStorage.getItem('fontSize') || '12');
@@ -477,22 +504,14 @@ export function attachEventListeners() {
         if (shortcutsPopup.style.display !== 'none' && !shortcutsPopup.contains(e.target) && e.target !== menuBtn) {
             shortcutsPopup.style.display = 'none';
         }
+        if (infoPopup && infoPopup.style.display !== 'none' && !infoPopup.contains(e.target) && e.target !== menuBtn) {
+            infoPopup.style.display = 'none';
+        }
         const fontPopup = document.getElementById('font-size-popup');
         if (fontPopup.style.display !== 'none' && !fontPopup.contains(e.target) && e.target !== menuBtn && e.target.getAttribute?.('data-action') !== 'font-size') {
             fontPopup.style.display = 'none';
         }
     });
-
-    let tooltipEl = null;
-    let tooltipTimeout = null;
-
-    function hideTooltip() {
-        if (tooltipTimeout) {
-            clearTimeout(tooltipTimeout);
-            tooltipTimeout = null;
-        }
-        if (tooltipEl) tooltipEl.classList.remove('visible');
-    }
 
     function showTooltip(target) {
         const text = target.getAttribute('data-tooltip');
