@@ -91,14 +91,14 @@ export function editCell(td, index, col) {
         if (textWidth + 8 <= rect.width) {
             popupWidth = rect.width;
         } else {
-            popupWidth = Math.min(textWidth + 12, maxPopupWidth);
+            popupWidth = Math.min(textWidth + 8, maxPopupWidth);
         }
         if (isDate) {
-            popupWidth = Math.max(popupWidth, Math.max(textWidth, 60) + 12 + 2 + 22 + 8);
+            popupWidth = Math.max(popupWidth, Math.max(textWidth, 60) + 8 + 2 + 22 + 8);
         }
         floatingEditor.style.width = popupWidth + 'px';
         if (isDate) {
-            input.style.width = (Math.max(textWidth, 60) + 12) + 'px';
+            input.style.width = (Math.max(textWidth, 60) + 8) + 'px';
         }
         if (isDate) {
             input.style.whiteSpace = 'nowrap';
