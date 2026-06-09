@@ -67,19 +67,21 @@ function tryKillPort(port: number): void {
                 if (/^\d+$/.test(pid)) {
                   new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
                   break;
-    } else if (Deno.build.os !== "windows") {
+                }
+              }
+            }
+          }
+        }
+      }
+    } else {
       const result = new Deno.Command("lsof", {
         args: ["-t", `-i:${port}`],
         stdout: "piped",
       }).outputSync();
-      const pid = new TextDecoder().decode(result.stdout).trim();
-      if (/^\d+$/.test(pid)) {
-        new Deno.Command("kill", { args: ["-9", pid] }).outputSync();
-      }
-    }
-              }
-            }
-          }
+      const output = new TextDecoder().decode(result.stdout).trim();
+      for (const pid of output.split(/\s+/)) {
+        if (/^\d+$/.test(pid)) {
+          new Deno.Command("kill", { args: ["-9", pid] }).outputSync();
         }
       }
     }
