@@ -28,6 +28,13 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 ## How to Run
 1. **Local:** Open `jobs-app/src/index.html` in Chrome/Edge
 2. **Shared folder:** Copy `jobs-app/index.html` + `jobs_data.json` to shared network folder
+3. **Build .exe:** `cd jobs-app/server && deno task build` (auto-generates version info from `deno.json`)
+
+## Version Info
+- Version managed in `jobs-app/server/deno.json` (field `"version"`)
+- `deno task gen-version` reads `deno.json` and generates `web/js/version.js`
+- `deno task build` runs gen-version then compiles the .exe
+- Info popup (Menu → Info) displays app name, version, author
 
 ## Features
 - **Load data** — Reads from `jobs_data.json` or localStorage on page load
