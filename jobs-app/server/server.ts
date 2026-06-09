@@ -25,6 +25,16 @@ let activeTabs = new Map<string, number>();
 let exitTimeout: ReturnType<typeof setTimeout> | undefined;
 const abortController = new AbortController();
 
+function scheduleExit() {
+  if (exitTimeout !== undefined) {
+    clearTimeout(exitTimeout);
+  }
+  exitTimeout = setTimeout(() => {
+    exitTimeout = undefined;
+    if (activeTabs.size === 0) abortController.abort();
+  }, 5000);
+}
+
 setInterval(() => {
   if (Date.now() - lastActivity > 1800000) abortController.abort();
 }, 60000);
@@ -42,14 +52,7 @@ setInterval(() => {
     activeTabs.delete(tabId);
   }
   if (changed && activeTabs.size === 0) {
-    if (exitTimeout !== undefined) {
-      clearTimeout(exitTimeout);
-      exitTimeout = undefined;
-    }
-    exitTimeout = setTimeout(() => {
-      exitTimeout = undefined;
-      if (activeTabs.size === 0) abortController.abort();
-    }, 5000);
+    scheduleExit();
   }
 }, 5000);
 
@@ -330,11 +333,7 @@ async function handler(req: Request): Promise<Response> {
   lastActivity = Date.now();
 
   if (exitTimeout !== undefined) {
-    clearTimeout(exitTimeout);
-    exitTimeout = setTimeout(() => {
-      exitTimeout = undefined;
-      if (activeTabs.size === 0) abortController.abort();
-    }, 5000);
+    scheduleExit();
   }
 
   const url = new URL(req.url);
@@ -376,14 +375,7 @@ async function handler(req: Request): Promise<Response> {
       const tabId = url.searchParams.get("tabId");
       if (tabId && activeTabs.delete(tabId)) {
         if (activeTabs.size === 0) {
-          if (exitTimeout !== undefined) {
-            clearTimeout(exitTimeout);
-            exitTimeout = undefined;
-          }
-          exitTimeout = setTimeout(() => {
-            exitTimeout = undefined;
-            if (activeTabs.size === 0) abortController.abort();
-          }, 5000);
+          scheduleExit();
         }
       }
       return new Response("ok");
