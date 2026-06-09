@@ -316,7 +316,7 @@ async function handler(req: Request): Promise<Response> {
         if (!urlStr) return false;
         try {
           const u = new URL(urlStr);
-          return u.hostname === "localhost" || u.hostname === "127.0.0.1";
+          return u.hostname === "localhost" || u.hostname === "127.0.0.1" || u.hostname === "::1";
         } catch {
           return false;
         }
