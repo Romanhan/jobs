@@ -325,6 +325,15 @@ async function serveStatic(url: URL): Promise<Response> {
 
 async function handler(req: Request): Promise<Response> {
   lastActivity = Date.now();
+
+  if (exitTimeout !== undefined) {
+    clearTimeout(exitTimeout);
+    exitTimeout = setTimeout(() => {
+      exitTimeout = undefined;
+      if (activeTabs.size === 0) abortController.abort();
+    }, 5000);
+  }
+
   const url = new URL(req.url);
   const path = url.pathname;
 
