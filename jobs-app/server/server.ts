@@ -328,14 +328,14 @@ async function handler(req: Request): Promise<Response> {
       const tabId = url.searchParams.get("tabId");
       if (tabId) {
         activeTabs.delete(tabId);
-      }
-      if (activeTabs.size === 0) {
-        if (exitTimeout !== undefined) {
-          clearTimeout(exitTimeout);
+        if (activeTabs.size === 0) {
+          if (exitTimeout !== undefined) {
+            clearTimeout(exitTimeout);
+          }
+          exitTimeout = setTimeout(() => {
+            if (activeTabs.size === 0) abortController.abort();
+          }, 5000);
         }
-        exitTimeout = setTimeout(() => {
-          if (activeTabs.size === 0) abortController.abort();
-        }, 5000);
       }
       return new Response("ok");
     }
