@@ -103,9 +103,9 @@ async function init() {
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) {
             const now = Date.now();
-            if (now - lastKeepAlive > 300000) {
+            if (now - lastKeepAlive > 60000) {
                 lastKeepAlive = now;
-                fetch('/?t=' + now, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+                fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
             }
             return;
         }
