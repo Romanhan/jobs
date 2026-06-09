@@ -308,7 +308,7 @@ async function handler(req: Request): Promise<Response> {
       activeTabs = Math.max(0, activeTabs - 1);
       if (activeTabs === 0) {
         setTimeout(() => {
-          if (activeTabs === 0) Deno.exit(0);
+          if (activeTabs === 0) abortController.abort();
         }, 5000);
       }
       return new Response("ok");
