@@ -77,19 +77,17 @@ function tryKillPort(port: number): void {
       }).outputSync();
       const stdout = new TextDecoder().decode(result.stdout);
       for (const line of stdout.split("\n")) {
-        if (line.includes("LISTENING")) {
-          const parts = line.trim().split(/\s+/);
-          if (parts.length >= 5) {
-            const localAddress = parts[1];
-            const lastColon = localAddress.lastIndexOf(":");
-            if (lastColon !== -1) {
-              const localPort = parseInt(localAddress.substring(lastColon + 1), 10);
-              if (localPort === port) {
-                const pid = parts[parts.length - 1];
-                if (/^\d+$/.test(pid)) {
-                  new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
-                  break;
-                }
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 5) {
+          const localAddress = parts[1];
+          const lastColon = localAddress.lastIndexOf(":");
+          if (lastColon !== -1) {
+            const localPort = parseInt(localAddress.substring(lastColon + 1), 10);
+            if (localPort === port) {
+              const pid = parts[parts.length - 1];
+              if (/^\d+$/.test(pid)) {
+                new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
+                break;
               }
             }
           }
