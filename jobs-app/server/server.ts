@@ -231,7 +231,13 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
 
 async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promise<Response> {
   const tabId = url.searchParams.get("tabId");
-  if (tabId) activeTabs.set(tabId, Date.now());
+  if (tabId) {
+    activeTabs.set(tabId, Date.now());
+    if (exitTimeout !== undefined) {
+      clearTimeout(exitTimeout);
+      exitTimeout = undefined;
+    }
+  }
 
   const since = parseInt(url.searchParams.get("since") || "0", 10);
   let stat: Deno.FileInfo;
