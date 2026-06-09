@@ -332,7 +332,7 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/enter" && req.method === "POST") {
       const origin = req.headers.get("origin");
       const referer = req.headers.get("referer");
-      const isLocal = (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
+      const isLocal = (origin || referer) && (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
       if (!isLocal) return new Response("Forbidden", { status: 403 });
 
       const tabId = url.searchParams.get("tabId");
@@ -348,7 +348,7 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/exit" && req.method === "POST") {
       const origin = req.headers.get("origin");
       const referer = req.headers.get("referer");
-      const isLocal = (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
+      const isLocal = (origin || referer) && (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
       if (!isLocal) return new Response("Forbidden", { status: 403 });
 
       const tabId = url.searchParams.get("tabId");
