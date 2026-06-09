@@ -418,6 +418,7 @@ export function attachEventListeners() {
     const menuBtn = document.getElementById('btn-menu');
     const menuDropdown = document.getElementById('menu-dropdown');
     const shortcutsPopup = document.getElementById('shortcuts-popup');
+    const infoPopup = document.getElementById('info-popup');
     
     function closeMenu() {
         menuDropdown.style.display = 'none';
