@@ -96,24 +96,33 @@ async function init() {
     renderForm();
     updateStats();
 
+    const tabId = window.crypto?.randomUUID?.() ?? Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
+
     let lastKeepAlive = Date.now();
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) {
             const now = Date.now();
-            if (now - lastKeepAlive > 300000) {
+            if (now - lastKeepAlive > 60000) {
                 lastKeepAlive = now;
-                fetch('/?t=' + now, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+                fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
             }
             return;
         }
         try {
-            const changed = await pollChanges();
+            const changed = await pollChanges(tabId);
             if (changed) {
                 renderTableBody();
                 updateStats();
             }
         } catch {}
     }, 2000);
+
+    window.addEventListener('pagehide', () => {
+        if (typeof navigator.sendBeacon === 'function') {
+            navigator.sendBeacon('/api/exit?tabId=' + tabId);
+        }
+    });
 }
 
 attachSortListener();

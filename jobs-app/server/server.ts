@@ -21,11 +21,40 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let lastActivity: number = Date.now();
+let activeTabs = new Map<string, number>();
+let exitTimeout: ReturnType<typeof setTimeout> | undefined;
 const abortController = new AbortController();
+
+function scheduleExit() {
+  if (exitTimeout !== undefined) {
+    clearTimeout(exitTimeout);
+  }
+  exitTimeout = setTimeout(() => {
+    exitTimeout = undefined;
+    if (activeTabs.size === 0) abortController.abort();
+  }, 5000);
+}
 
 setInterval(() => {
   if (Date.now() - lastActivity > 1800000) abortController.abort();
 }, 60000);
+
+setInterval(() => {
+  const now = Date.now();
+  const toDelete: string[] = [];
+  for (const [tabId, lastSeen] of activeTabs.entries()) {
+    if (now - lastSeen > 300000) {
+      toDelete.push(tabId);
+    }
+  }
+  let changed = toDelete.length > 0;
+  for (const tabId of toDelete) {
+    activeTabs.delete(tabId);
+  }
+  if (changed && activeTabs.size === 0) {
+    scheduleExit();
+  }
+}, 5000);
 
 try {
   Deno.addSignalListener("SIGINT", () => {
@@ -43,6 +72,59 @@ function logError(msg: string) {
   try {
     Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
   } catch {}
+}
+
+function tryKillPort(port: number): void {
+  try {
+    if (Deno.build.os === "windows") {
+      const result = new Deno.Command("netstat", {
+        args: ["-ano"],
+        stdout: "piped",
+      }).outputSync();
+      const stdout = new TextDecoder().decode(result.stdout);
+      for (const line of stdout.split("\n")) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 5) {
+          const localAddress = parts[1];
+          const lastColon = localAddress.lastIndexOf(":");
+          if (lastColon !== -1) {
+            const localPort = parseInt(localAddress.substring(lastColon + 1), 10);
+            if (localPort === port) {
+              const pid = parts[parts.length - 1];
+              if (/^\d+$/.test(pid)) {
+                new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
+                break;
+              }
+            }
+          }
+        }
+      }
+    } else {
+      const result = new Deno.Command("lsof", {
+        args: ["-t", `-i:${port}`],
+        stdout: "piped",
+      }).outputSync();
+      const output = new TextDecoder().decode(result.stdout).trim();
+      for (const pid of output.split(/\s+/)) {
+        if (/^\d+$/.test(pid)) {
+          try {
+            Deno.kill(parseInt(pid, 10), "SIGKILL");
+          } catch {}
+        }
+      }
+    }
+  } catch {}
+}
+
+function isLocalConnection(urlStr: string | null): boolean {
+  if (!urlStr) return false;
+  try {
+    const u = new URL(urlStr);
+    const host = u.hostname.replace(/^\[|\]$/g, "");
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
 }
 
 async function ensureDataFile(): Promise<void> {
@@ -158,6 +240,15 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
 }
 
 async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promise<Response> {
+  const tabId = url.searchParams.get("tabId");
+  if (tabId) {
+    activeTabs.set(tabId, Date.now());
+    if (exitTimeout !== undefined) {
+      clearTimeout(exitTimeout);
+      exitTimeout = undefined;
+    }
+  }
+
   const since = parseInt(url.searchParams.get("since") || "0", 10);
   let stat: Deno.FileInfo;
   try {
@@ -240,8 +331,22 @@ async function serveStatic(url: URL): Promise<Response> {
 
 async function handler(req: Request): Promise<Response> {
   lastActivity = Date.now();
+
+  if (exitTimeout !== undefined) {
+    scheduleExit();
+  }
+
   const url = new URL(req.url);
   const path = url.pathname;
+
+  // Local-only check for all API endpoints
+  if (path.startsWith("/api/")) {
+    const origin = req.headers.get("origin");
+    const referer = req.headers.get("referer");
+    if ((origin && !isLocalConnection(origin)) || (referer && !isLocalConnection(referer))) {
+      return new Response("Forbidden", { status: 403 });
+    }
+  }
 
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
 
@@ -253,6 +358,26 @@ async function handler(req: Request): Promise<Response> {
     }
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
+    }
+    if (path === "/api/enter" && req.method === "POST") {
+      const tabId = url.searchParams.get("tabId");
+      if (tabId) {
+        activeTabs.set(tabId, Date.now());
+        if (exitTimeout !== undefined) {
+          clearTimeout(exitTimeout);
+          exitTimeout = undefined;
+        }
+      }
+      return new Response("ok");
+    }
+    if (path === "/api/exit" && req.method === "POST") {
+      const tabId = url.searchParams.get("tabId");
+      if (tabId && activeTabs.delete(tabId)) {
+        if (activeTabs.size === 0) {
+          scheduleExit();
+        }
+      }
+      return new Response("ok");
     }
     return await serveStatic(url);
   } catch (e) {
@@ -269,50 +394,60 @@ async function startServer() {
     Deno.exit(1);
   }
 
-  try {
-    const server = Deno.serve({
-      port: PORT,
-      hostname: "127.0.0.1",
-      signal: abortController.signal,
-      onListen({ port }) {
-        const url = `http://localhost:${port}`;
-        console.log(`Server running on port ${port}`);
-        console.log(`Open: ${url}`);
-        console.log(`Data: ${DATA_FILE}`);
-        console.log(`Close: Ctrl+C`);
-        console.log("");
+  let retried = false;
+  while (true) {
+    try {
+      const server = Deno.serve({
+        port: PORT,
+        hostname: "127.0.0.1",
+        signal: abortController.signal,
+        onListen({ port }) {
+          const url = `http://localhost:${port}`;
+          console.log(`Server running on port ${port}`);
+          console.log(`Open: ${url}`);
+          console.log(`Data: ${DATA_FILE}`);
+          console.log(`Close: Ctrl+C`);
+          console.log("");
 
-        let command: string[];
-        if (Deno.build.os === "windows") {
-          command = ["cmd.exe", "/c", "start", "", url];
-        } else if (Deno.build.os === "darwin") {
-          command = ["open", url];
-        } else {
-          command = ["xdg-open", url];
+          let command: string[];
+          if (Deno.build.os === "windows") {
+            command = ["cmd.exe", "/c", "start", "", url];
+          } else if (Deno.build.os === "darwin") {
+            command = ["open", url];
+          } else {
+            command = ["xdg-open", url];
+          }
+          try {
+            new Deno.Command(command[0], {
+              args: command.slice(1),
+              stdin: "null",
+              stdout: "null",
+              stderr: "null"
+            }).spawn();
+          } catch (e) {
+            logError(`Browser open failed: ${e}`);
+          }
         }
-        try {
-          new Deno.Command(command[0], {
-            args: command.slice(1),
-            stdin: "null",
-            stdout: "null",
-            stderr: "null"
-          }).spawn();
-        } catch (e) {
-          logError(`Browser open failed: ${e}`);
-        }
+      }, handler);
+
+      await server.finished;
+      Deno.exit(0);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
+      if (e instanceof Deno.errors.AddrInUse && !retried) {
+        logError(`Port ${PORT} in use, trying to kill old process...`);
+        tryKillPort(PORT);
+        retried = true;
+        await new Promise(r => setTimeout(r, 500));
+        continue;
       }
-    }, handler);
-
-    await server.finished;
-    Deno.exit(0);
-  } catch (e) {
-    if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
-    if (e instanceof Deno.errors.AddrInUse) {
-      logError(`Port ${PORT} in use`);
+      if (retried) {
+        logError(`Port ${PORT} still in use after kill attempt`);
+      } else {
+        logError(`Failed to start server: ${e}`);
+      }
       Deno.exit(1);
     }
-    logError(`Failed to start server: ${e}`);
-    Deno.exit(1);
   }
 }
 
