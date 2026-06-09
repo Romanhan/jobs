@@ -80,7 +80,6 @@ export function editCell(td, index, col) {
         measureDiv.style.whiteSpace = 'nowrap';
         measureDiv.style.fontSize = getComputedStyle(document.documentElement).getPropertyValue('--font-row-size');
         measureDiv.style.fontFamily = window.getComputedStyle(td).fontFamily;
-        measureDiv.style.padding = '2px';
         measureDiv.textContent = textToMeasure;
         document.body.appendChild(measureDiv);
         
