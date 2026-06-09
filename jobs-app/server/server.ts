@@ -292,7 +292,7 @@ async function handler(req: Request): Promise<Response> {
       const exitTime = Date.now();
       setTimeout(() => {
         if (lastActivity <= exitTime) Deno.exit(0);
-      }, 1500);
+      }, 5000);
       return new Response("ok");
     }
     return await serveStatic(url);
