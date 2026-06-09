@@ -21,6 +21,7 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let lastActivity: number = Date.now();
+let activeTabs = 0;
 const abortController = new AbortController();
 
 setInterval(() => {
@@ -285,6 +286,10 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
+    if (path === "/api/enter" && req.method === "POST") {
+      activeTabs++;
+      return new Response("ok");
+    }
     if (path === "/api/exit" && req.method === "POST") {
       const origin = req.headers.get("origin");
       const referer = req.headers.get("referer");
@@ -300,10 +305,12 @@ async function handler(req: Request): Promise<Response> {
       const isLocal = isLocalConnection(origin) && isLocalConnection(referer);
       if (!isLocal) return new Response("Forbidden", { status: 403 });
 
-      const exitTime = Date.now();
-      setTimeout(() => {
-        if (lastActivity <= exitTime) Deno.exit(0);
-      }, 5000);
+      activeTabs = Math.max(0, activeTabs - 1);
+      if (activeTabs === 0) {
+        setTimeout(() => {
+          if (activeTabs === 0) Deno.exit(0);
+        }, 5000);
+      }
       return new Response("ok");
     }
     return await serveStatic(url);

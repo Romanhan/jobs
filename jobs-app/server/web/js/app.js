@@ -96,6 +96,8 @@ async function init() {
     renderForm();
     updateStats();
 
+    fetch('/api/enter', { method: 'POST', keepalive: true }).catch(() => {});
+
     let lastKeepAlive = Date.now();
     setInterval(async () => {
         if (document.querySelector('.floating-editor')) {
