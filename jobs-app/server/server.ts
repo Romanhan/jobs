@@ -89,6 +89,17 @@ function tryKillPort(port: number): void {
   } catch {}
 }
 
+function isLocalConnection(urlStr: string | null): boolean {
+  if (!urlStr) return false;
+  try {
+    const u = new URL(urlStr);
+    const host = u.hostname.replace(/^\[|\]$/g, "");
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
 async function ensureDataFile(): Promise<void> {
   try {
     const stat = await Deno.stat(DATA_FILE);
@@ -299,6 +310,11 @@ async function handler(req: Request): Promise<Response> {
       return await handlePoll(url, CORS);
     }
     if (path === "/api/enter" && req.method === "POST") {
+      const origin = req.headers.get("origin");
+      const referer = req.headers.get("referer");
+      const isLocal = (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
+      if (!isLocal) return new Response("Forbidden", { status: 403 });
+
       const tabId = url.searchParams.get("tabId");
       if (tabId) {
         activeTabs.add(tabId);
@@ -312,16 +328,6 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/exit" && req.method === "POST") {
       const origin = req.headers.get("origin");
       const referer = req.headers.get("referer");
-      const isLocalConnection = (urlStr: string | null) => {
-        if (!urlStr) return false;
-        try {
-          const u = new URL(urlStr);
-          const host = u.hostname.replace(/^\[|\]$/g, "");
-          return host === "localhost" || host === "127.0.0.1" || host === "::1";
-        } catch {
-          return false;
-        }
-      };
       const isLocal = (!origin || isLocalConnection(origin)) && (!referer || isLocalConnection(referer));
       if (!isLocal) return new Response("Forbidden", { status: 403 });
 
