@@ -321,91 +321,60 @@ async function startServer() {
     Deno.exit(1);
   }
 
-  try {
-    const server = Deno.serve({
-      port: PORT,
-      hostname: "127.0.0.1",
-      signal: abortController.signal,
-      onListen({ port }) {
-        const url = `http://localhost:${port}`;
-        console.log(`Server running on port ${port}`);
-        console.log(`Open: ${url}`);
-        console.log(`Data: ${DATA_FILE}`);
-        console.log(`Close: Ctrl+C`);
-        console.log("");
+  let retried = false;
+  while (true) {
+    try {
+      const server = Deno.serve({
+        port: PORT,
+        hostname: "127.0.0.1",
+        signal: abortController.signal,
+        onListen({ port }) {
+          const url = `http://localhost:${port}`;
+          console.log(`Server running on port ${port}`);
+          console.log(`Open: ${url}`);
+          console.log(`Data: ${DATA_FILE}`);
+          console.log(`Close: Ctrl+C`);
+          console.log("");
 
-        let command: string[];
-        if (Deno.build.os === "windows") {
-          command = ["cmd.exe", "/c", "start", "", url];
-        } else if (Deno.build.os === "darwin") {
-          command = ["open", url];
-        } else {
-          command = ["xdg-open", url];
-        }
-        try {
-          new Deno.Command(command[0], {
-            args: command.slice(1),
-            stdin: "null",
-            stdout: "null",
-            stderr: "null"
-          }).spawn();
-        } catch (e) {
-          logError(`Browser open failed: ${e}`);
-        }
-      }
-    }, handler);
-
-    await server.finished;
-    Deno.exit(0);
-  } catch (e) {
-    if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
-    if (e instanceof Deno.errors.AddrInUse) {
-      logError(`Port ${PORT} in use, trying to kill old process...`);
-      tryKillPort(PORT);
-      await new Promise(r => setTimeout(r, 500));
-      try {
-        const server = Deno.serve({
-          port: PORT,
-          hostname: "127.0.0.1",
-          signal: abortController.signal,
-          onListen({ port }) {
-            const url = `http://localhost:${port}`;
-            console.log(`Server running on port ${port}`);
-            console.log(`Open: ${url}`);
-            console.log(`Data: ${DATA_FILE}`);
-            console.log(`Close: Ctrl+C`);
-            console.log("");
-
-            let command: string[];
-            if (Deno.build.os === "windows") {
-              command = ["cmd.exe", "/c", "start", "", url];
-            } else if (Deno.build.os === "darwin") {
-              command = ["open", url];
-            } else {
-              command = ["xdg-open", url];
-            }
-            try {
-              new Deno.Command(command[0], {
-                args: command.slice(1),
-                stdin: "null",
-                stdout: "null",
-                stderr: "null"
-              }).spawn();
-            } catch (e) {
-              logError(`Browser open failed: ${e}`);
-            }
+          let command: string[];
+          if (Deno.build.os === "windows") {
+            command = ["cmd.exe", "/c", "start", "", url];
+          } else if (Deno.build.os === "darwin") {
+            command = ["open", url];
+          } else {
+            command = ["xdg-open", url];
           }
-        }, handler);
+          try {
+            new Deno.Command(command[0], {
+              args: command.slice(1),
+              stdin: "null",
+              stdout: "null",
+              stderr: "null"
+            }).spawn();
+          } catch (e) {
+            logError(`Browser open failed: ${e}`);
+          }
+        }
+      }, handler);
 
-        await server.finished;
-        Deno.exit(0);
-      } catch (e2) {
-        logError(`Port ${PORT} still in use after kill attempt`);
-        Deno.exit(1);
+      await server.finished;
+      Deno.exit(0);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
+      if (e instanceof Deno.errors.AddrInUse && !retried) {
+        logError(`Port ${PORT} in use, trying to kill old process...`);
+        tryKillPort(PORT);
+        retried = true;
+        await new Promise(r => setTimeout(r, 500));
+        continue;
       }
+      if (retried) {
+        logError(`Port ${PORT} still in use after kill attempt`);
+      } else {
+        logError(`Failed to start server: ${e}`);
+      }
+      Deno.exit(1);
     }
-    logError(`Failed to start server: ${e}`);
-    Deno.exit(1);
   }
 }
 
