@@ -6,6 +6,16 @@ import { renderTableBody, updateStats, showStatus, filterTable, renderForm, rend
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
 let editingCell = null;
+let tooltipEl = null;
+let tooltipTimeout = null;
+
+function hideTooltip() {
+    if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+    }
+    if (tooltipEl) tooltipEl.classList.remove('visible');
+}
 
 export function setEditingCell(cell) {
     editingCell = cell;
@@ -35,8 +45,7 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
 });
 
 export function editCell(td, index, col) {
-    const tooltipPopup = document.querySelector('.tooltip-popup.visible');
-    if (tooltipPopup) tooltipPopup.classList.remove('visible');
+    hideTooltip();
 
     if (editingCell) {
         const activeInput = document.querySelector('.floating-editor textarea');
@@ -503,17 +512,6 @@ export function attachEventListeners() {
             fontPopup.style.display = 'none';
         }
     });
-
-    let tooltipEl = null;
-    let tooltipTimeout = null;
-
-    function hideTooltip() {
-        if (tooltipTimeout) {
-            clearTimeout(tooltipTimeout);
-            tooltipTimeout = null;
-        }
-        if (tooltipEl) tooltipEl.classList.remove('visible');
-    }
 
     function showTooltip(target) {
         const text = target.getAttribute('data-tooltip');
