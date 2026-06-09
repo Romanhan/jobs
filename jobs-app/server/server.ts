@@ -39,7 +39,10 @@ setInterval(() => {
     }
   }
   if (changed && activeTabs.size === 0) {
-    if (exitTimeout !== undefined) clearTimeout(exitTimeout);
+    if (exitTimeout !== undefined) {
+      clearTimeout(exitTimeout);
+      exitTimeout = undefined;
+    }
     exitTimeout = setTimeout(() => {
       exitTimeout = undefined;
       if (activeTabs.size === 0) abortController.abort();
@@ -364,6 +367,7 @@ async function handler(req: Request): Promise<Response> {
         if (activeTabs.size === 0) {
           if (exitTimeout !== undefined) {
             clearTimeout(exitTimeout);
+            exitTimeout = undefined;
           }
           exitTimeout = setTimeout(() => {
             exitTimeout = undefined;
