@@ -62,8 +62,11 @@ function tryKillPort(port: number): void {
             if (lastColon !== -1) {
               const localPort = parseInt(localAddress.substring(lastColon + 1), 10);
               if (localPort === port) {
-                new Deno.Command("taskkill", { args: ["/PID", parts[parts.length - 1], "/F"] }).outputSync();
-                break;
+                const pid = parts[parts.length - 1];
+                if (/^\d+$/.test(pid)) {
+                  new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
+                  break;
+                }
               }
             }
           }
