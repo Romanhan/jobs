@@ -493,7 +493,7 @@ export function attachEventListeners() {
         if (shortcutsPopup.style.display !== 'none' && !shortcutsPopup.contains(e.target) && e.target !== menuBtn) {
             shortcutsPopup.style.display = 'none';
         }
-        if (infoPopup.style.display !== 'none' && !infoPopup.contains(e.target) && e.target !== menuBtn) {
+        if (infoPopup && infoPopup.style.display !== 'none' && !infoPopup.contains(e.target) && e.target !== menuBtn) {
             infoPopup.style.display = 'none';
         }
         const fontPopup = document.getElementById('font-size-popup');
