@@ -117,7 +117,7 @@ async function init() {
         } catch {}
     }, 2000);
 
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('pagehide', () => {
         navigator.sendBeacon('/api/exit');
     });
 }
