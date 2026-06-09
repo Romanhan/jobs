@@ -119,7 +119,9 @@ async function init() {
     }, 2000);
 
     window.addEventListener('pagehide', () => {
-        navigator.sendBeacon('/api/exit?tabId=' + tabId);
+        if (typeof navigator.sendBeacon === 'function') {
+            navigator.sendBeacon('/api/exit?tabId=' + tabId);
+        }
     });
 }
 
