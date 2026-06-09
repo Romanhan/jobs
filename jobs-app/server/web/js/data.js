@@ -82,11 +82,13 @@ export async function autoSave() {
     }
 }
 
-export async function pollChanges() {
+export async function pollChanges(tabId) {
     if (inFlightSaves > 0 || isPolling) return false;
     isPolling = true;
     try {
-        const res = await fetch('/api/poll?since=' + lastSavedTimestamp);
+        let url = '/api/poll?since=' + lastSavedTimestamp;
+        if (tabId) url += '&tabId=' + encodeURIComponent(tabId);
+        const res = await fetch(url);
         if (!res.ok) return false;
         const data = await res.json();
         if (data.changed && data.jobs) {

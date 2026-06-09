@@ -21,13 +21,30 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let lastActivity: number = Date.now();
-let activeTabs = new Set<string>();
+let activeTabs = new Map<string, number>();
 let exitTimeout: ReturnType<typeof setTimeout> | undefined;
 const abortController = new AbortController();
 
 setInterval(() => {
   if (Date.now() - lastActivity > 1800000) abortController.abort();
 }, 60000);
+
+setInterval(() => {
+  const now = Date.now();
+  let changed = false;
+  for (const [tabId, lastSeen] of activeTabs.entries()) {
+    if (now - lastSeen > 25000) {
+      activeTabs.delete(tabId);
+      changed = true;
+    }
+  }
+  if (changed && activeTabs.size === 0) {
+    if (exitTimeout !== undefined) clearTimeout(exitTimeout);
+    exitTimeout = setTimeout(() => {
+      if (activeTabs.size === 0) abortController.abort();
+    }, 5000);
+  }
+}, 5000);
 
 try {
   Deno.addSignalListener("SIGINT", () => {
@@ -213,6 +230,9 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
 }
 
 async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promise<Response> {
+  const tabId = url.searchParams.get("tabId");
+  if (tabId) activeTabs.set(tabId, Date.now());
+
   const since = parseInt(url.searchParams.get("since") || "0", 10);
   let stat: Deno.FileInfo;
   try {
@@ -317,7 +337,7 @@ async function handler(req: Request): Promise<Response> {
 
       const tabId = url.searchParams.get("tabId");
       if (tabId) {
-        activeTabs.add(tabId);
+        activeTabs.set(tabId, Date.now());
         if (exitTimeout !== undefined) {
           clearTimeout(exitTimeout);
           exitTimeout = undefined;

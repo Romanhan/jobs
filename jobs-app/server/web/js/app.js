@@ -110,7 +110,7 @@ async function init() {
             return;
         }
         try {
-            const changed = await pollChanges();
+            const changed = await pollChanges(tabId);
             if (changed) {
                 renderTableBody();
                 updateStats();
