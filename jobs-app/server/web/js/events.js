@@ -35,6 +35,9 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
 });
 
 export function editCell(td, index, col) {
+    const tooltipPopup = document.querySelector('.tooltip-popup.visible');
+    if (tooltipPopup) tooltipPopup.classList.remove('visible');
+
     if (editingCell) {
         const activeInput = document.querySelector('.floating-editor textarea');
         if (activeInput) {
