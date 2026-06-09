@@ -143,7 +143,6 @@ window.startResize = startResize;
 
 function setUpButtons() {
     document.getElementById('btn-add-job').addEventListener('click', openModal);
-    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
     document.getElementById('btn-cancel').addEventListener('click', closeModal);
 
     document.getElementById('btn-theme').addEventListener('click', function() {
