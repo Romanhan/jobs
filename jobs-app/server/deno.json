@@ -1,5 +1,9 @@
 {
   "name": "jobs-app-server",
-  "version": "1.0.0",
-  "exports": "./server.ts"
+  "version": "0.1.0",
+  "exports": "./server.ts",
+  "tasks": {
+    "gen-version": "deno run -A gen-version.ts",
+    "build": "deno task gen-version && deno compile --target x86_64-pc-windows-msvc --no-terminal --allow-net --allow-read --allow-write --allow-env --allow-run --include web --output jobs-app.exe server.ts"
+  }
 }

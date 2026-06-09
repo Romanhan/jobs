@@ -1,4 +1,5 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
+import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
@@ -287,6 +288,7 @@ export function handleKeydown(e) {
     const shortcutsPopup = document.getElementById('shortcuts-popup');
     const menuDropdown = document.getElementById('menu-dropdown');
     const fontPopup = document.getElementById('font-size-popup');
+    const infoPopup = document.getElementById('info-popup');
     if (e.key === 'Escape' && fontPopup && fontPopup.style.display !== 'none') {
         fontPopup.style.display = 'none';
         e.preventDefault();
@@ -294,6 +296,11 @@ export function handleKeydown(e) {
     }
     if (e.key === 'Escape' && shortcutsPopup && shortcutsPopup.style.display !== 'none') {
         shortcutsPopup.style.display = 'none';
+        e.preventDefault();
+        return;
+    }
+    if (e.key === 'Escape' && infoPopup && infoPopup.style.display !== 'none') {
+        infoPopup.style.display = 'none';
         e.preventDefault();
         return;
     }
@@ -450,6 +457,13 @@ export function attachEventListeners() {
             input.click();
         } else if (action === 'shortcuts') {
             shortcutsPopup.style.display = shortcutsPopup.style.display === 'none' ? 'block' : 'none';
+        } else if (action === 'info') {
+            const grid = document.getElementById('info-grid');
+            grid.innerHTML = '<div class="info-label">Rakendus</div><div class="info-value">' + APP_NAME + '</div>'
+                + '<div class="info-label">Versioon</div><div class="info-value">' + APP_VERSION + '</div>'
+                + '<div class="info-label">Autor</div><div class="info-value">' + APP_AUTHOR + '</div>'
+                + '<div class="info-close-hint">Vajuta Esc sulgemiseks</div>';
+            infoPopup.style.display = infoPopup.style.display === 'none' ? 'block' : 'none';
         } else if (action === 'font-size') {
             const popup = document.getElementById('font-size-popup');
             const currentSize = parseInt(localStorage.getItem('fontSize') || '12');
@@ -476,6 +490,9 @@ export function attachEventListeners() {
         }
         if (shortcutsPopup.style.display !== 'none' && !shortcutsPopup.contains(e.target) && e.target !== menuBtn) {
             shortcutsPopup.style.display = 'none';
+        }
+        if (infoPopup.style.display !== 'none' && !infoPopup.contains(e.target) && e.target !== menuBtn) {
+            infoPopup.style.display = 'none';
         }
         const fontPopup = document.getElementById('font-size-popup');
         if (fontPopup.style.display !== 'none' && !fontPopup.contains(e.target) && e.target !== menuBtn && e.target.getAttribute?.('data-action') !== 'font-size') {
