@@ -279,11 +279,31 @@ export function loadFromFile(file) {
                     if (job['Töö Nr']) newJobs.push(job);
                 }
 
-                jobs = newJobs;
+                const keyFields = [
+                    'Töö Nr',
+                    'Detaili/koostu nimetus või joonise Nr',
+                    'Kommentaar(tooriku/detaili seis, muu oluline info)'
+                ];
+                const key = j => j ? JSON.stringify(keyFields.map(k => String(j[k] ?? '').trim().toLowerCase())) : '';
+                const existingKeys = new Set(jobs.filter(Boolean).map(key));
+                const toAdd = [];
+                for (const job of newJobs) {
+                    const k = key(job);
+                    if (!existingKeys.has(k)) {
+                        existingKeys.add(k);
+                        toAdd.push(job);
+                    }
+                }
                 isLoaded = true;
-                clearUndo();
-                autoSave();
-                resolve({ count: jobs.length, jobs });
+                if (toAdd.length > 0) {
+                    pushUndo();
+                    for (const job of toAdd) {
+                        jobs.push(job);
+                    }
+                    autoSave();
+                }
+                const addedCount = toAdd.length;
+                resolve({ count: newJobs.length, jobs, added: addedCount });
             } catch (err) {
                 reject(err);
             }

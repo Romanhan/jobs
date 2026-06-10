@@ -461,7 +461,16 @@ export function attachEventListeners() {
                     renderTable();
                     renderForm();
                     updateStats();
-                    showStatus('CSV laetud! (' + result.count + ' tööd)', 'success');
+                    const skipped = result.count - result.added;
+                    let msg = 'CSV laetud! ';
+                    if (result.added > 0) {
+                        const uutStr = result.added === 1 ? 'uus' : 'uut';
+                        msg += result.added + ' ' + uutStr;
+                        if (skipped > 0) msg += ', ' + skipped + ' dubleeritud';
+                    } else {
+                        msg += 'uusi töid ei lisatud (' + skipped + ' dubleeritud)';
+                    }
+                    showStatus(msg, 'success');
                 }).catch(err => {
                     showStatus('Viga: ' + err.message, 'error');
                 });
