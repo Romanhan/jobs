@@ -221,6 +221,13 @@ export function finishEditing() {
 }
 
 export function deleteRow(index) {
+    const jobToDelete = getJobs()[index];
+    if (!jobToDelete) {
+        showStatus('Viga: Tööd ei leitud', 'error');
+        return;
+    }
+    hideTooltip();
+
     const popup = document.getElementById('confirm-popup');
     const cancelBtn = document.getElementById('confirm-cancel');
     const okBtn = document.getElementById('confirm-ok');
