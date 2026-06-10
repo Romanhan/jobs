@@ -285,7 +285,7 @@ export function loadFromFile(file) {
                     'Kommentaar(tooriku/detaili seis, muu oluline info)'
                 ];
                 const key = j => j ? JSON.stringify(keyFields.map(k => String(j[k] ?? '').trim().toLowerCase())) : '';
-                const existingKeys = new Set(jobs.map(key));
+                const existingKeys = new Set(jobs.filter(Boolean).map(key));
                 const toAdd = [];
                 for (const job of newJobs) {
                     const k = key(job);
