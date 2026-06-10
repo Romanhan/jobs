@@ -421,6 +421,7 @@ th.cell-delete-header {
 .cell-delete {
     width: 28px;
     min-width: 28px;
+    max-width: 28px;
     padding: 2px;
     text-align: center;
     vertical-align: middle;
