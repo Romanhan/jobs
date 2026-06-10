@@ -280,9 +280,9 @@ export function loadFromFile(file) {
                 }
 
                 const keyFields = [
-                    COLUMNS.find(c => c.startsWith('Töö Nr')) || 'Töö Nr',
-                    COLUMNS.find(c => c.startsWith('Detaili/koostu')) || 'Detaili/koostu nimetus või joonise Nr',
-                    COLUMNS.find(c => c.startsWith('Kommentaar')) || 'Kommentaar(tooriku/detaili seis, muu oluline info)'
+                    'Töö Nr',
+                    'Detaili/koostu nimetus või joonise Nr',
+                    'Kommentaar(tooriku/detaili seis, muu oluline info)'
                 ];
                 const key = j => j ? JSON.stringify(keyFields.map(k => String(j[k] ?? '').trim().toLowerCase())) : '';
                 const existingKeys = new Set(jobs.map(key));
