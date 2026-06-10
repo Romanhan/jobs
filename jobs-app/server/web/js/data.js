@@ -297,7 +297,9 @@ export function loadFromFile(file) {
                 isLoaded = true;
                 if (toAdd.length > 0) {
                     pushUndo();
-                    jobs.push(...toAdd);
+                    for (const job of toAdd) {
+                        jobs.push(job);
+                    }
                     autoSave();
                 }
                 const addedCount = toAdd.length;
