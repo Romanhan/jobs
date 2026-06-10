@@ -448,6 +448,6 @@ th.cell-delete-header {
     outline-offset: 1px;
 }
 .btn-delete:hover {
-    color: #e74c3c;
+    color: var(--text-important);
     background: rgba(231, 76, 60, 0.15);
 }
