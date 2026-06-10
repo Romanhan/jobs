@@ -91,7 +91,7 @@ export function renderTable() {
     
     let html = '<tr><th class="row-indicator"></th>';
     ths.forEach(th => { html += th.html; });
-    html += '</tr>';
+    html += '<th class="cell-delete-header"></th></tr>';
     thead.innerHTML = html;
     thead.parentNode.insertBefore(colgroup, thead);
     document.getElementById('jobs-table').style.width = totalWidth + 'px';
@@ -190,6 +190,7 @@ export function renderTableBody() {
                 html += '<td tabindex="0" class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
             }
         });
+        html += '<td class="cell-delete"><button class="btn-delete" data-index="' + index + '" title="Kustuta">×</button></td>';
         html += '</tr>';
     });
     

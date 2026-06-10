@@ -112,6 +112,12 @@ export function addJob(job) {
     autoSave();
 }
 
+export function deleteJob(index) {
+    pushUndo();
+    jobs.splice(index, 1);
+    autoSave();
+}
+
 let columnWidths = {};
 let hiddenColumns = {};
 

@@ -1,7 +1,7 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
-import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
+import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
@@ -219,6 +219,30 @@ export function finishEditing() {
     setEditingCellState(null, null);
 }
 
+export function deleteRow(index) {
+    const popup = document.getElementById('confirm-popup');
+    popup.style.display = 'flex';
+
+    function close() {
+        popup.style.display = 'none';
+        document.removeEventListener('keydown', onKey);
+    }
+
+    function onKey(e) {
+        if (e.key === 'Escape') close();
+    }
+    document.addEventListener('keydown', onKey);
+
+    document.getElementById('confirm-ok').onclick = function() {
+        close();
+        doDeleteJob(index);
+        renderTableBody();
+        updateStats();
+        showStatus('Töö kustutatud', 'success');
+    };
+    document.getElementById('confirm-cancel').onclick = close;
+}
+
 export function toggleField(index, col, value) {
     pushUndo();
     const d = new Date();
@@ -401,6 +425,12 @@ export function attachEventListeners() {
     
     const tbody = document.getElementById('table-body');
     tbody.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-delete');
+        if (btn) {
+            const index = parseInt(btn.getAttribute('data-index'));
+            deleteRow(index);
+            return;
+        }
         const td = e.target.closest('td');
         if (!td) return;
         if (td.querySelector('input')) return;

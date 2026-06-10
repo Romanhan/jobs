@@ -410,3 +410,33 @@ body.modal-open .row-indicator {
 td strong, td s, td .text-important {
     white-space: nowrap;
 }
+
+th.cell-delete-header {
+    width: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    padding: 0;
+    border-right: none;
+}
+.cell-delete {
+    width: 28px;
+    min-width: 28px;
+    padding: 2px;
+    text-align: center;
+    vertical-align: middle;
+}
+.btn-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: var(--radius-xs);
+    font-family: inherit;
+}
+.btn-delete:hover {
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
