@@ -469,6 +469,7 @@ export function attachEventListeners() {
     tbody.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-delete');
         if (btn) {
+            if (document.body.classList.contains('modal-open')) return;
             const index = parseInt(btn.getAttribute('data-index'), 10);
             deleteRow(index);
             return;
