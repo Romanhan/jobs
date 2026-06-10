@@ -449,5 +449,5 @@ th.cell-delete-header {
 }
 .btn-delete:hover {
     color: var(--text-important);
-    background: rgba(231, 76, 60, 0.15);
+    background: rgba(var(--color-danger-rgb), 0.15);
 }
