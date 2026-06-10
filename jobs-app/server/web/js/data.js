@@ -280,13 +280,16 @@ export function loadFromFile(file) {
                 }
 
                 const keyFields = [
-                    'Töö Nr',
-                    'Detaili/koostu nimetus või joonise Nr',
-                    'Kommentaar(tooriku/detaili seis, muu oluline info)'
+                    COLUMNS.find(c => c.startsWith('Töö Nr')),
+                    COLUMNS.find(c => c.startsWith('Detaili/koostu')),
+                    COLUMNS.find(c => c.startsWith('Kommentaar'))
                 ];
-                const key = j => j ? keyFields.map(k => String(j[k] ?? '').trim().toLowerCase()).join('|||') : '';
+                const key = j => j ? JSON.stringify(keyFields.map(k => String(j[k] ?? '').trim().toLowerCase())) : '';
                 const existingKeys = new Set(jobs.map(key));
                 let addedCount = 0;
+                if (newJobs.length > 0) {
+                    pushUndo();
+                }
                 for (const job of newJobs) {
                     const k = key(job);
                     if (!existingKeys.has(k)) {
@@ -296,7 +299,6 @@ export function loadFromFile(file) {
                     }
                 }
                 isLoaded = true;
-                clearUndo();
                 autoSave();
                 resolve({ count: newJobs.length, jobs, added: addedCount });
             } catch (err) {
