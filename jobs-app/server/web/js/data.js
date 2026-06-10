@@ -279,19 +279,11 @@ export function loadFromFile(file) {
                     if (job['Töö Nr']) newJobs.push(job);
                 }
 
-                const keyFields = [
-                    'Töö Nr',
-                    'Detaili/koostu nimetus või joonise Nr',
-                    'Kommentaar(tooriku/detaili seis, muu oluline info)'
-                ];
-                const key = j => keyFields.map(k => j[k] ?? '').join('|||');
-                const existingKeys = new Set(jobs.map(key));
-                const added = newJobs.filter(j => !existingKeys.has(key(j)));
-                jobs.push(...added);
+                jobs = newJobs;
                 isLoaded = true;
                 clearUndo();
                 autoSave();
-                resolve({ count: jobs.length, jobs, added: added.length });
+                resolve({ count: jobs.length, jobs });
             } catch (err) {
                 reject(err);
             }

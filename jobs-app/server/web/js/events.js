@@ -461,10 +461,7 @@ export function attachEventListeners() {
                     renderTable();
                     renderForm();
                     updateStats();
-                    const skipped = result.count - result.added;
-                    let msg = 'CSV laetud! ' + result.added + ' uut';
-                    if (skipped > 0) msg += ', ' + skipped + ' dubleeritud';
-                    showStatus(msg, 'success');
+                    showStatus('CSV laetud! (' + result.count + ' tööd)', 'success');
                 }).catch(err => {
                     showStatus('Viga: ' + err.message, 'error');
                 });
