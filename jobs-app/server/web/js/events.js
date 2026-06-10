@@ -254,23 +254,24 @@ export function deleteRow(index) {
             return;
         }
         if (e.key === 'Tab') {
+            const focusables = [cancelBtn, okBtn];
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
             if (e.shiftKey) {
-                if (document.activeElement === cancelBtn) {
+                if (document.activeElement === first || !popup.contains(document.activeElement)) {
                     e.preventDefault();
-                    okBtn.focus();
+                    last.focus();
                 }
             } else {
-                if (document.activeElement === okBtn) {
+                if (document.activeElement === last || !popup.contains(document.activeElement)) {
                     e.preventDefault();
-                    cancelBtn.focus();
+                    first.focus();
                 }
             }
+            e.stopPropagation();
             return;
         }
-        if (!popup.contains(e.target)) {
-            e.stopPropagation();
-            e.preventDefault();
-        }
+        e.stopPropagation();
     }
     activeDeleteKeydownHandler = onKey;
     document.addEventListener('keydown', onKey, true);
