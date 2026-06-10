@@ -462,7 +462,8 @@ export function attachEventListeners() {
                     renderForm();
                     updateStats();
                     const skipped = result.count - result.added;
-                    let msg = 'CSV laetud! ' + result.added + ' uut';
+                    const uutStr = result.added === 1 ? 'uus' : 'uut';
+                    let msg = 'CSV laetud! ' + result.added + ' ' + uutStr;
                     if (skipped > 0) msg += ', ' + skipped + ' dubleeritud';
                     showStatus(msg, 'success');
                 }).catch(err => {
