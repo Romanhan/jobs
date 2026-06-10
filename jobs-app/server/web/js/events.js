@@ -222,25 +222,39 @@ export function finishEditing() {
 
 export function deleteRow(index) {
     const popup = document.getElementById('confirm-popup');
+    const triggerElement = document.activeElement;
     popup.style.display = 'flex';
+    document.getElementById('confirm-cancel').focus();
 
     if (activeDeleteKeydownHandler) {
-        document.removeEventListener('keydown', activeDeleteKeydownHandler);
+        document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
     }
 
     function close() {
         popup.style.display = 'none';
         if (activeDeleteKeydownHandler) {
-            document.removeEventListener('keydown', activeDeleteKeydownHandler);
+            document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
             activeDeleteKeydownHandler = null;
+        }
+        if (triggerElement) {
+            triggerElement.focus();
         }
     }
 
     function onKey(e) {
-        if (e.key === 'Escape') close();
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            close();
+            return;
+        }
+        if (!popup.contains(e.target)) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
     }
     activeDeleteKeydownHandler = onKey;
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey, true);
 
     document.getElementById('confirm-ok').onclick = function() {
         close();
