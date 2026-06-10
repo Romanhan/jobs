@@ -222,9 +222,12 @@ export function finishEditing() {
 
 export function deleteRow(index) {
     const popup = document.getElementById('confirm-popup');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    const okBtn = document.getElementById('confirm-ok');
     const triggerElement = document.activeElement;
+
     popup.style.display = 'flex';
-    document.getElementById('confirm-cancel').focus();
+    cancelBtn.focus();
 
     if (activeDeleteKeydownHandler) {
         document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
@@ -236,6 +239,8 @@ export function deleteRow(index) {
             document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
             activeDeleteKeydownHandler = null;
         }
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
         if (triggerElement) {
             triggerElement.focus();
         }
@@ -248,6 +253,20 @@ export function deleteRow(index) {
             close();
             return;
         }
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                if (document.activeElement === cancelBtn) {
+                    e.preventDefault();
+                    okBtn.focus();
+                }
+            } else {
+                if (document.activeElement === okBtn) {
+                    e.preventDefault();
+                    cancelBtn.focus();
+                }
+            }
+            return;
+        }
         if (!popup.contains(e.target)) {
             e.stopPropagation();
             e.preventDefault();
@@ -256,14 +275,14 @@ export function deleteRow(index) {
     activeDeleteKeydownHandler = onKey;
     document.addEventListener('keydown', onKey, true);
 
-    document.getElementById('confirm-ok').onclick = function() {
+    okBtn.onclick = function() {
         close();
         doDeleteJob(index);
         renderTableBody();
         updateStats();
         showStatus('Töö kustutatud', 'success');
     };
-    document.getElementById('confirm-cancel').onclick = close;
+    cancelBtn.onclick = close;
 }
 
 export function toggleField(index, col, value) {
