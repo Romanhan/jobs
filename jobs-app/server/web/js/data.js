@@ -298,7 +298,7 @@ export function loadFromFile(file) {
                 isLoaded = true;
                 clearUndo();
                 autoSave();
-                resolve({ count: jobs.length, jobs, added: added.length });
+                resolve({ count: newJobs.length, jobs, added: added.length });
             } catch (err) {
                 reject(err);
             }
