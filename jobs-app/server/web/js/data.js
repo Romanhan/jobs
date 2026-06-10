@@ -286,8 +286,15 @@ export function loadFromFile(file) {
                 ];
                 const key = j => keyFields.map(k => j[k] ?? '').join('|||');
                 const existingKeys = new Set(jobs.map(key));
-                const added = newJobs.filter(j => !existingKeys.has(key(j)));
-                jobs.push(...added);
+                const added = [];
+                for (const job of newJobs) {
+                    const k = key(job);
+                    if (!existingKeys.has(k)) {
+                        existingKeys.add(k);
+                        added.push(job);
+                        jobs.push(job);
+                    }
+                }
                 isLoaded = true;
                 clearUndo();
                 autoSave();
