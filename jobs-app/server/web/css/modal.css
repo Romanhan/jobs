@@ -10,6 +10,7 @@
     align-items: center;
     overflow-y: auto;
     backdrop-filter: blur(4px);
+    z-index: 100;
 }
 
 .modal.active {
