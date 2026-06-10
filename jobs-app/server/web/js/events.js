@@ -8,6 +8,7 @@ import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, s
 let editingCell = null;
 let tooltipEl = null;
 let tooltipTimeout = null;
+let activeDeleteKeydownHandler = null;
 
 function hideTooltip() {
     if (tooltipTimeout) {
@@ -223,14 +224,22 @@ export function deleteRow(index) {
     const popup = document.getElementById('confirm-popup');
     popup.style.display = 'flex';
 
+    if (activeDeleteKeydownHandler) {
+        document.removeEventListener('keydown', activeDeleteKeydownHandler);
+    }
+
     function close() {
         popup.style.display = 'none';
-        document.removeEventListener('keydown', onKey);
+        if (activeDeleteKeydownHandler) {
+            document.removeEventListener('keydown', activeDeleteKeydownHandler);
+            activeDeleteKeydownHandler = null;
+        }
     }
 
     function onKey(e) {
         if (e.key === 'Escape') close();
     }
+    activeDeleteKeydownHandler = onKey;
     document.addEventListener('keydown', onKey);
 
     document.getElementById('confirm-ok').onclick = function() {
