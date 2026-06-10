@@ -234,6 +234,7 @@ export function deleteRow(index) {
 
     popup.style.display = 'flex';
     cancelBtn.focus();
+    document.removeEventListener('keydown', handleKeydown);
 
     if (activeDeleteKeydownHandler) {
         document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
@@ -245,6 +246,7 @@ export function deleteRow(index) {
             document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
             activeDeleteKeydownHandler = null;
         }
+        document.addEventListener('keydown', handleKeydown);
         okBtn.onclick = null;
         cancelBtn.onclick = null;
     }
