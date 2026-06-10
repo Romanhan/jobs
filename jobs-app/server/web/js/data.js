@@ -286,19 +286,19 @@ export function loadFromFile(file) {
                 ];
                 const key = j => j ? keyFields.map(k => String(j[k] ?? '').trim().toLowerCase()).join('|||') : '';
                 const existingKeys = new Set(jobs.map(key));
-                const added = [];
+                let addedCount = 0;
                 for (const job of newJobs) {
                     const k = key(job);
                     if (!existingKeys.has(k)) {
                         existingKeys.add(k);
-                        added.push(job);
                         jobs.push(job);
+                        addedCount++;
                     }
                 }
                 isLoaded = true;
                 clearUndo();
                 autoSave();
-                resolve({ count: newJobs.length, jobs, added: added.length });
+                resolve({ count: newJobs.length, jobs, added: addedCount });
             } catch (err) {
                 reject(err);
             }
