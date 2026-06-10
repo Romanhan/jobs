@@ -439,6 +439,13 @@ th.cell-delete-header {
     border-radius: 50%;
     font-family: inherit;
     user-select: none;
+    background: none;
+    border: none;
+    padding: 0;
+}
+.btn-delete:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
 }
 .btn-delete:hover {
     color: #e74c3c;
