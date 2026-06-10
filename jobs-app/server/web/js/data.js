@@ -284,7 +284,7 @@ export function loadFromFile(file) {
                     'Detaili/koostu nimetus või joonise Nr',
                     'Kommentaar(tooriku/detaili seis, muu oluline info)'
                 ];
-                const key = j => keyFields.map(k => j[k] ?? '').join('|||');
+                const key = j => keyFields.map(k => String(j[k] ?? '').trim().toLowerCase()).join('|||');
                 const existingKeys = new Set(jobs.map(key));
                 const added = [];
                 for (const job of newJobs) {
