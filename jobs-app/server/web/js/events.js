@@ -1,13 +1,14 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
-import { getJobs, autoSave as doAutoSave, addJob as doAddJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
+import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
 let editingCell = null;
 let tooltipEl = null;
 let tooltipTimeout = null;
+let activeDeleteKeydownHandler = null;
 
 function hideTooltip() {
     if (tooltipTimeout) {
@@ -60,7 +61,7 @@ export function editCell(td, index, col) {
     }
     const job = getJobs()[index];
     const value = job[col] || '';
-    const isDate = DATE_COLS.includes(col);
+    const isDate = DATE_COLS.includes(col) || col === 'Tooriku saabumise kuupäev EE';
     const textToMeasure = isDate ? formatDate(value) : value;
     
     const rect = td.getBoundingClientRect();
@@ -219,6 +220,85 @@ export function finishEditing() {
     setEditingCellState(null, null);
 }
 
+export function deleteRow(index) {
+    const jobToDelete = getJobs()[index];
+    if (!jobToDelete) {
+        showStatus('Viga: Tööd ei leitud', 'error');
+        return;
+    }
+    hideTooltip();
+
+    const popup = document.getElementById('confirm-popup');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    const okBtn = document.getElementById('confirm-ok');
+
+    popup.style.display = 'flex';
+    cancelBtn.focus();
+    document.removeEventListener('keydown', handleKeydown);
+
+    if (activeDeleteKeydownHandler) {
+        document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
+    }
+
+    function close() {
+        popup.style.display = 'none';
+        if (activeDeleteKeydownHandler) {
+            document.removeEventListener('keydown', activeDeleteKeydownHandler, true);
+            activeDeleteKeydownHandler = null;
+        }
+        document.addEventListener('keydown', handleKeydown);
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+    }
+
+    function onKey(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            close();
+            return;
+        }
+        if (e.key === 'Tab') {
+            const focusables = [cancelBtn, okBtn];
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === first || !popup.contains(document.activeElement)) {
+                    e.preventDefault();
+                    last.focus();
+                }
+            } else {
+                if (document.activeElement === last || !popup.contains(document.activeElement)) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+            e.stopPropagation();
+            return;
+        }
+    }
+    activeDeleteKeydownHandler = onKey;
+    document.addEventListener('keydown', onKey, true);
+
+    okBtn.onclick = function() {
+        close();
+        const currentJobs = getJobs();
+        let targetIndex = index;
+        if (currentJobs[index] !== jobToDelete) {
+            targetIndex = currentJobs.indexOf(jobToDelete);
+        }
+        if (targetIndex !== -1) {
+            doDeleteJob(targetIndex);
+            renderTableBody();
+            updateStats();
+            showStatus('Töö kustutatud', 'success');
+        } else {
+            showStatus('Viga: Tööd ei leitud', 'error');
+        }
+    };
+    cancelBtn.onclick = close;
+}
+
 export function toggleField(index, col, value) {
     pushUndo();
     const d = new Date();
@@ -253,6 +333,7 @@ export function closeModal() {
     
     document.body.classList.remove('modal-open');
     document.getElementById('modal').classList.remove('active');
+    document.activeElement?.blur();
 }
 
 export function addJob(e) {
@@ -401,6 +482,13 @@ export function attachEventListeners() {
     
     const tbody = document.getElementById('table-body');
     tbody.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-delete');
+        if (btn) {
+            if (document.body.classList.contains('modal-open')) return;
+            const index = parseInt(btn.getAttribute('data-index'), 10);
+            deleteRow(index);
+            return;
+        }
         const td = e.target.closest('td');
         if (!td) return;
         if (td.querySelector('input')) return;

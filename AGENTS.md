@@ -4,17 +4,17 @@
 Single-page HTML work management app with soft neumorphic (soft UI) design.
 
 ## Files
-- `jobs-app/src/index.html` — Main app (HTML + JS)
-- `jobs-app/src/css/variables.css` — Design tokens (colors, shadows, radii)
-- `jobs-app/src/css/base.css` — Body, container, buttons
-- `jobs-app/src/css/header.css` — Header bar, status pills, legend
-- `jobs-app/src/css/toolbar.css` — Toolbar, inputs, checkboxes, menu, popups
-- `jobs-app/src/css/table.css` — Table, sticky columns, row tints, tooltips, editor
-- `jobs-app/src/css/modal.css` — Modal, form inputs
-- `jobs-app/src/css/calendar.css` — Calendar popup
-- `jobs-app/src/css/scrollbar.css` — Scrollbar styling
-- `jobs-app/src/css/status-bar.css` — Toast notifications
-- `jobs-app/src/styles.css` — Root import file
+- `jobs-app/server/web/index.html` — Main app (HTML + JS)
+- `jobs-app/server/web/css/variables.css` — Design tokens (colors, shadows, radii)
+- `jobs-app/server/web/css/base.css` — Body, container, buttons
+- `jobs-app/server/web/css/header.css` — Header bar, status pills, legend
+- `jobs-app/server/web/css/toolbar.css` — Toolbar, inputs, checkboxes, menu, popups
+- `jobs-app/server/web/css/table.css` — Table, sticky columns, row tints, tooltips, editor
+- `jobs-app/server/web/css/modal.css` — Modal, form inputs
+- `jobs-app/server/web/css/calendar.css` — Calendar popup
+- `jobs-app/server/web/css/scrollbar.css` — Scrollbar styling
+- `jobs-app/server/web/css/status-bar.css` — Toast notifications
+- `jobs-app/server/web/css/styles.css` — Root import file
 - `jobs_data.json` — Data file (optional, loads from localStorage)
 
 ## Design System
@@ -25,8 +25,17 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - **Dark theme** — Full `[data-theme="dark"]` support with adjusted values
 - **Custom scrollbar** — Matte, matching the theme
 
+## Code Style & Design Rules
+- **No hardcoded colors** — All color/background/border values must reference CSS custom properties from `variables.css` (`var(--color-*)`, `var(--surface-*)`, `var(--text-*)`, etc.). New colors must be added as tokens with both light and dark theme values.
+- **Neumorphic consistency** — Extruded surfaces use `box-shadow: var(--shadow-extruded-*)` (light TL + dark BR); pressed/inset states use `var(--shadow-pressed)` or `var(--shadow-inset-*)`. Flat backgrounds or hardcoded box-shadows are not allowed on surfaces or buttons.
+- **Use existing tokens first** — Before adding a new token, check if an existing one fits (`--color-primary`, `--text-important`, `--surface-btn-secondary`, etc.). Avoid token bloat.
+- **Always theme both modes** — Every new token must have a `[data-theme="dark"]` override in `variables.css`.
+- **Match element patterns** — New interactive elements should mimic existing ones (e.g., buttons use `--surface-btn-*` + `--shadow-btn-*`, inputs use `--shadow-inset-input`, tooltips use `--surface-menu`). Do not invent new visual styles.
+- **Radius system** — Use `--radius-*` tokens (xs/sm/md/lg) consistently; never hardcode border-radius values.
+- **Zero-font-size tds** — Table cells use `line-height: 0; font-size: 0` on `td` with content wrapped in `.cell-inner` (`display: inline-block; font-size: var(--font-row-size); line-height: 1`). Content outside `.cell-inner` must also match this pattern.
+
 ## How to Run
-1. **Local:** Open `jobs-app/src/index.html` in Chrome/Edge
+1. **Local:** Open `jobs-app/server/web/index.html` in Chrome/Edge
 2. **Shared folder:** Copy `jobs-app/index.html` + `jobs_data.json` to shared network folder
 3. **Build .exe:** `cd jobs-app/server && deno task build` (auto-generates version info from `deno.json`)
 

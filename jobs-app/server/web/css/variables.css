@@ -41,6 +41,8 @@
   --color-overdue: #d47a7a;
   --color-completed: #6a7a8e;
   --color-success: #6abf9e;
+  --color-danger: #e74c3c;
+  --color-danger-rgb: 231, 76, 60;
 
   --surface-header: #eef0f4;
   --surface-btn-primary: #6abf9e;
@@ -153,6 +155,8 @@
   --color-overdue: #e8a9a9;
   --color-completed: #7a8290;
   --color-success: #4a8e7a;
+  --color-danger: #c0392b;
+  --color-danger-rgb: 192, 57, 43;
 
   --surface-header: #22262e;
   --surface-btn-primary: #4a8e7a;

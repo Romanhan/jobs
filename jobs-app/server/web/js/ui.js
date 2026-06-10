@@ -82,6 +82,10 @@ export function renderTable() {
         ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '"><span class="header-label">' + label + '</span><div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
     
+    const delCol = document.createElement('col');
+    delCol.style.width = '28px';
+    colgroup.appendChild(delCol);
+    
     for (let i = ths.length - 1; i >= 0; i--) {
         if (!ths[i].hidden) {
             ths[i].html = ths[i].html.replace('<th class="', '<th class="last-visible-th ');
@@ -91,10 +95,10 @@ export function renderTable() {
     
     let html = '<tr><th class="row-indicator"></th>';
     ths.forEach(th => { html += th.html; });
-    html += '</tr>';
+    html += '<th class="cell-delete-header"></th></tr>';
     thead.innerHTML = html;
     thead.parentNode.insertBefore(colgroup, thead);
-    document.getElementById('jobs-table').style.width = totalWidth + 'px';
+    document.getElementById('jobs-table').style.width = (totalWidth + 28) + 'px';
     renderTableBody();
     updateStickyPositions();
 }
@@ -190,6 +194,7 @@ export function renderTableBody() {
                 html += '<td tabindex="0" class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
             }
         });
+        html += '<td class="cell-delete"><button type="button" class="btn-delete" data-index="' + index + '" data-tooltip="Kustuta" aria-label="Kustuta">×</button></td>';
         html += '</tr>';
     });
     

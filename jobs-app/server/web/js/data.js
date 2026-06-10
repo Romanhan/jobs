@@ -112,6 +112,15 @@ export function addJob(job) {
     autoSave();
 }
 
+export function deleteJob(index) {
+    if (typeof index !== 'number' || isNaN(index) || index < 0 || index >= jobs.length) {
+        return;
+    }
+    pushUndo();
+    jobs.splice(index, 1);
+    autoSave();
+}
+
 let columnWidths = {};
 let hiddenColumns = {};
 
