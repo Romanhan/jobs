@@ -283,7 +283,6 @@ export function deleteRow(index) {
     activeDeleteKeydownHandler = onKey;
     document.addEventListener('keydown', onKey, true);
 
-    const jobToDelete = getJobs()[index];
     okBtn.onclick = function() {
         close();
         const currentJobs = getJobs();
