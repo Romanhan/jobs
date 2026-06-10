@@ -294,6 +294,7 @@ export function loadFromFile(file) {
                         toAdd.push(job);
                     }
                 }
+                isLoaded = true;
                 if (toAdd.length > 0) {
                     pushUndo();
                     for (const job of toAdd) {
@@ -302,7 +303,6 @@ export function loadFromFile(file) {
                     autoSave();
                 }
                 const addedCount = toAdd.length;
-                isLoaded = true;
                 resolve({ count: newJobs.length, jobs, added: addedCount });
             } catch (err) {
                 reject(err);
