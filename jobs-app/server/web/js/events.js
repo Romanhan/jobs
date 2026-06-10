@@ -278,7 +278,6 @@ export function deleteRow(index) {
             e.stopPropagation();
             return;
         }
-        e.stopPropagation();
     }
     activeDeleteKeydownHandler = onKey;
     document.addEventListener('keydown', onKey, true);
