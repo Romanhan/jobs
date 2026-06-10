@@ -61,7 +61,7 @@ export function editCell(td, index, col) {
     }
     const job = getJobs()[index];
     const value = job[col] || '';
-    const isDate = DATE_COLS.includes(col);
+    const isDate = DATE_COLS.includes(col) || col === 'Tooriku saabumise kuupäev EE';
     const textToMeasure = isDate ? formatDate(value) : value;
     
     const rect = td.getBoundingClientRect();
