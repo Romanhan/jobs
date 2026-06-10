@@ -231,7 +231,6 @@ export function deleteRow(index) {
     const popup = document.getElementById('confirm-popup');
     const cancelBtn = document.getElementById('confirm-cancel');
     const okBtn = document.getElementById('confirm-ok');
-    const triggerElement = document.activeElement;
 
     popup.style.display = 'flex';
     cancelBtn.focus();
@@ -248,9 +247,6 @@ export function deleteRow(index) {
         }
         okBtn.onclick = null;
         cancelBtn.onclick = null;
-        if (triggerElement) {
-            triggerElement.focus();
-        }
     }
 
     function onKey(e) {
@@ -335,6 +331,7 @@ export function closeModal() {
     
     document.body.classList.remove('modal-open');
     document.getElementById('modal').classList.remove('active');
+    document.activeElement?.blur();
 }
 
 export function addJob(e) {
