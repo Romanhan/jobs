@@ -34,7 +34,8 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - Version managed in `jobs-app/server/deno.json` (field `"version"`)
 - `deno task gen-version` reads `deno.json` and generates `web/js/version.js`
 - `deno task build` runs gen-version then compiles the .exe
-- Info popup (Menu → Info) displays app name, version, author
+- Info popup (Menu → Info) displays app name, version, author (English labels)
+- App icon — `icon.ico` in `server/` (16×16, 32×32, 64×64 combined), baked via `--icon icon.ico`
 
 ## Features
 - **Load data** — Reads from `jobs_data.json` or localStorage on page load
