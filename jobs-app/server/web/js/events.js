@@ -276,12 +276,22 @@ export function deleteRow(index) {
     activeDeleteKeydownHandler = onKey;
     document.addEventListener('keydown', onKey, true);
 
+    const jobToDelete = getJobs()[index];
     okBtn.onclick = function() {
         close();
-        doDeleteJob(index);
-        renderTableBody();
-        updateStats();
-        showStatus('Töö kustutatud', 'success');
+        const currentJobs = getJobs();
+        let targetIndex = index;
+        if (currentJobs[index] !== jobToDelete) {
+            targetIndex = currentJobs.indexOf(jobToDelete);
+        }
+        if (targetIndex !== -1) {
+            doDeleteJob(targetIndex);
+            renderTableBody();
+            updateStats();
+            showStatus('Töö kustutatud', 'success');
+        } else {
+            showStatus('Viga: Tööd ei leitud', 'error');
+        }
     };
     cancelBtn.onclick = close;
 }
