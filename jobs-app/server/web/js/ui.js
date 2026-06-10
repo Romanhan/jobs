@@ -194,7 +194,7 @@ export function renderTableBody() {
                 html += '<td tabindex="0" class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
             }
         });
-        html += '<td class="cell-delete"><button class="btn-delete" data-index="' + index + '" title="Kustuta">×</button></td>';
+        html += '<td class="cell-delete"><span class="btn-delete" data-index="' + index + '" title="Kustuta">×</span></td>';
         html += '</tr>';
     });
     
