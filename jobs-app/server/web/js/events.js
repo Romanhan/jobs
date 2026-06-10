@@ -481,9 +481,9 @@ export function attachEventListeners() {
         } else if (action === 'info') {
             const grid = document.getElementById('info-grid');
             if (grid && infoPopup) {
-                grid.innerHTML = '<div class="info-label">Rakendus</div><div class="info-value">' + APP_NAME + '</div>'
-                    + '<div class="info-label">Versioon</div><div class="info-value">' + APP_VERSION + '</div>'
-                    + '<div class="info-label">Autor</div><div class="info-value">' + APP_AUTHOR + '</div>';
+                grid.innerHTML = '<div class="info-label">Application</div><div class="info-value">' + APP_NAME + '</div>'
+                    + '<div class="info-label">Version</div><div class="info-value">' + APP_VERSION + '</div>'
+                    + '<div class="info-label">Author</div><div class="info-value">' + APP_AUTHOR + '</div>';
                 infoPopup.style.display = infoPopup.style.display === 'none' ? 'block' : 'none';
             }
         } else if (action === 'font-size') {
