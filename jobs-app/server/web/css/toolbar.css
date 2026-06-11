@@ -380,7 +380,7 @@
     border: none;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-menu);
-    min-width: 120px;
+    min-width: 100px;
     margin-top: 4px;
     padding: 6px;
 }
