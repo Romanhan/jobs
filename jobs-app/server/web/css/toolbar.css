@@ -254,8 +254,9 @@
 
 .menu-divider {
     border: none;
-    border-top: 1px solid var(--border-medium);
-    margin: 5px 10px;
+    background: transparent;
+    height: 6px;
+    margin: 0;
 }
 
 .info-popup {
@@ -373,7 +374,7 @@
     right: 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
     z-index: 950;
     background: var(--bg-input);
     border: none;
@@ -381,35 +382,34 @@
     box-shadow: var(--shadow-menu);
     min-width: 120px;
     margin-top: 4px;
-    padding: 0;
+    padding: 6px 8px;
 }
 
 .menu-item {
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
     width: 100%;
-    height: auto;
-    padding: 7px 14px;
+    padding: 3px 10px;
     line-height: 1;
     border: none;
     background: var(--surface-menu-item);
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 11px;
     cursor: pointer;
     text-align: left;
     white-space: nowrap;
     transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
     font-family: inherit;
-    position: relative;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-extruded-sm);
 }
 
 .menu-item:hover {
     background: var(--surface-menu-item-hover);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-extruded-sm);
+    border-radius: var(--radius-md);
+    transform: translateY(-1px);
 }
 
 .menu-item:active {
