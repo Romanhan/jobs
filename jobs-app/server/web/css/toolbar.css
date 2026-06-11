@@ -408,8 +408,7 @@
 
 .menu-item:hover {
     background: var(--surface-menu-item-hover);
-    border-radius: var(--radius-md);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-extruded-md);
 }
 
 .menu-item:active {
