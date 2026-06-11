@@ -385,15 +385,11 @@
     padding: 6px 8px;
 }
 
-.menu-group {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: transparent;
+.menu-divider {
     border: none;
-    border-radius: var(--radius-sm);
-    padding: 4px;
-    box-shadow: var(--shadow-extruded-xs);
+    background: transparent;
+    height: 12px;
+    margin: 0;
 }
 
 .menu-item {
@@ -402,7 +398,7 @@
     justify-content: space-between;
     gap: 8px;
     width: 100%;
-    padding: 3px 10px;
+    padding: 5px 12px;
     line-height: 1;
     border: none;
     background: transparent;
@@ -413,7 +409,7 @@
     white-space: nowrap;
     transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
     font-family: inherit;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
 }
 
 .menu-item:hover {
