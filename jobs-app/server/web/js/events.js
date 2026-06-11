@@ -525,7 +525,7 @@ export function attachEventListeners() {
     
     menuBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+        menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'flex' : 'none';
     });
     
     menuDropdown.addEventListener('click', function(e) {
