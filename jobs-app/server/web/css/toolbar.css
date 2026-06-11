@@ -374,7 +374,7 @@
     right: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     z-index: 950;
     background: var(--bg-input);
     border: none;
@@ -388,7 +388,7 @@
 .menu-divider {
     border: none;
     background: transparent;
-    height: 12px;
+    height: 10px;
     margin: 0;
 }
 
@@ -401,7 +401,7 @@
     padding: 5px 12px;
     line-height: 1;
     border: none;
-    background: transparent;
+    background: var(--surface-menu-item);
     color: var(--text-secondary);
     font-size: 11px;
     cursor: pointer;
@@ -410,10 +410,20 @@
     transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
     font-family: inherit;
     border-radius: var(--radius-md);
+    box-shadow: -1px -1px 2px rgba(255,255,255,0.85), 1px 1px 3px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .menu-item {
+    box-shadow: -1px -1px 2px rgba(255,255,255,0.05), 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 .menu-item:hover {
     background: var(--surface-menu-item-hover);
+    box-shadow: -1px -1px 3px rgba(255,255,255,0.85), 2px 2px 5px rgba(0,0,0,0.25);
+}
+
+[data-theme="dark"] .menu-item:hover {
+    box-shadow: -1px -1px 3px rgba(255,255,255,0.05), 2px 2px 5px rgba(0,0,0,0.55);
 }
 
 .menu-item:active {
