@@ -394,7 +394,7 @@
     padding: 3px 10px;
     line-height: 1;
     border: none;
-    background: var(--surface-menu-item);
+    background: transparent;
     color: var(--text-secondary);
     font-size: 11px;
     cursor: pointer;
@@ -403,12 +403,10 @@
     transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
     font-family: inherit;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-extruded-xs);
 }
 
 .menu-item:hover {
     background: var(--surface-menu-item-hover);
-    box-shadow: var(--shadow-extruded-md);
 }
 
 .menu-item:active {
