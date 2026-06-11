@@ -403,7 +403,7 @@
     transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
     font-family: inherit;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-extruded-sm);
+    box-shadow: var(--shadow-extruded-xs);
 }
 
 .menu-item:hover {

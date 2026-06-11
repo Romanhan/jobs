@@ -68,6 +68,7 @@
   --surface-menu-item-hover: #e6eaee;
   --surface-menu-item-active: #dce0e6;
 
+  --shadow-extruded-xs: -1px -1px 3px rgba(255,255,255,0.8), 2px 2px 5px rgba(0,0,0,0.2);
   --shadow-extruded-sm: -2px -2px 5px rgba(255,255,255,0.9), 3px 3px 7px rgba(0,0,0,0.25);
   --shadow-extruded-md: -3px -3px 8px rgba(255,255,255,0.9), 4px 4px 10px rgba(0,0,0,0.28);
   --shadow-extruded-lg: -4px -4px 10px rgba(255,255,255,0.9), 6px 6px 14px rgba(0,0,0,0.30);
@@ -182,6 +183,7 @@
   --surface-menu-item-hover: #2a2e36;
   --surface-menu-item-active: #1a1d23;
 
+  --shadow-extruded-xs: -1px -1px 3px rgba(255,255,255,0.05), 2px 2px 5px rgba(0,0,0,0.45);
   --shadow-extruded-sm: -2px -2px 5px rgba(255,255,255,0.05), 3px 3px 7px rgba(0,0,0,0.50);
   --shadow-extruded-md: -3px -3px 8px rgba(255,255,255,0.05), 4px 4px 10px rgba(0,0,0,0.55);
   --shadow-extruded-lg: -4px -4px 10px rgba(255,255,255,0.05), 6px 6px 14px rgba(0,0,0,0.55);
