@@ -1,6 +1,6 @@
 .toolbar {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     flex-wrap: wrap;
     margin-bottom: 0;
     padding: 6px 8px 12px;
@@ -13,7 +13,7 @@
     font-size: 12px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     color: var(--text-muted);
 }
 
@@ -374,7 +374,7 @@
     right: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 15px;
     z-index: 950;
     background: var(--bg-input);
     border: none;
