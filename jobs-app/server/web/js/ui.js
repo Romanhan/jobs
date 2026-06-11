@@ -300,8 +300,8 @@ export function updateStats() {
     const total = jobsArr.length;
     const completed = jobsArr.filter(j => j['Valmis']).length;
     const active = total - completed;
-    const inProgress = jobsArr.filter(j => j['Alustatud'] && !j['Valmis']).length;
-    const allhanke = jobsArr.filter(j => j['Töötlus allhankes'] && !j['Valmis']).length;
+    const inProgress = jobsArr.filter(j => getStatus(j) === 'in-progress').length;
+    const allhanke = jobsArr.filter(j => getStatus(j) === 'allhanke').length;
     const overdue = jobsArr.filter(j => getStatus(j) === 'overdue').length;
     
     document.getElementById('count-active').textContent = active;
