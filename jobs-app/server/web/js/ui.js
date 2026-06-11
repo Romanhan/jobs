@@ -298,11 +298,15 @@ export function renderForm() {
 export function updateStats() {
     const jobsArr = getJobs();
     const total = jobsArr.length;
-    const completed = jobsArr.filter(j => j['Valmis']).length;
+    let completed = 0, inProgress = 0, allhanke = 0, overdue = 0;
+    jobsArr.forEach(job => {
+        const status = getStatus(job);
+        if (status === 'completed') completed++;
+        else if (status === 'in-progress') inProgress++;
+        else if (status === 'allhanke') allhanke++;
+        else if (status === 'overdue') overdue++;
+    });
     const active = total - completed;
-    const inProgress = jobsArr.filter(j => j['Alustatud'] && !j['Valmis']).length;
-    const allhanke = jobsArr.filter(j => j['Töötlus allhankes'] && !j['Valmis']).length;
-    const overdue = jobsArr.filter(j => getStatus(j) === 'overdue').length;
     
     document.getElementById('count-active').textContent = active;
     document.getElementById('count-in-progress').textContent = inProgress;
