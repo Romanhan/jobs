@@ -28,11 +28,17 @@ export function getStatusFilter() {
 
 function parseDeadline(str) {
     if (typeof str !== 'string') return null;
-    const parts = str.includes('.') ? str.split('.') : str.split('-');
-    if (parts.length !== 3 || parts.some(p => !p.trim() || isNaN(p))) return null;
-    const [y, m, d] = str.includes('.') ? [parts[2], parts[1] - 1, parts[0]] : [parts[0], parts[1] - 1, parts[2]];
-    const date = new Date(y, m, d);
-    return isNaN(date.getTime()) ? null : date;
+    let match = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (match) {
+        const date = new Date(match[3], match[2] - 1, match[1]);
+        return isNaN(date.getTime()) ? null : date;
+    }
+    match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (match) {
+        const date = new Date(match[1], match[2] - 1, match[3]);
+        return isNaN(date.getTime()) ? null : date;
+    }
+    return null;
 }
 
 function isInProgress(job) {
