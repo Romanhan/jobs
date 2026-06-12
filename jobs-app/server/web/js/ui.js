@@ -26,21 +26,18 @@ export function getStatusFilter() {
     return statusFilter;
 }
 
+function parseDeadline(str) {
+    if (typeof str !== 'string') return null;
+    const parts = str.includes('.') ? str.split('.') : str.split('-');
+    const [y, m, d] = str.includes('.') ? [parts[2], parts[1] - 1, parts[0]] : [parts[0], parts[1] - 1, parts[2]];
+    return new Date(y, m, d);
+}
+
 export function getStatus(job) {
     if (job['Valmis']) return 'completed';
-    const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
-    if (deadlineStr) {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        let deadline;
-        if (deadlineStr.includes('.')) {
-            const parts = deadlineStr.split('.');
-            deadline = new Date(parts[2], parts[1] - 1, parts[0]);
-        } else {
-            const parts = deadlineStr.split('-');
-            deadline = new Date(parts[0], parts[1] - 1, parts[2]);
-        }
-        if (!isNaN(deadline) && deadline < today) return 'overdue';
-    }
+    const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (deadline && !isNaN(deadline) && deadline < today) return 'overdue';
     if (job['Töötlus allhankes']) return 'allhanke';
     if (job['Alustatud']) return 'in-progress';
     return null;
@@ -114,6 +111,7 @@ export function renderTableBody() {
     const hiddenColumns = getHiddenColumns();
     
     const jobsArr = getJobs();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     
     let filteredJobs = jobsArr.map((job, index) => ({ job, index }))
         .filter(({ job }) => {
@@ -123,18 +121,8 @@ export function renderTableBody() {
                 if (statusFilter === 'allhanke' && (job['Valmis'] || !job['Töötlus allhankes'])) return false;
                 if (statusFilter === 'overdue') {
                     if (job['Valmis']) return false;
-                    const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
-                    if (!deadlineStr) return false;
-                    const today = new Date(); today.setHours(0, 0, 0, 0);
-                    let deadline;
-                    if (deadlineStr.includes('.')) {
-                        const parts = deadlineStr.split('.');
-                        deadline = new Date(parts[2], parts[1] - 1, parts[0]);
-                    } else {
-                        const parts = deadlineStr.split('-');
-                        deadline = new Date(parts[0], parts[1] - 1, parts[2]);
-                    }
-                    if (isNaN(deadline) || !(deadline < today)) return false;
+                    const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
+                    if (!deadline || isNaN(deadline) || !(deadline < today)) return false;
                 }
             } else {
                 if (job['Valmis'] && !showCompleted) return false;
@@ -323,18 +311,8 @@ export function updateStats() {
         } else {
             if (job['Alustatud']) inProgress++;
             if (job['Töötlus allhankes']) allhanke++;
-            const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
-            if (deadlineStr) {
-                let deadline;
-                if (deadlineStr.includes('.')) {
-                    const parts = deadlineStr.split('.');
-                    deadline = new Date(parts[2], parts[1] - 1, parts[0]);
-                } else {
-                    const parts = deadlineStr.split('-');
-                    deadline = new Date(parts[0], parts[1] - 1, parts[2]);
-                }
-                if (!isNaN(deadline) && deadline < today) overdue++;
-            }
+            const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
+            if (deadline && !isNaN(deadline) && deadline < today) overdue++;
         }
     });
     const active = total - completed;
