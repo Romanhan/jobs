@@ -24,14 +24,7 @@ async function ensureRcedit() {
 async function setVersionInfo() {
   await ensureRcedit();
 
-  const cmd = isWindows ? rceditPath : "wine";
-  const cmdArgs = isWindows
-    ? [rceditPath]
-    : [rceditPath];
-
-  const args = [
-    ...cmdArgs,
-    exePath,
+  const versionFlags = [
     "--set-file-version", version,
     "--set-product-version", version,
     "--set-version-string", "FileVersion", version,
@@ -41,6 +34,11 @@ async function setVersionInfo() {
     "--set-version-string", "FileDescription", "Work management application",
     "--set-version-string", "LegalCopyright", "",
   ];
+
+  const cmd = isWindows ? rceditPath : "wine";
+  const args = isWindows
+    ? [exePath, ...versionFlags]
+    : [rceditPath, exePath, ...versionFlags];
 
   console.log(`Setting version info for ${exePath}...`);
   const proc = new Deno.Command(cmd, { args });
