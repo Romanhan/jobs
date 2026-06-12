@@ -151,40 +151,36 @@ function setUpButtons() {
     });
 
     document.getElementById('filter-nr').addEventListener('input', filterTable);
-    document.getElementById('filter-koht').addEventListener('input', function() {
-        document.getElementById('btn-filter-tos').classList.remove('active');
-        document.getElementById('btn-filter-karusell').classList.remove('active');
-        filterTable();
-    });
-    document.getElementById('show-blank-koht').addEventListener('change', filterTable);
+    const filterKoht = document.getElementById('filter-koht');
+    const btnTos = document.getElementById('btn-filter-tos');
+    const btnKarusell = document.getElementById('btn-filter-karusell');
 
-    document.getElementById('btn-filter-tos').addEventListener('click', function() {
-        const kohtInput = document.getElementById('filter-koht');
-        const karusellBtn = document.getElementById('btn-filter-karusell');
-        if (this.classList.contains('active')) {
-            this.classList.remove('active');
-            kohtInput.value = '';
-        } else {
-            this.classList.add('active');
-            karusellBtn.classList.remove('active');
-            kohtInput.value = 'TOS';
-        }
-        filterTable();
-    });
+    if (filterKoht) {
+        filterKoht.addEventListener('input', function() {
+            btnTos?.classList.remove('active');
+            btnKarusell?.classList.remove('active');
+            filterTable();
+        });
+    }
+    document.getElementById('show-blank-koht')?.addEventListener('change', filterTable);
 
-    document.getElementById('btn-filter-karusell').addEventListener('click', function() {
-        const kohtInput = document.getElementById('filter-koht');
-        const tosBtn = document.getElementById('btn-filter-tos');
-        if (this.classList.contains('active')) {
-            this.classList.remove('active');
-            kohtInput.value = '';
-        } else {
-            this.classList.add('active');
-            tosBtn.classList.remove('active');
-            kohtInput.value = 'Karusell';
-        }
-        filterTable();
-    });
+    function setupLocationFilter(btn, otherBtn, value) {
+        if (!btn || !filterKoht) return;
+        btn.addEventListener('click', function() {
+            if (this.classList.contains('active')) {
+                this.classList.remove('active');
+                filterKoht.value = '';
+            } else {
+                this.classList.add('active');
+                otherBtn?.classList.remove('active');
+                filterKoht.value = value;
+            }
+            filterTable();
+        });
+    }
+
+    setupLocationFilter(btnTos, btnKarusell, 'TOS');
+    setupLocationFilter(btnKarusell, btnTos, 'Karusell');
     document.getElementById('show-hidden-dates').addEventListener('change', function() {
         localStorage.setItem('showHiddenDates', this.checked);
         renderTable();
