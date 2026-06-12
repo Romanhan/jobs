@@ -151,8 +151,40 @@ function setUpButtons() {
     });
 
     document.getElementById('filter-nr').addEventListener('input', filterTable);
-    document.getElementById('filter-koht').addEventListener('input', filterTable);
+    document.getElementById('filter-koht').addEventListener('input', function() {
+        document.getElementById('btn-filter-tos').classList.remove('active');
+        document.getElementById('btn-filter-karusell').classList.remove('active');
+        filterTable();
+    });
     document.getElementById('show-blank-koht').addEventListener('change', filterTable);
+
+    document.getElementById('btn-filter-tos').addEventListener('click', function() {
+        const kohtInput = document.getElementById('filter-koht');
+        const karusellBtn = document.getElementById('btn-filter-karusell');
+        if (this.classList.contains('active')) {
+            this.classList.remove('active');
+            kohtInput.value = '';
+        } else {
+            this.classList.add('active');
+            karusellBtn.classList.remove('active');
+            kohtInput.value = 'TOS';
+        }
+        filterTable();
+    });
+
+    document.getElementById('btn-filter-karusell').addEventListener('click', function() {
+        const kohtInput = document.getElementById('filter-koht');
+        const tosBtn = document.getElementById('btn-filter-tos');
+        if (this.classList.contains('active')) {
+            this.classList.remove('active');
+            kohtInput.value = '';
+        } else {
+            this.classList.add('active');
+            tosBtn.classList.remove('active');
+            kohtInput.value = 'Karusell';
+        }
+        filterTable();
+    });
     document.getElementById('show-hidden-dates').addEventListener('change', function() {
         localStorage.setItem('showHiddenDates', this.checked);
         renderTable();
