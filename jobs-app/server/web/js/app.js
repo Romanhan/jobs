@@ -153,13 +153,13 @@ function setUpButtons() {
     document.getElementById('filter-nr').addEventListener('input', filterTable);
     const filterKoht = document.getElementById('filter-koht');
     const btnTos = document.getElementById('btn-filter-tos');
-    const btnKarusell = document.getElementById('btn-filter-karusell');
+    const btnKarusell = document.getElementById('btn-filter-karusel');
 
     if (filterKoht) {
         filterKoht.addEventListener('input', () => {
             const val = filterKoht.value.trim().toLowerCase();
             const isTos = val === 'tos';
-            const isKarusell = val === 'karusell';
+            const isKarusell = val === 'karusel';
 
             btnTos?.classList.toggle('active', isTos);
             btnTos?.setAttribute('aria-pressed', isTos ? 'true' : 'false');
@@ -191,7 +191,7 @@ function setUpButtons() {
     }
 
     setupLocationFilter(btnTos, btnKarusell, 'TOS');
-    setupLocationFilter(btnKarusell, btnTos, 'Karusell');
+    setupLocationFilter(btnKarusell, btnTos, 'Karusel');
     document.getElementById('show-hidden-dates').addEventListener('change', function() {
         localStorage.setItem('showHiddenDates', this.checked);
         renderTable();
