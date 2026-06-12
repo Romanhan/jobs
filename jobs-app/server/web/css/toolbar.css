@@ -46,6 +46,17 @@
     box-shadow: var(--shadow-inset-input), var(--shadow-input-focus);
 }
 
+.toolbar input:-webkit-autofill,
+.toolbar select:-webkit-autofill {
+    -webkit-text-fill-color: var(--text-secondary);
+    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+}
+
+.toolbar input:-webkit-autofill:focus,
+.toolbar select:-webkit-autofill:focus {
+    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
+}
+
 .toolbar button {
     border: none;
 }
