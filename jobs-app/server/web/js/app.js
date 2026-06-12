@@ -168,16 +168,18 @@ function setUpButtons() {
 
     function setupLocationFilter(btn, otherBtn, value) {
         if (!btn || !filterKoht) return;
-        btn.addEventListener('click', function() {
-            if (this.classList.contains('active')) {
-                this.classList.remove('active');
-                this.setAttribute('aria-pressed', 'false');
+        btn.addEventListener('click', () => {
+            if (btn.classList.contains('active')) {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-pressed', 'false');
                 filterKoht.value = '';
             } else {
-                this.classList.add('active');
-                this.setAttribute('aria-pressed', 'true');
-                otherBtn?.classList.remove('active');
-                otherBtn?.setAttribute('aria-pressed', 'false');
+                btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
+                if (otherBtn) {
+                    otherBtn.classList.remove('active');
+                    otherBtn.setAttribute('aria-pressed', 'false');
+                }
                 filterKoht.value = value;
             }
             filterTable();
