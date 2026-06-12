@@ -31,12 +31,16 @@ function parseDeadline(str) {
     let match = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
     if (match) {
         const date = new Date(match[3], match[2] - 1, match[1]);
-        return isNaN(date.getTime()) ? null : date;
+        if (isNaN(date.getTime())) return null;
+        if (date.getMonth() !== match[2] - 1 || date.getDate() !== Number(match[1])) return null;
+        return date;
     }
     match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (match) {
         const date = new Date(match[1], match[2] - 1, match[3]);
-        return isNaN(date.getTime()) ? null : date;
+        if (isNaN(date.getTime())) return null;
+        if (date.getMonth() !== match[2] - 1 || date.getDate() !== Number(match[3])) return null;
+        return date;
     }
     return null;
 }
