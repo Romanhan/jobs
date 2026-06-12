@@ -29,15 +29,17 @@ export function getStatusFilter() {
 function parseDeadline(str) {
     if (typeof str !== 'string') return null;
     const parts = str.includes('.') ? str.split('.') : str.split('-');
+    if (parts.length !== 3 || parts.some(p => !p.trim() || isNaN(p))) return null;
     const [y, m, d] = str.includes('.') ? [parts[2], parts[1] - 1, parts[0]] : [parts[0], parts[1] - 1, parts[2]];
-    return new Date(y, m, d);
+    const date = new Date(y, m, d);
+    return isNaN(date.getTime()) ? null : date;
 }
 
 export function getStatus(job) {
     if (job['Valmis']) return 'completed';
     const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (deadline && !isNaN(deadline) && deadline < today) return 'overdue';
+    if (deadline && deadline < today) return 'overdue';
     if (job['Töötlus allhankes']) return 'allhanke';
     if (job['Alustatud']) return 'in-progress';
     return null;
@@ -122,7 +124,7 @@ export function renderTableBody() {
                 if (statusFilter === 'overdue') {
                     if (job['Valmis']) return false;
                     const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
-                    if (!deadline || isNaN(deadline) || !(deadline < today)) return false;
+                    if (!deadline || !(deadline < today)) return false;
                 }
             } else {
                 if (job['Valmis'] && !showCompleted) return false;
@@ -312,7 +314,7 @@ export function updateStats() {
             if (job['Alustatud']) inProgress++;
             if (job['Töötlus allhankes']) allhanke++;
             const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
-            if (deadline && !isNaN(deadline) && deadline < today) overdue++;
+            if (deadline && deadline < today) overdue++;
         }
     });
     const active = total - completed;
