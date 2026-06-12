@@ -158,7 +158,9 @@ function setUpButtons() {
     if (filterKoht) {
         filterKoht.addEventListener('input', function() {
             btnTos?.classList.remove('active');
+            btnTos?.setAttribute('aria-pressed', 'false');
             btnKarusell?.classList.remove('active');
+            btnKarusell?.setAttribute('aria-pressed', 'false');
             filterTable();
         });
     }
@@ -169,10 +171,13 @@ function setUpButtons() {
         btn.addEventListener('click', function() {
             if (this.classList.contains('active')) {
                 this.classList.remove('active');
+                this.setAttribute('aria-pressed', 'false');
                 filterKoht.value = '';
             } else {
                 this.classList.add('active');
+                this.setAttribute('aria-pressed', 'true');
                 otherBtn?.classList.remove('active');
+                otherBtn?.setAttribute('aria-pressed', 'false');
                 filterKoht.value = value;
             }
             filterTable();
