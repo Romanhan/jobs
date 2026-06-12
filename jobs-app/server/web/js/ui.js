@@ -46,7 +46,7 @@ function parseDeadline(str) {
 }
 
 function isInProgress(job) {
-    return job['Alustatud'] && !job['Valmis'];
+    return job['Alustatud'] && !job['Töötlus allhankes'] && !job['Valmis'];
 }
 
 function isAllhanke(job) {
