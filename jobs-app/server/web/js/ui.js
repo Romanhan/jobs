@@ -35,13 +35,26 @@ function parseDeadline(str) {
     return isNaN(date.getTime()) ? null : date;
 }
 
+function isInProgress(job) {
+    return job['Alustatud'] && !job['Valmis'];
+}
+
+function isAllhanke(job) {
+    return job['Töötlus allhankes'] && !job['Valmis'];
+}
+
+function isOverdue(job, today) {
+    if (job['Valmis']) return false;
+    const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
+    return !!deadline && deadline < today;
+}
+
 export function getStatus(job) {
     if (job['Valmis']) return 'completed';
-    const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (deadline && deadline < today) return 'overdue';
-    if (job['Töötlus allhankes']) return 'allhanke';
-    if (job['Alustatud']) return 'in-progress';
+    if (isOverdue(job, today)) return 'overdue';
+    if (isAllhanke(job)) return 'allhanke';
+    if (isInProgress(job)) return 'in-progress';
     return null;
 }
 
@@ -119,13 +132,9 @@ export function renderTableBody() {
         .filter(({ job }) => {
             if (statusFilter) {
                 if (statusFilter === 'completed' && !job['Valmis']) return false;
-                if (statusFilter === 'in-progress' && (job['Valmis'] || !job['Alustatud'])) return false;
-                if (statusFilter === 'allhanke' && (job['Valmis'] || !job['Töötlus allhankes'])) return false;
-                if (statusFilter === 'overdue') {
-                    if (job['Valmis']) return false;
-                    const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
-                    if (!deadline || !(deadline < today)) return false;
-                }
+                if (statusFilter === 'in-progress' && !isInProgress(job)) return false;
+                if (statusFilter === 'allhanke' && !isAllhanke(job)) return false;
+                if (statusFilter === 'overdue' && !isOverdue(job, today)) return false;
             } else {
                 if (job['Valmis'] && !showCompleted) return false;
                 const allhankes = job['Töötlus allhankes'];
@@ -311,10 +320,9 @@ export function updateStats() {
         if (job['Valmis']) {
             completed++;
         } else {
-            if (job['Alustatud']) inProgress++;
-            if (job['Töötlus allhankes']) allhanke++;
-            const deadline = parseDeadline(job['EE vajaduse kuupäev (koostamiseks valmis kujul)']);
-            if (deadline && deadline < today) overdue++;
+            if (isInProgress(job)) inProgress++;
+            if (isAllhanke(job)) allhanke++;
+            if (isOverdue(job, today)) overdue++;
         }
     });
     const active = total - completed;
