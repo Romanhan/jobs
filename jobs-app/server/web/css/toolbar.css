@@ -126,12 +126,12 @@
 .btn-filter-location {
     font-size: 11px;
     padding: 4px 8px;
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     border: none;
     font-weight: 600;
     background: var(--surface-btn-secondary);
     color: var(--text-muted);
-    box-shadow: var(--shadow-btn-secondary);
+    box-shadow: var(--shadow-status-box);
     cursor: pointer;
     white-space: nowrap;
     transition: all 0.15s ease;
@@ -139,10 +139,11 @@
 
 .btn-filter-location:hover {
     background: var(--surface-btn-secondary-hover);
+    box-shadow: var(--shadow-status-box-hover);
 }
 
 .btn-filter-location:focus-visible {
-    box-shadow: var(--shadow-btn-secondary), var(--shadow-focus);
+    box-shadow: var(--shadow-status-box), var(--shadow-focus);
 }
 
 .btn-filter-location.active {
