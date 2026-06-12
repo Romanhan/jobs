@@ -156,11 +156,15 @@ function setUpButtons() {
     const btnKarusell = document.getElementById('btn-filter-karusell');
 
     if (filterKoht) {
-        filterKoht.addEventListener('input', function() {
-            btnTos?.classList.remove('active');
-            btnTos?.setAttribute('aria-pressed', 'false');
-            btnKarusell?.classList.remove('active');
-            btnKarusell?.setAttribute('aria-pressed', 'false');
+        filterKoht.addEventListener('input', () => {
+            const val = filterKoht.value.trim().toLowerCase();
+            const isTos = val === 'tos';
+            const isKarusell = val === 'karusell';
+
+            btnTos?.classList.toggle('active', isTos);
+            btnTos?.setAttribute('aria-pressed', isTos ? 'true' : 'false');
+            btnKarusell?.classList.toggle('active', isKarusell);
+            btnKarusell?.setAttribute('aria-pressed', isKarusell ? 'true' : 'false');
             filterTable();
         });
     }
