@@ -118,7 +118,24 @@ export function renderTableBody() {
     let filteredJobs = jobsArr.map((job, index) => ({ job, index }))
         .filter(({ job }) => {
             if (statusFilter) {
-                if (getStatus(job) !== statusFilter) return false;
+                if (statusFilter === 'completed' && !job['Valmis']) return false;
+                if (statusFilter === 'in-progress' && (job['Valmis'] || !job['Alustatud'])) return false;
+                if (statusFilter === 'allhanke' && (job['Valmis'] || !job['Töötlus allhankes'])) return false;
+                if (statusFilter === 'overdue') {
+                    if (job['Valmis']) return false;
+                    const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
+                    if (!deadlineStr) return false;
+                    const today = new Date(); today.setHours(0, 0, 0, 0);
+                    let deadline;
+                    if (deadlineStr.includes('.')) {
+                        const parts = deadlineStr.split('.');
+                        deadline = new Date(parts[2], parts[1] - 1, parts[0]);
+                    } else {
+                        const parts = deadlineStr.split('-');
+                        deadline = new Date(parts[0], parts[1] - 1, parts[2]);
+                    }
+                    if (isNaN(deadline) || !(deadline < today)) return false;
+                }
             } else {
                 if (job['Valmis'] && !showCompleted) return false;
                 const allhankes = job['Töötlus allhankes'];
@@ -299,12 +316,26 @@ export function updateStats() {
     const jobsArr = getJobs();
     const total = jobsArr.length;
     let completed = 0, inProgress = 0, allhanke = 0, overdue = 0;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     jobsArr.forEach(job => {
-        const status = getStatus(job);
-        if (status === 'completed') completed++;
-        else if (status === 'in-progress') inProgress++;
-        else if (status === 'allhanke') allhanke++;
-        else if (status === 'overdue') overdue++;
+        if (job['Valmis']) {
+            completed++;
+        } else {
+            if (job['Alustatud']) inProgress++;
+            if (job['Töötlus allhankes']) allhanke++;
+            const deadlineStr = job['EE vajaduse kuupäev (koostamiseks valmis kujul)'];
+            if (deadlineStr) {
+                let deadline;
+                if (deadlineStr.includes('.')) {
+                    const parts = deadlineStr.split('.');
+                    deadline = new Date(parts[2], parts[1] - 1, parts[0]);
+                } else {
+                    const parts = deadlineStr.split('-');
+                    deadline = new Date(parts[0], parts[1] - 1, parts[2]);
+                }
+                if (!isNaN(deadline) && deadline < today) overdue++;
+            }
+        }
     });
     const active = total - completed;
     
