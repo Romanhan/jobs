@@ -1,0 +1,25 @@
+name: Build Windows Executable
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+      
+      - name: Build executable
+        run: deno task build
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jobs-app
+          path: jobs-app/server/jobs-app.exe
