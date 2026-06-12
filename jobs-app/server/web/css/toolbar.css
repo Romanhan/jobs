@@ -40,17 +40,6 @@
     box-shadow: var(--shadow-inset-input);
 }
 
-input:-webkit-autofill,
-select:-webkit-autofill {
-    -webkit-text-fill-color: var(--text-secondary);
-    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
-}
-
-input:-webkit-autofill:focus,
-select:-webkit-autofill:focus {
-    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
-}
-
 .toolbar input:focus,
 .toolbar select:focus {
     outline: none;
