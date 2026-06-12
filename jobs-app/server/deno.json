@@ -1,9 +1,10 @@
 {
   "name": "jobs-app-server",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "exports": "./server.ts",
   "tasks": {
     "gen-version": "deno run -A gen-version.ts",
-    "build": "deno task gen-version && deno compile --target x86_64-pc-windows-msvc --no-terminal --allow-all --icon icon.ico --include web --output jobs-app.exe server.ts"
+    "set-version-info": "deno run -A set-version-info.ts",
+    "build": "deno task gen-version && deno compile --target x86_64-pc-windows-msvc --no-terminal --allow-all --icon icon.ico --include web --output jobs-app.exe server.ts && deno task set-version-info"
   }
 }
