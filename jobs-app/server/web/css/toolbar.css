@@ -40,6 +40,20 @@
     box-shadow: var(--shadow-inset-input);
 }
 
+.toolbar input:-webkit-autofill,
+.toolbar select:-webkit-autofill {
+    -webkit-text-fill-color: var(--text-secondary);
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset;
+    box-shadow: var(--shadow-inset-input);
+    border-radius: var(--radius-sm);
+}
+
+.toolbar input:-moz-autofill,
+.toolbar select:-moz-autofill {
+    -moz-text-fill-color: var(--text-secondary);
+    box-shadow: 0 0 0 1000px var(--bg-input) inset, var(--shadow-inset-input);
+}
+
 .toolbar input:focus,
 .toolbar select:focus {
     outline: none;
