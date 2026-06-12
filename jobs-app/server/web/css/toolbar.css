@@ -43,9 +43,8 @@
 .toolbar input:-webkit-autofill,
 .toolbar select:-webkit-autofill {
     -webkit-text-fill-color: var(--text-secondary);
-    -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset, var(--shadow-inset-input);
-    box-shadow: 0 0 0 1000px var(--bg-input) inset, var(--shadow-inset-input);
-    border-radius: var(--radius-sm);
+    -webkit-box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
 }
 
 .toolbar input:focus,
