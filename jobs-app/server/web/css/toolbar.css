@@ -141,6 +141,10 @@
     background: var(--surface-btn-secondary-hover);
 }
 
+.btn-filter-location:focus-visible {
+    box-shadow: var(--shadow-extruded-sm), var(--shadow-focus);
+}
+
 .btn-filter-location.active {
     background: var(--surface-btn-primary);
     color: var(--text-on-primary);
