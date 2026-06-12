@@ -17,6 +17,7 @@ jobs:
           deno-version: v2.x
       
       - name: Build executable
+        working-directory: jobs-app/server
         run: deno task build
       
       - name: Upload artifact
