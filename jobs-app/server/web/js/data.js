@@ -6,8 +6,19 @@ let lastSavedTimestamp = 0;
 let isLoaded = false;
 let inFlightSaves = 0;
 let isPolling = false;
+let sortColumn = null;
+let sortDirection = 'asc';
 let undoStack = [];
 const MAX_UNDO = 50;
+
+export function setSortingState(col, dir) {
+    sortColumn = col;
+    sortDirection = dir;
+}
+
+export function getSortingState() {
+    return { sortColumn, sortDirection };
+}
 
 export function setJobs(newJobs) {
     jobs = newJobs;
@@ -19,14 +30,28 @@ export function getJobs() {
 
 export function pushUndo() {
     try {
-        undoStack.push(JSON.parse(JSON.stringify(jobs)));
+        undoStack.push({
+            jobs: JSON.parse(JSON.stringify(jobs)),
+            sortColumn,
+            sortDirection
+        });
         if (undoStack.length > MAX_UNDO) undoStack.shift();
     } catch (e) {}
 }
 
 export function undo() {
     if (undoStack.length === 0) return false;
-    jobs = undoStack.pop();
+    const state = undoStack.pop();
+    jobs = state.jobs;
+    if (state.sortColumn) {
+        sortColumn = state.sortColumn;
+        sortDirection = state.sortDirection;
+        localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn, sortDirection }));
+    } else {
+        sortColumn = null;
+        sortDirection = 'asc';
+        localStorage.removeItem('jobsSortState');
+    }
     autoSave();
     return true;
 }
@@ -147,6 +172,9 @@ export function reorderJobs(column, direction, shouldSave = false) {
 export function addJob(job) {
     pushUndo();
     jobs.push(job);
+    if (sortColumn && sortDirection) {
+        reorderJobs(sortColumn, sortDirection, false);
+    }
     autoSave();
 }
 

@@ -1,28 +1,9 @@
 import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
 import { formatDate, renderMarkdown } from './utils.js';
-import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs } from './data.js';
+import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs, setSortingState, getSortingState } from './data.js';
 import { openDateCalendar } from './calendar.js';
 
-let sortColumn = null;
-let sortDirection = 'asc';
 let statusFilter = null;
-
-export function setSortingState(column, direction) {
-    sortColumn = column;
-    sortDirection = direction;
-}
-
-export function getSortingState() {
-    return { sortColumn, sortDirection };
-}
-
-export function clearSort() {
-    sortColumn = null;
-    sortDirection = 'asc';
-    document.querySelectorAll('thead th.sorted').forEach(th => {
-        th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
-    });
-}
 
 export function setStatusFilter(filter) {
     statusFilter = filter;
@@ -91,6 +72,7 @@ export function renderTable() {
     
     let totalWidth = 16;
     const ths = [];
+    const { sortColumn, sortDirection } = getSortingState();
     COLUMNS.forEach(col => {
         const isHidden = HIDDEN_COLS.includes(col) && !showHidden;
         if (isHidden) return;
@@ -331,21 +313,18 @@ export function filterTable() {
 }
 
 export function sortBy(col) {
-    if (sortColumn === col) {
-        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortColumn = col;
-        sortDirection = 'asc';
-    }
+    const { sortColumn, sortDirection } = getSortingState();
+    const newDir = sortColumn === col ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'asc';
+    setSortingState(col, newDir);
     document.querySelectorAll('thead th').forEach(th => {
         th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
     });
     const th = document.querySelector('thead th[data-col="' + col + '"]');
     if (th) {
-        th.classList.add('sorted', sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        th.classList.add('sorted', newDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
-    reorderJobs(col, sortDirection, true);
-    localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn, sortDirection }));
+    reorderJobs(col, newDir, true);
+    localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn: col, sortDirection: newDir }));
     renderTableBody();
     updateStickyPositions();
 }
