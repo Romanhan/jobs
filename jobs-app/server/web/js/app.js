@@ -62,7 +62,7 @@ function restoreSort() {
     if (saved) {
         try {
             const state = JSON.parse(saved);
-            if (state.sortColumn && typeof state.sortDirection === 'string') {
+            if (state && state.sortColumn && typeof state.sortDirection === 'string') {
                 setSortingState(state.sortColumn, state.sortDirection);
                 reorderJobs(state.sortColumn, state.sortDirection, false);
             }
