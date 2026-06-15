@@ -147,7 +147,7 @@ export function reorderJobs(column, direction, shouldSave = false) {
         if (!isEmptyA && isEmptyB) return -1;
 
         if (typeof valA === 'boolean' || typeof valB === 'boolean') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
-        else if (DATE_COLS.includes(column)) {
+        else if (DATE_COLS.includes(column) || column === 'Tooriku saabumise kuupäev EE') {
             let cleanA = valA, cleanB = valB;
             if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(cleanA)) {
                 const p = cleanA.split('.');
