@@ -231,7 +231,12 @@ function setUpButtons() {
                 el.classList.remove('active');
                 el.setAttribute('aria-pressed', 'false');
             });
-            filterTable();
+            document.getElementById('show-hidden-dates').checked = false;
+            document.getElementById('show-completed').checked = false;
+            document.getElementById('show-allhankes').checked = false;
+            localStorage.setItem('showHiddenDates', 'false');
+            renderTable();
+            updateStats();
             return;
         }
         if (getStatusFilter() === filter) {
