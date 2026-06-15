@@ -2,7 +2,7 @@ import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
-import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
+import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable, clearSort } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
 let editingCell = null;
@@ -407,6 +407,8 @@ export function handleKeydown(e) {
         e.preventDefault();
         if (undo()) {
             if (editingCell) finishEditing();
+            clearSort();
+            localStorage.removeItem('jobsSortState');
             renderTableBody();
             updateStats();
             showStatus('Tagasi võetud', 'success');

@@ -16,6 +16,14 @@ export function getSortingState() {
     return { sortColumn, sortDirection };
 }
 
+export function clearSort() {
+    sortColumn = null;
+    sortDirection = 'asc';
+    document.querySelectorAll('thead th.sorted').forEach(th => {
+        th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
+    });
+}
+
 export function setStatusFilter(filter) {
     statusFilter = filter;
     renderTableBody();
