@@ -225,6 +225,13 @@ function setUpButtons() {
         if (filter === 'all') {
             setStatusFilter(null);
             document.querySelectorAll('.status-box.filter-active').forEach(el => el.classList.remove('filter-active'));
+            document.getElementById('filter-nr').value = '';
+            document.getElementById('filter-koht').value = '';
+            document.querySelectorAll('.btn-filter-location.active').forEach(el => {
+                el.classList.remove('active');
+                el.setAttribute('aria-pressed', 'false');
+            });
+            filterTable();
             return;
         }
         if (getStatusFilter() === filter) {
