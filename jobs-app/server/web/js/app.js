@@ -225,15 +225,20 @@ function setUpButtons() {
         if (filter === 'all') {
             setStatusFilter(null);
             document.querySelectorAll('.status-box.filter-active').forEach(el => el.classList.remove('filter-active'));
-            document.getElementById('filter-nr').value = '';
-            document.getElementById('filter-koht').value = '';
-            document.querySelectorAll('.btn-filter-location.active').forEach(el => {
-                el.classList.remove('active');
-                el.setAttribute('aria-pressed', 'false');
+            const el = document.getElementById('filter-nr');
+            if (el) el.value = '';
+            const el2 = document.getElementById('filter-koht');
+            if (el2) el2.value = '';
+            document.querySelectorAll('.btn-filter-location.active').forEach(el3 => {
+                el3.classList.remove('active');
+                el3.setAttribute('aria-pressed', 'false');
             });
-            document.getElementById('show-hidden-dates').checked = false;
-            document.getElementById('show-completed').checked = false;
-            document.getElementById('show-allhankes').checked = false;
+            const el4 = document.getElementById('show-hidden-dates');
+            if (el4) el4.checked = false;
+            const el5 = document.getElementById('show-completed');
+            if (el5) el5.checked = false;
+            const el6 = document.getElementById('show-allhankes');
+            if (el6) el6.checked = false;
             localStorage.setItem('showHiddenDates', 'false');
             renderTable();
             updateStats();
