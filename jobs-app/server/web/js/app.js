@@ -239,6 +239,8 @@ function setUpButtons() {
             if (el5) el5.checked = false;
             const el6 = document.getElementById('show-allhankes');
             if (el6) el6.checked = false;
+            const elBlank = document.getElementById('show-blank-koht');
+            if (elBlank) elBlank.checked = false;
             localStorage.setItem('showHiddenDates', 'false');
             renderTable();
             updateStats();
