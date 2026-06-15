@@ -106,6 +106,46 @@ export async function pollChanges(tabId) {
     }
 }
 
+export function reorderJobs(column, direction, shouldSave = false) {
+    if (!column) return;
+    if (shouldSave) pushUndo();
+
+    jobs.sort((a, b) => {
+        let valA = a[column], valB = b[column];
+        if (valA === null || valA === undefined) valA = '';
+        if (valB === null || valB === undefined) valB = '';
+
+        const isEmptyA = !valA || valA === '';
+        const isEmptyB = !valB || valB === '';
+
+        if (isEmptyA && !isEmptyB) return 1;
+        if (!isEmptyA && isEmptyB) return -1;
+
+        if (typeof valA === 'boolean') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
+        else if (DATE_COLS.includes(column)) {
+            let cleanA = valA, cleanB = valB;
+            if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(cleanA)) {
+                const p = cleanA.split('.');
+                cleanA = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+            }
+            if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(cleanB)) {
+                const p = cleanB.split('.');
+                cleanB = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+            }
+            const dateA = cleanA ? new Date(cleanA).getTime() : 0;
+            const dateB = cleanB ? new Date(cleanB).getTime() : 0;
+            valA = isNaN(dateA) ? 0 : dateA;
+            valB = isNaN(dateB) ? 0 : dateB;
+        }
+        else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    if (shouldSave) autoSave();
+}
+
 export function addJob(job) {
     pushUndo();
     jobs.push(job);

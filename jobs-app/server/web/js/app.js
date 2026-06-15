@@ -1,6 +1,6 @@
-import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths } from './data.js';
+import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs } from './data.js';
 import { COLUMNS } from './config.js';
-import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
+import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions, setSortingState, getSortingState } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
@@ -57,6 +57,19 @@ function setUpForm() {
     form.addEventListener('submit', addJob);
 }
 
+function restoreSort() {
+    const saved = localStorage.getItem('jobsSortState');
+    if (saved) {
+        try {
+            const state = JSON.parse(saved);
+            if (state.sortColumn && typeof state.sortDirection === 'string') {
+                setSortingState(state.sortColumn, state.sortDirection);
+                reorderJobs(state.sortColumn, state.sortDirection, false);
+            }
+        } catch (e) {}
+    }
+}
+
 async function init() {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -90,6 +103,8 @@ async function init() {
     autoCalculateColumnWidths(COLUMNS);
     saveColumnWidths();
 
+    restoreSort();
+
     document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
 
     renderTable();
@@ -112,6 +127,10 @@ async function init() {
         try {
             const changed = await pollChanges(tabId);
             if (changed) {
+                const { sortColumn, sortDirection } = getSortingState();
+                if (sortColumn && sortDirection) {
+                    reorderJobs(sortColumn, sortDirection, false);
+                }
                 renderTableBody();
                 updateStats();
             }

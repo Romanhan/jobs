@@ -1,6 +1,6 @@
 import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
 import { formatDate, renderMarkdown } from './utils.js';
-import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave } from './data.js';
+import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs } from './data.js';
 import { openDateCalendar } from './calendar.js';
 
 let sortColumn = null;
@@ -155,41 +155,6 @@ export function renderTableBody() {
             const kohtMatch = kohtBlank || !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);
             return nrMatch && kohtMatch;
         });
-    
-    if (sortColumn) {
-        filteredJobs.sort((a, b) => {
-            let valA = a.job[sortColumn], valB = b.job[sortColumn];
-            if (valA === null || valA === undefined) valA = '';
-            if (valB === null || valB === undefined) valB = '';
-            
-            const isEmptyA = !valA || valA === '';
-            const isEmptyB = !valB || valB === '';
-            
-            if (isEmptyA && !isEmptyB) return 1;
-            if (!isEmptyA && isEmptyB) return -1;
-            
-            if (typeof valA === 'boolean') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
-            else if (DATE_COLS.includes(sortColumn)) {
-                let cleanA = valA, cleanB = valB;
-                if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(cleanA)) {
-                    const p = cleanA.split('.');
-                    cleanA = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
-                }
-                if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(cleanB)) {
-                    const p = cleanB.split('.');
-                    cleanB = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
-                }
-                const dateA = cleanA ? new Date(cleanA).getTime() : 0;
-                const dateB = cleanB ? new Date(cleanB).getTime() : 0;
-                valA = isNaN(dateA) ? 0 : dateA;
-                valB = isNaN(dateB) ? 0 : dateB;
-            }
-            else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
-            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }
     
     let html = '';
     filteredJobs.forEach(({ job, index }) => {
@@ -371,6 +336,8 @@ export function sortBy(col) {
     if (th) {
         th.classList.add('sorted', sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
+    reorderJobs(col, sortDirection, true);
+    localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn, sortDirection }));
     renderTableBody();
     updateStickyPositions();
 }
