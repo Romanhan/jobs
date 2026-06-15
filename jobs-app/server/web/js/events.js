@@ -407,7 +407,7 @@ export function handleKeydown(e) {
         e.preventDefault();
         if (undo()) {
             if (editingCell) finishEditing();
-            renderTableBody();
+            renderTable();
             updateStats();
             showStatus('Tagasi võetud', 'success');
         }
