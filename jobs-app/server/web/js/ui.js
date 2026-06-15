@@ -126,9 +126,6 @@ export function renderTable() {
 }
 
 export function renderTableBody() {
-    if (sortColumn && sortDirection) {
-        reorderJobs(sortColumn, sortDirection, false);
-    }
     const tbody = document.getElementById('table-body');
     const filterNr = document.getElementById('filter-nr').value.toLowerCase();
     const filterKoht = document.getElementById('filter-koht').value.toLowerCase();
