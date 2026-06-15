@@ -325,6 +325,7 @@ export function sortBy(col) {
         th.classList.add('sorted', newDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
     reorderJobs(col, newDir, false);
+    doAutoSave();
     localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn: col, sortDirection: newDir }));
     renderTableBody();
     updateStickyPositions();
