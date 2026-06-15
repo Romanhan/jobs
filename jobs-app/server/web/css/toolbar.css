@@ -2,7 +2,6 @@
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
-    overflow: hidden;
     margin-bottom: 0;
     padding: 6px 8px 12px;
     background: var(--surface-header);

@@ -15,6 +15,10 @@ button {
     justify-content: center;
 }
 
+#btn-add-job {
+    margin-left: 2px;
+}
+
 .btn-primary {
     background: var(--surface-btn-primary);
     color: #ffffff;
