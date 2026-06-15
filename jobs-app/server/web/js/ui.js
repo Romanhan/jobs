@@ -1,6 +1,6 @@
 import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
 import { formatDate, renderMarkdown } from './utils.js';
-import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs, setSortingState, getSortingState } from './data.js';
+import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs, setSortingState, getSortingState, pushUndo } from './data.js';
 import { openDateCalendar } from './calendar.js';
 
 let statusFilter = null;
@@ -315,6 +315,7 @@ export function filterTable() {
 export function sortBy(col) {
     const { sortColumn, sortDirection } = getSortingState();
     const newDir = sortColumn === col ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'asc';
+    pushUndo();
     setSortingState(col, newDir);
     document.querySelectorAll('thead th').forEach(th => {
         th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
@@ -323,7 +324,7 @@ export function sortBy(col) {
     if (th) {
         th.classList.add('sorted', newDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
-    reorderJobs(col, newDir, true);
+    reorderJobs(col, newDir, false);
     localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn: col, sortDirection: newDir }));
     renderTableBody();
     updateStickyPositions();
