@@ -115,8 +115,8 @@ export function reorderJobs(column, direction, shouldSave = false) {
         if (valA === null || valA === undefined) valA = '';
         if (valB === null || valB === undefined) valB = '';
 
-        const isEmptyA = !valA || valA === '';
-        const isEmptyB = !valB || valB === '';
+        const isEmptyA = valA === '';
+        const isEmptyB = valB === '';
 
         if (isEmptyA && !isEmptyB) return 1;
         if (!isEmptyA && isEmptyB) return -1;
