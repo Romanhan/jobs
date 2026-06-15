@@ -132,10 +132,8 @@ export function reorderJobs(column, direction, shouldSave = false) {
                 const p = cleanB.split('.');
                 cleanB = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
             }
-            const dateA = cleanA ? new Date(cleanA).getTime() : 0;
-            const dateB = cleanB ? new Date(cleanB).getTime() : 0;
-            valA = isNaN(dateA) ? 0 : dateA;
-            valB = isNaN(dateB) ? 0 : dateB;
+            valA = cleanA;
+            valB = cleanB;
         }
         else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
         if (valA < valB) return direction === 'asc' ? -1 : 1;
