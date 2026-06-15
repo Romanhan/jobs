@@ -76,9 +76,7 @@ export function renderTable() {
     COLUMNS.forEach(col => {
         const isHidden = HIDDEN_COLS.includes(col) && !showHidden;
         if (isHidden) return;
-        const label = COLUMN_LABELS[col] || col;
-        const sortedClass = sortColumn === col ? 'sorted' : '';
-        const sortedDir = sortColumn === col ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+        const label = (COLUMN_LABELS[col] || col) + (sortColumn === col ? (sortDirection === 'asc' ? ' ▴' : ' ▾') : '');
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const wrapClass = COLUMN_WRAP.includes(col) ? 'wrap-header' : '';
         const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
@@ -91,7 +89,7 @@ export function renderTable() {
         colEl.style.width = width + 'px';
         colgroup.appendChild(colEl);
         
-        ths.push({ html: '<th class="' + sortedClass + ' ' + sortedDir + ' ' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '"><span class="header-label">' + label + '</span><div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
+        ths.push({ html: '<th class="' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '"><span class="header-label">' + label + '</span><div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
     
     const delCol = document.createElement('col');
@@ -317,16 +315,7 @@ export function sortBy(col) {
     const newDir = sortColumn === col ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'asc';
     pushUndo();
     setSortingState(col, newDir);
-    document.querySelectorAll('thead th').forEach(th => {
-        th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
-    });
-    const th = document.querySelector('thead th[data-col="' + col + '"]');
-    if (th) {
-        th.classList.add('sorted', newDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
-    }
     reorderJobs(col, newDir, false);
-    doAutoSave();
-    localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn: col, sortDirection: newDir }));
     renderTableBody();
     updateStickyPositions();
 }

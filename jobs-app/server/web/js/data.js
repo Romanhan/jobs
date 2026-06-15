@@ -43,15 +43,8 @@ export function undo() {
     if (undoStack.length === 0) return false;
     const state = undoStack.pop();
     jobs = state.jobs;
-    if (state.sortColumn) {
-        sortColumn = state.sortColumn;
-        sortDirection = state.sortDirection;
-        localStorage.setItem('jobsSortState', JSON.stringify({ sortColumn, sortDirection }));
-    } else {
-        sortColumn = null;
-        sortDirection = 'asc';
-        localStorage.removeItem('jobsSortState');
-    }
+    sortColumn = state.sortColumn || null;
+    sortDirection = state.sortColumn ? state.sortDirection : 'asc';
     autoSave();
     return true;
 }

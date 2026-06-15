@@ -57,19 +57,6 @@ function setUpForm() {
     form.addEventListener('submit', addJob);
 }
 
-function restoreSort() {
-    const saved = localStorage.getItem('jobsSortState');
-    if (saved) {
-        try {
-            const state = JSON.parse(saved);
-            if (state && COLUMNS.includes(state.sortColumn) && (state.sortDirection === 'asc' || state.sortDirection === 'desc')) {
-                setSortingState(state.sortColumn, state.sortDirection);
-                reorderJobs(state.sortColumn, state.sortDirection, false);
-            }
-        } catch (e) {}
-    }
-}
-
 async function init() {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -102,8 +89,6 @@ async function init() {
 
     autoCalculateColumnWidths(COLUMNS);
     saveColumnWidths();
-
-    restoreSort();
 
     document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
 

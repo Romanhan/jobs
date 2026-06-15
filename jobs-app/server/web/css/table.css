@@ -96,22 +96,6 @@ th:hover {
     background: var(--bg-row-hover);
 }
 
-th.sorted::after {
-    content: '▾';
-    font-size: 8px;
-    color: var(--border-strong);
-    opacity: 1;
-    margin-left: 2px;
-    vertical-align: middle;
-}
-
-th.sorted-asc::after {
-    content: '▴';
-}
-
-th.sorted-desc::after {
-    content: '▾';
-}
 
 td {
     cursor: pointer;
