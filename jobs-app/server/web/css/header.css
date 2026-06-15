@@ -72,6 +72,11 @@
     box-shadow: var(--shadow-status-box-hover);
 }
 
+.status-box:active {
+    box-shadow: var(--shadow-pressed);
+    transform: translateY(1px);
+}
+
 .status-box.filter-active {
     box-shadow: var(--shadow-pressed);
     transform: translateY(1px);

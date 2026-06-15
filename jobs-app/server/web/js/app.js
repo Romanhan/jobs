@@ -210,7 +210,6 @@ function setUpButtons() {
         if (filter === 'all') {
             setStatusFilter(null);
             document.querySelectorAll('.status-box.filter-active').forEach(el => el.classList.remove('filter-active'));
-            box.classList.add('filter-active');
             const el = document.getElementById('filter-nr');
             if (el) el.value = '';
             const el2 = document.getElementById('filter-koht');
