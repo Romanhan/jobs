@@ -316,8 +316,7 @@ export function sortBy(col) {
     pushUndo();
     setSortingState(col, newDir);
     reorderJobs(col, newDir, false);
-    renderTableBody();
-    updateStickyPositions();
+    renderTable();
 }
 
 export function startResize(e, th) {
