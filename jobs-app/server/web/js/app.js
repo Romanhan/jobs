@@ -73,6 +73,8 @@ async function init() {
 
     const savedFontSize = localStorage.getItem('fontSize') || '12';
     setRowFontSize(savedFontSize);
+    autoCalculateColumnWidths(COLUMNS);
+    saveColumnWidths();
 
     // First render — show UI shell immediately, populate after data loads
     renderForm();
@@ -84,9 +86,6 @@ async function init() {
     } else {
         showStatus('Serveriga ühendamine ebaõnnestus', 'error');
     }
-
-    autoCalculateColumnWidths(COLUMNS);
-    saveColumnWidths();
 
     document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
 
