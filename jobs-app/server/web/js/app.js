@@ -20,6 +20,7 @@ function setRowFontSize(size) {
     localStorage.setItem('fontSize', size);
     document.getElementById('font-size-display').textContent = size + ' px';
     document.getElementById('font-size-slider').value = size;
+    updateStickyPositions();
 }
 
 setSelectDateCallback((rowIndex, colName, dateStr) => {
