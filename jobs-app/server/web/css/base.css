@@ -19,6 +19,12 @@ button {
     margin-left: 6px;
 }
 
+#btn-add-job:disabled {
+    opacity: 0.5;
+    cursor: default;
+    box-shadow: var(--shadow-pressed);
+}
+
 .btn-primary {
     background: var(--surface-btn-primary);
     color: #ffffff;

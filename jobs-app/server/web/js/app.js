@@ -77,10 +77,17 @@ async function init() {
     saveColumnWidths();
 
     // First render — show UI shell immediately, populate after data loads
+    const btnAddJob = document.getElementById('btn-add-job');
+    const btnMenu = document.getElementById('btn-menu');
+    if (btnAddJob) btnAddJob.disabled = true;
+    if (btnMenu) btnMenu.disabled = true;
+
     renderForm();
     renderTable(true);
 
     const dataResult = await loadData();
+    if (btnAddJob) btnAddJob.disabled = false;
+    if (btnMenu) btnMenu.disabled = false;
     if (dataResult && dataResult.status === 'loaded') {
         showStatus('Andmed laetud! (' + dataResult.count + ' tööd)', 'success');
     } else {

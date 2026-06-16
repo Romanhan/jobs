@@ -416,6 +416,12 @@
     transform: translateY(1px);
 }
 
+.btn-menu:disabled {
+    opacity: 0.5;
+    cursor: default;
+    box-shadow: var(--shadow-pressed);
+}
+
 .menu-dropdown {
     position: absolute;
     top: 100%;
