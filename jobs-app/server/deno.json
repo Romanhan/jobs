@@ -1,6 +1,6 @@
 {
   "name": "jobs-app-server",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "exports": "./server.ts",
   "tasks": {
     "gen-version": "deno run -A gen-version.ts",
