@@ -300,16 +300,9 @@
     color: var(--text-muted);
 }
 
-.shortcut-card {
-    background: var(--surface-menu);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-extruded-sm);
-    padding: 8px 12px;
-    margin-bottom: 8px;
-}
-
-.shortcut-card:last-child {
-    margin-bottom: 0;
+.shortcut-gap {
+    grid-column: 1 / -1;
+    height: 4px;
 }
 
 .menu-divider {
