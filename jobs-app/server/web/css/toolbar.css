@@ -300,16 +300,16 @@
     color: var(--text-muted);
 }
 
-.shortcut-header {
-    grid-column: 1 / -1;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    padding-top: 8px;
+.shortcut-card {
+    background: var(--surface-menu);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-extruded-sm);
+    padding: 8px 12px;
+    margin-bottom: 8px;
 }
 
-.shortcut-header:first-of-type {
-    padding-top: 0;
+.shortcut-card:last-child {
+    margin-bottom: 0;
 }
 
 .menu-divider {
