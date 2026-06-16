@@ -481,6 +481,7 @@ export function handleKeydown(e) {
 export function attachEventListeners() {
     
     const tbody = document.getElementById('table-body');
+    const addForm = document.getElementById('add-form');
     tbody.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-delete');
         if (btn) {
@@ -501,8 +502,8 @@ export function attachEventListeners() {
     
     document.addEventListener('keydown', handleKeydown);
     
-    document.getElementById('add-form').addEventListener('submit', addJob);
-    document.getElementById('add-form').addEventListener('keydown', function(e) {
+    addForm.addEventListener('submit', addJob);
+    addForm.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
             const input = e.target;
             const col = input.getAttribute('name');

@@ -4,6 +4,8 @@ import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filt
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 
+performance.mark('module-exec-start');
+
 function setTheme(theme) {
     if (theme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -20,8 +22,6 @@ function setRowFontSize(size) {
     localStorage.setItem('fontSize', size);
     document.getElementById('font-size-display').textContent = size + ' px';
     document.getElementById('font-size-slider').value = size;
-    renderTableBody();
-    updateStickyPositions();
 }
 
 setSelectDateCallback((rowIndex, colName, dateStr) => {
@@ -52,12 +52,8 @@ function attachSortListener() {
 
 }
 
-function setUpForm() {
-    const form = document.getElementById('add-form');
-    form.addEventListener('submit', addJob);
-}
-
 async function init() {
+    performance.mark('init-start');
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
         setTheme('dark');
@@ -80,7 +76,14 @@ async function init() {
     const savedFontSize = localStorage.getItem('fontSize') || '12';
     setRowFontSize(savedFontSize);
 
+    // First render — show UI shell immediately, populate after data loads
+    renderForm();
+    renderTable(true);
+    performance.mark('render-done');
+
+    performance.mark('data-fetch-start');
     const dataResult = await loadData();
+    performance.mark('data-fetch-end');
     if (dataResult && dataResult.status === 'loaded') {
         showStatus('Andmed laetud! (' + dataResult.count + ' tööd)', 'success');
     } else {
@@ -92,8 +95,8 @@ async function init() {
 
     document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
 
+    // Re-render with actual data
     renderTable();
-    renderForm();
     updateStats();
 
     const tabId = window.crypto?.randomUUID?.() ?? Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
@@ -127,11 +130,27 @@ async function init() {
             navigator.sendBeacon('/api/exit?tabId=' + tabId);
         }
     });
+
+    requestAnimationFrame(() => {
+        performance.mark('startup-end');
+        const measures = [
+            ['module-to-init', 'module-exec-start', 'init-start'],
+            ['init-to-fetch', 'init-start', 'data-fetch-start'],
+            ['data-fetch', 'data-fetch-start', 'data-fetch-end'],
+            ['data-to-render', 'data-fetch-end', 'render-done'],
+            ['total-startup', 'module-exec-start', 'startup-end'],
+        ];
+        measures.forEach(([name, start, end]) => {
+            try { performance.measure(name, start, end); } catch (e) {}
+        });
+        performance.getEntriesByType('measure').forEach(m =>
+            console.log('[perf] ' + m.name + ': ' + m.duration.toFixed(1) + 'ms')
+        );
+    });
 }
 
 attachSortListener();
 attachEventListeners();
-setUpForm();
 setUpButtons();
 
 window.toggleField = toggleField;

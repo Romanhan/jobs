@@ -57,7 +57,7 @@ export function getStatus(job) {
     return null;
 }
 
-export function renderTable() {
+export function renderTable(skipBody) {
     const thead = document.querySelector('thead');
     const showHidden = document.getElementById('show-hidden-dates')?.checked;
     const hiddenColumns = getHiddenColumns();
@@ -72,6 +72,7 @@ export function renderTable() {
     
     let totalWidth = 16;
     const ths = [];
+    const widths = getColumnWidths();
     const { sortColumn, sortDirection } = getSortingState();
     COLUMNS.forEach(col => {
         const isHidden = HIDDEN_COLS.includes(col) && !showHidden;
@@ -80,7 +81,6 @@ export function renderTable() {
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const wrapClass = COLUMN_WRAP.includes(col) ? 'wrap-header' : '';
         const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
-        const widths = getColumnWidths();
         const width = widths[col] || 40;
         totalWidth += width;
         
@@ -109,8 +109,10 @@ export function renderTable() {
     thead.innerHTML = html;
     thead.parentNode.insertBefore(colgroup, thead);
     document.getElementById('jobs-table').style.width = (totalWidth + 28) + 'px';
-    renderTableBody();
-    updateStickyPositions();
+    if (!skipBody) {
+        renderTableBody();
+        updateStickyPositions();
+    }
 }
 
 export function renderTableBody() {
@@ -144,6 +146,7 @@ export function renderTableBody() {
             return nrMatch && kohtMatch;
         });
     
+    const widths = getColumnWidths();
     let html = '';
     filteredJobs.forEach(({ job, index }) => {
         const status = getStatus(job);
@@ -159,7 +162,6 @@ export function renderTableBody() {
             const isDate = DATE_COLS.includes(col);
             const isHidden = hiddenColumns[col] || (HIDDEN_COLS.includes(col) && !showHidden);
             if (isHidden) return;
-            const widths = getColumnWidths();
             const width = widths[col] || 40;
             let colEscaped = col.replace(/'/g, "\\'");
             
