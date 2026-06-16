@@ -300,6 +300,18 @@
     color: var(--text-muted);
 }
 
+.shortcut-header {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding-top: 8px;
+}
+
+.shortcut-header:first-of-type {
+    padding-top: 0;
+}
+
 .menu-divider {
     border: none;
     background: transparent;
