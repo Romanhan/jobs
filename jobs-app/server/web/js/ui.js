@@ -111,6 +111,8 @@ export function renderTable(skipBody) {
     document.getElementById('jobs-table').style.width = (totalWidth + 28) + 'px';
     if (!skipBody) {
         renderTableBody();
+    } else {
+        updateStickyPositions();
     }
 }
 
