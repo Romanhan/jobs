@@ -2,7 +2,7 @@
 
 A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets with an intuitive web interface. Built with vanilla HTML, CSS, and JavaScript. No dependencies, no build step.
 
-![App Screenshot](screenshot2.png)
+![App Screenshot](screenshot-3.png)
 
 ## Features
 
