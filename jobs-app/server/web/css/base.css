@@ -22,16 +22,12 @@ select:-webkit-autofill {
 input:autofill:focus,
 textarea:autofill:focus,
 select:autofill:focus {
-    color: var(--text-secondary);
-    -webkit-text-fill-color: var(--text-secondary);
     box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
 }
 
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill:focus,
 select:-webkit-autofill:focus {
-    color: var(--text-secondary);
-    -webkit-text-fill-color: var(--text-secondary);
     box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
 }
 
