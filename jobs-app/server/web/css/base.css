@@ -3,32 +3,38 @@
 }
 
 /* Global autofill override: keeps the app surface color instead of the browser default */
+
+/* Standard :autofill for Firefox */
 input:autofill,
 textarea:autofill,
 select:autofill {
-    color: var(--text-secondary);
-    -webkit-text-fill-color: var(--text-secondary);
-    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+    -webkit-text-fill-color: var(--text-secondary) !important;
+    background-color: var(--bg-input) !important;
+    box-shadow: var(--shadow-inset-input);
 }
 
+/* Webkit :autofill for Chrome/Edge/Safari — covers all states */
 input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
 textarea:-webkit-autofill,
-select:-webkit-autofill {
-    color: var(--text-secondary);
-    -webkit-text-fill-color: var(--text-secondary);
-    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+    -webkit-text-fill-color: var(--text-secondary) !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+    caret-color: var(--text-secondary);
 }
 
-input:autofill:focus,
-textarea:autofill:focus,
-select:autofill:focus {
-    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
-}
-
+/* Focus state adds the focus ring */
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill:focus,
 select:-webkit-autofill:focus {
-    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset, var(--shadow-input-focus) !important;
 }
 
 button {
