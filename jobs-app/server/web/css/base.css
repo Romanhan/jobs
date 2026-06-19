@@ -4,20 +4,27 @@
 
 /* Global autofill override: keeps the app surface color instead of the browser default */
 input:autofill,
-input:-webkit-autofill,
 textarea:autofill,
+select:autofill {
+    -webkit-text-fill-color: var(--text-secondary);
+    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+}
+
+input:-webkit-autofill,
 textarea:-webkit-autofill,
-select:autofill,
 select:-webkit-autofill {
     -webkit-text-fill-color: var(--text-secondary);
     box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
 }
 
 input:autofill:focus,
-input:-webkit-autofill:focus,
 textarea:autofill:focus,
+select:autofill:focus {
+    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
+}
+
+input:-webkit-autofill:focus,
 textarea:-webkit-autofill:focus,
-select:autofill:focus,
 select:-webkit-autofill:focus {
     box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
 }
