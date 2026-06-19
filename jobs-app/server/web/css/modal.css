@@ -94,6 +94,17 @@
     box-shadow: var(--shadow-inset-input), var(--shadow-input-focus);
 }
 
+.form-group input:-webkit-autofill,
+.form-group select:-webkit-autofill {
+    -webkit-text-fill-color: var(--text-secondary);
+    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+}
+
+.form-group input:-webkit-autofill:focus,
+.form-group select:-webkit-autofill:focus {
+    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
+}
+
 .date-input {
     width: 120px;
     text-align: left;
