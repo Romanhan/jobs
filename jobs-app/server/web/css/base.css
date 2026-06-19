@@ -2,6 +2,35 @@
     box-sizing: border-box;
 }
 
+/* Global autofill override: keeps the app surface color instead of the browser default */
+input:autofill,
+textarea:autofill,
+select:autofill {
+    color: var(--text-secondary);
+    -webkit-text-fill-color: var(--text-secondary);
+    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+}
+
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    color: var(--text-secondary);
+    -webkit-text-fill-color: var(--text-secondary);
+    box-shadow: var(--shadow-inset-input), 0 0 0 1000px var(--bg-input) inset;
+}
+
+input:autofill:focus,
+textarea:autofill:focus,
+select:autofill:focus {
+    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
+}
+
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill:focus {
+    box-shadow: var(--shadow-inset-input), var(--shadow-input-focus), 0 0 0 1000px var(--bg-input) inset;
+}
+
 button {
     font-family: inherit;
     height: 24px;
