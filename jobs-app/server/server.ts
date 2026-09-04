@@ -147,6 +147,13 @@ async function acquireDataLock(): Promise<() => Promise<void>> {
         try { await Deno.remove(path, { recursive: true }); } catch {}
       };
     } catch (e) {
+      // Network shares can briefly report ACCESS_DENIED while another client
+      // is creating/removing the lock directory. Treat that like contention
+      // and retry instead of failing the save immediately.
+      if (e instanceof Deno.errors.PermissionDenied) {
+        await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
+        continue;
+      }
       if (!(e instanceof Deno.errors.AlreadyExists)) throw e;
       try {
         const stat = await Deno.stat(path);
@@ -156,7 +163,13 @@ async function acquireDataLock(): Promise<() => Promise<void>> {
           continue;
         }
       } catch (statError) {
+        if (statError instanceof Deno.errors.PermissionDenied) {
+          await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
+          continue;
+        }
         if (!(statError instanceof Deno.errors.NotFound)) throw statError;
+        // The lock disappeared between mkdir and stat; retry immediately.
+        continue;
       }
       await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
     }
