@@ -2,3 +2,6 @@
 *.zip
 *.log
 jobs_data.json
+jobs_data.json.version
+jobs_data.json.lock/
+jobs_data_temp*.tmp

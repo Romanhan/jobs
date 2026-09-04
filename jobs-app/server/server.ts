@@ -1,10 +1,26 @@
 const DEFAULT_PORT = 8085;
 const MAX_SAVE_RETRIES = 8;
 const SAVE_RETRY_BASE_DELAY_MS = 50;
+const LOCK_RETRY_DELAY_MS = 100;
+const LOCK_MAX_WAIT_MS = 15000;
+const LOCK_STALE_MS = 120000;
+const BACKUP_INTERVAL_MS = 48 * 60 * 60 * 1000;
+const BACKUP_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+const BACKUP_RETENTION_COUNT = 36;
 
 let DATA_FILE = "jobs_data.json";
 const args = Deno.args;
 let PORT = DEFAULT_PORT;
+let lastBackupCheck = 0;
+
+type Job = Record<string, unknown>;
+type MergeConflict = {
+  jobId: string;
+  field: string;
+  baseValue: unknown;
+  currentValue: unknown;
+  userValue: unknown;
+};
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--data" && i + 1 < args.length) DATA_FILE = args[i + 1];
@@ -72,6 +88,195 @@ function logError(msg: string) {
   try {
     Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
   } catch {}
+}
+
+function lockPath(): string {
+  return `${DATA_FILE}.lock`;
+}
+
+function revisionPath(): string {
+  return `${DATA_FILE}.version`;
+}
+
+function dataDirectory(): string {
+  const slash = Math.max(DATA_FILE.lastIndexOf("/"), DATA_FILE.lastIndexOf("\\"));
+  if (slash < 0) return ".";
+  const dir = DATA_FILE.substring(0, slash);
+  if (dir === "") return DATA_FILE.startsWith("/") ? "/" : "\\";
+  return dir.endsWith(":") ? `${dir}/` : dir;
+}
+
+function joinPath(dir: string, name: string): string {
+  const separator = dir.includes("\\") && !dir.includes("/") ? "\\" : "/";
+  return dir.endsWith("/") || dir.endsWith("\\") ? `${dir}${name}` : `${dir}${separator}${name}`;
+}
+
+function backupTimestamp(date = new Date()): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+}
+
+async function readRevision(): Promise<string> {
+  const stat = await Deno.stat(DATA_FILE);
+  try {
+    const revision = (await Deno.readTextFile(revisionPath())).trim();
+    if (revision) return `${revision}-${stat.mtime?.getTime() || 0}-${stat.size}`;
+  } catch {}
+  return `legacy-${stat.mtime?.getTime() || 0}-${stat.size}`;
+}
+
+async function writeRevision(stat: Deno.FileInfo): Promise<string> {
+  const revision = crypto.randomUUID();
+  await Deno.writeTextFile(revisionPath(), revision);
+  return `${revision}-${stat.mtime?.getTime() || 0}-${stat.size}`;
+}
+
+async function acquireDataLock(): Promise<() => Promise<void>> {
+  const path = lockPath();
+  const started = Date.now();
+  while (Date.now() - started < LOCK_MAX_WAIT_MS) {
+    try {
+      await Deno.mkdir(path);
+      try {
+        await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({
+          pid: Deno.pid,
+          created: Date.now(),
+        }));
+      } catch {}
+      return async () => {
+        try { await Deno.remove(path, { recursive: true }); } catch {}
+      };
+    } catch (e) {
+      if (!(e instanceof Deno.errors.AlreadyExists)) throw e;
+      try {
+        const stat = await Deno.stat(path);
+        const age = Date.now() - (stat.mtime?.getTime() || Date.now());
+        if (age > LOCK_STALE_MS) {
+          await Deno.remove(path, { recursive: true });
+          continue;
+        }
+      } catch (statError) {
+        if (!(statError instanceof Deno.errors.NotFound)) throw statError;
+      }
+      await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
+    }
+  }
+  throw new Error(`Timed out waiting for shared data lock "${path}"`);
+}
+
+function ensureJobIds(jobs: Job[]): boolean {
+  let changed = false;
+  const used = new Set<string>();
+  for (const job of jobs) {
+    let id = typeof job._id === "string" ? job._id : "";
+    if (!id || used.has(id)) {
+      id = crypto.randomUUID();
+      job._id = id;
+      changed = true;
+    }
+    used.add(id);
+  }
+  return changed;
+}
+
+async function readJobsFile(): Promise<Job[]> {
+  const content = await Deno.readTextFile(DATA_FILE);
+  const jobs = JSON.parse(content);
+  if (!Array.isArray(jobs)) throw new Error("Data file does not contain an array");
+  return jobs;
+}
+
+async function writeJobsFile(jobs: Job[]): Promise<{ modified: number; revision: string }> {
+  let dir = DATA_FILE.includes("/") || DATA_FILE.includes("\\") ? DATA_FILE.replace(/[\/\\][^\/\\]+$/, "") : ".";
+  if (dir === "") dir = DATA_FILE.startsWith("/") ? "/" : "\\";
+  if (dir.endsWith(":")) dir += "/";
+  for (let attempt = 0; attempt < MAX_SAVE_RETRIES; attempt++) {
+    let tempFile: string | undefined;
+    try {
+      tempFile = await Deno.makeTempFile({ dir, prefix: "jobs_data_temp", suffix: ".tmp" });
+      await Deno.writeTextFile(tempFile, JSON.stringify(jobs));
+      await Deno.rename(tempFile, DATA_FILE);
+      const stat = await Deno.stat(DATA_FILE);
+      const revision = await writeRevision(stat);
+      return { modified: stat.mtime?.getTime() || Date.now(), revision };
+    } catch (e) {
+      if (tempFile) try { await Deno.remove(tempFile); } catch {}
+      if (attempt === MAX_SAVE_RETRIES - 1) throw e;
+      await new Promise(resolve => setTimeout(resolve, SAVE_RETRY_BASE_DELAY_MS * Math.pow(2, attempt)));
+    }
+  }
+  throw new Error("Save failed");
+}
+
+function valuesEqual(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a ?? "") === JSON.stringify(b ?? "");
+}
+
+async function isValidBackup(path: string): Promise<boolean> {
+  try {
+    const parsed = JSON.parse(await Deno.readTextFile(path));
+    return Array.isArray(parsed);
+  } catch {
+    return false;
+  }
+}
+
+async function maybeCreateBackup(forceCheck = false): Promise<void> {
+  const now = Date.now();
+  if (!forceCheck && now - lastBackupCheck < BACKUP_CHECK_INTERVAL_MS) return;
+  lastBackupCheck = now;
+  let releaseLock: (() => Promise<void>) | undefined;
+  try {
+    releaseLock = await acquireDataLock();
+    const backupDir = joinPath(dataDirectory(), "backups");
+    await Deno.mkdir(backupDir, { recursive: true });
+    const backups: { name: string; path: string; modified: number }[] = [];
+    for await (const entry of Deno.readDir(backupDir)) {
+      if (!entry.isFile || !/^jobs_data_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/.test(entry.name)) continue;
+      const path = joinPath(backupDir, entry.name);
+      try {
+        const stat = await Deno.stat(path);
+        backups.push({ name: entry.name, path, modified: stat.mtime?.getTime() || 0 });
+      } catch {}
+    }
+    backups.sort((a, b) => b.modified - a.modified);
+    let newestValidBackup: { name: string; path: string; modified: number } | undefined;
+    for (const backup of backups) {
+      if (await isValidBackup(backup.path)) {
+        newestValidBackup = backup;
+        break;
+      }
+    }
+    if (newestValidBackup && now - newestValidBackup.modified < BACKUP_INTERVAL_MS) return;
+
+    const jobs = await readJobsFile();
+    const backupName = `jobs_data_${backupTimestamp()}.json`;
+    const finalPath = joinPath(backupDir, backupName);
+    const tempPath = `${finalPath}.tmp-${crypto.randomUUID()}`;
+    try {
+      await Deno.writeTextFile(tempPath, JSON.stringify(jobs));
+      if (!await isValidBackup(tempPath)) throw new Error("Backup validation failed");
+      await Deno.rename(tempPath, finalPath);
+    } catch (e) {
+      try { await Deno.remove(tempPath); } catch {}
+      throw e;
+    }
+
+    backups.unshift({ name: backupName, path: finalPath, modified: now });
+    const validBackups: { name: string; path: string; modified: number }[] = [];
+    for (const backup of backups) {
+      if (await isValidBackup(backup.path)) validBackups.push(backup);
+    }
+    if (validBackups.length > BACKUP_RETENTION_COUNT) {
+      for (const backup of validBackups.slice(BACKUP_RETENTION_COUNT)) {
+        try { await Deno.remove(backup.path); } catch (e) { logError(`Old backup cleanup failed for "${backup.path}": ${e}`); }
+      }
+    }
+  } catch (e) {
+    logError(`Automatic backup failed: ${e}`);
+  } finally {
+    if (releaseLock) await releaseLock();
+  }
 }
 
 function tryKillPort(port: number): void {
@@ -165,7 +370,9 @@ async function ensureDataFile(): Promise<void> {
 }
 
 async function handleGetData(corsHeaders: Record<string, string>): Promise<Response> {
+  let releaseLock: (() => Promise<void>) | undefined;
   try {
+    releaseLock = await acquireDataLock();
     const stat = await Deno.stat(DATA_FILE);
     let content;
     try {
@@ -179,15 +386,102 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
     } catch {
       return new Response("Invalid JSON in data file", { status: 500, headers: corsHeaders });
     }
+    let modified = stat.mtime?.getTime() || Date.now();
+    let revision: string;
+    if (ensureJobIds(jobs)) {
+      const saved = await writeJobsFile(jobs);
+      modified = saved.modified;
+      revision = saved.revision;
+    } else {
+      revision = await readRevision();
+    }
     return Response.json({
-      modified: stat.mtime?.getTime() || Date.now(),
+      modified,
+      revision,
       jobs,
     }, { headers: corsHeaders });
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
-      return Response.json({ modified: 0, jobs: [] }, { headers: corsHeaders });
+      return new Response("Shared data file is unavailable", { status: 503, headers: corsHeaders });
     }
     return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
+  } finally {
+    if (releaseLock) await releaseLock();
+  }
+}
+
+async function handleMergeData(req: Request, corsHeaders: Record<string, string>): Promise<Response> {
+  let payload: { base?: Job[]; proposed?: Job[] };
+  try {
+    payload = await req.json();
+  } catch {
+    return new Response("Invalid JSON", { status: 400, headers: corsHeaders });
+  }
+  if (!Array.isArray(payload.base) || !Array.isArray(payload.proposed)) {
+    return new Response("Invalid merge data", { status: 400, headers: corsHeaders });
+  }
+
+  let releaseLock: (() => Promise<void>) | undefined;
+  try {
+    releaseLock = await acquireDataLock();
+    const latest = await readJobsFile();
+    ensureJobIds(latest);
+    const baseById = new Map(payload.base.map(job => [String(job._id || ""), job]));
+    const proposedById = new Map(payload.proposed.map(job => [String(job._id || ""), job]));
+    const latestById = new Map(latest.map(job => [String(job._id || ""), job]));
+    const conflicts: MergeConflict[] = [];
+
+    for (const [id, proposed] of proposedById) {
+      if (!id) continue;
+      const base = baseById.get(id);
+      const current = latestById.get(id);
+      if (!base) {
+        if (!current) {
+          latest.push(structuredClone(proposed));
+          latestById.set(id, latest[latest.length - 1]);
+        } else if (!valuesEqual(current, proposed)) {
+          conflicts.push({ jobId: id, field: "_job", baseValue: null, currentValue: current, userValue: proposed });
+        }
+        continue;
+      }
+      if (!current) {
+        conflicts.push({ jobId: id, field: "_deleted", baseValue: base, currentValue: null, userValue: proposed });
+        continue;
+      }
+      const fields = new Set([...Object.keys(base), ...Object.keys(proposed)]);
+      fields.delete("_id");
+      for (const field of fields) {
+        const baseValue = base[field] ?? "";
+        const userValue = proposed[field] ?? "";
+        if (valuesEqual(baseValue, userValue)) continue;
+        const currentValue = current[field] ?? "";
+        if (valuesEqual(currentValue, baseValue) || valuesEqual(currentValue, userValue)) {
+          current[field] = userValue;
+        } else {
+          conflicts.push({ jobId: id, field, baseValue, currentValue, userValue });
+        }
+      }
+    }
+
+    for (const [id, base] of baseById) {
+      if (!id || proposedById.has(id)) continue;
+      const current = latestById.get(id);
+      if (!current) continue;
+      if (valuesEqual(current, base)) {
+        const index = latest.indexOf(current);
+        if (index >= 0) latest.splice(index, 1);
+      } else {
+        conflicts.push({ jobId: id, field: "_deleted", baseValue: base, currentValue: current, userValue: null });
+      }
+    }
+
+    const saved = await writeJobsFile(latest);
+    return Response.json({ status: conflicts.length ? "conflict" : "saved", conflicts, jobs: latest, modified: saved.modified, revision: saved.revision }, { headers: corsHeaders });
+  } catch (e) {
+    logError(`Merge save failed: ${e}`);
+    return Response.json({ status: "error", message: "Shared data file is unavailable" }, { status: 503, headers: corsHeaders });
+  } finally {
+    if (releaseLock) await releaseLock();
   }
 }
 
@@ -255,12 +549,14 @@ async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promis
     stat = await Deno.stat(DATA_FILE);
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
-      return Response.json({ changed: false }, { headers: corsHeaders });
+      return new Response("Shared data file is unavailable", { status: 503, headers: corsHeaders });
     }
     return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
   }
   const mtime = stat.mtime?.getTime() || 0;
-  if (mtime > since) {
+  const clientRevision = url.searchParams.get("revision");
+  const revision = await readRevision();
+  if ((clientRevision && clientRevision !== revision) || (!clientRevision && mtime > since)) {
     let content;
     try {
       content = await Deno.readTextFile(DATA_FILE);
@@ -273,7 +569,7 @@ async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promis
     } catch {
       return new Response("Invalid JSON in data file", { status: 500, headers: corsHeaders });
     }
-    return Response.json({ changed: true, jobs, modified: mtime }, { headers: corsHeaders });
+    return Response.json({ changed: true, jobs, modified: mtime, revision }, { headers: corsHeaders });
   }
   return Response.json({ changed: false }, { headers: corsHeaders });
 }
@@ -356,6 +652,11 @@ async function handler(req: Request): Promise<Response> {
       if (req.method === "POST") return await handlePostData(req, CORS);
       return new Response("Method Not Allowed", { status: 405 });
     }
+    if (path === "/api/merge" && req.method === "POST") {
+      const response = await handleMergeData(req, CORS);
+      if (response.ok) void maybeCreateBackup();
+      return response;
+    }
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
@@ -391,7 +692,6 @@ async function startServer() {
     await ensureDataFile();
   } catch (e) {
     logError(`Data file error: ${e}`);
-    Deno.exit(1);
   }
 
   let retried = false;
@@ -408,6 +708,7 @@ async function startServer() {
           console.log(`Data: ${DATA_FILE}`);
           console.log(`Close: Ctrl+C`);
           console.log("");
+          setTimeout(() => void maybeCreateBackup(true), 2000);
 
           let command: string[];
           if (Deno.build.os === "windows") {

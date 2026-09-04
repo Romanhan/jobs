@@ -37,6 +37,15 @@
             </div>
             
             <div class="header-actions">
+                <button type="button" id="sync-indicator" class="sync-indicator is-checking" aria-label="Kontrollin ühendust" aria-expanded="false" data-tooltip="Kontrollin ühendust">
+                    <span class="sync-dot" aria-hidden="true"></span>
+                </button>
+                <div id="sync-popup" class="sync-popup" style="display:none">
+                    <div class="sync-popup-title">Ühenduse olek</div>
+                    <div id="sync-popup-message">Kontrollin ühendust…</div>
+                    <div id="sync-popup-details" class="sync-popup-details"></div>
+                    <div id="sync-popup-actions" class="sync-popup-actions"></div>
+                </div>
                 <button id="btn-theme" class="btn-icon" data-tooltip="Vaheta teemat"><span class="icon-moon">&#9790;</span></button>
                 <button id="btn-menu" class="btn-menu" data-tooltip="Menüü">&#8801;</button>
                 <div id="menu-dropdown" class="menu-dropdown" style="display:none">
@@ -115,6 +124,21 @@
             <div class="confirm-buttons">
                 <button type="button" class="btn-secondary" id="confirm-cancel">Katkesta</button>
                 <button type="button" class="btn-primary" id="confirm-ok">Kustuta</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="conflict-merge-popup" class="conflict-merge-popup" style="display:none" role="dialog" aria-modal="true" aria-labelledby="conflict-merge-title">
+        <div class="conflict-merge-content">
+            <div class="modal-header">
+                <h2 id="conflict-merge-title">Ühenda mõlemad muudatused</h2>
+            </div>
+            <div id="conflict-merge-job" class="conflict-merge-job"></div>
+            <label for="conflict-merge-value">Kontrollige ja muutke ühendatud teksti enne salvestamist.</label>
+            <textarea id="conflict-merge-value" rows="7"></textarea>
+            <div class="conflict-merge-buttons">
+                <button type="button" class="btn-secondary" id="conflict-merge-cancel">Katkesta</button>
+                <button type="button" class="btn-primary" id="conflict-merge-save">Salvesta ühendatud tekst</button>
             </div>
         </div>
     </div>
