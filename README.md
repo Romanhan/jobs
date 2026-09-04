@@ -39,19 +39,6 @@ The app assigns permanent hidden IDs to jobs and merges changes one field at a t
 
 All users must upgrade together when the synchronization protocol changes. An older executable can still perform an unsafe whole-file save.
 
-## Conflict workflow
-
-If two users update the same field from the same older value, the second save is retained as a conflict instead of silently overwriting either change. The user can accept the shared value, accept their own value, or combine both Comment values in an editable dialog.
-
-1. [Connected and saved](presentation/01-sync-connected.png)
-2. [Same-field conflict with three choices](presentation/02-sync-conflict.png)
-3. [Editable combined-comment dialog](presentation/03-sync-merge-editor.png)
-4. [Combined value saved and connection restored](presentation/04-sync-resolved.png)
-
-![Same-field conflict](presentation/02-sync-conflict.png)
-
-![Combine both comments](presentation/03-sync-merge-editor.png)
-
 ## Shared files and backups
 
 The shared folder normally contains:
