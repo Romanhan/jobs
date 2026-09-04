@@ -4,6 +4,10 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
+## Current version — 0.3.0
+
+Version 0.3.0 makes shared-drive collaboration safer. It saves and merges individual field changes under a shared lock, shows conflicts instead of silently overwriting same-field edits, adds a connection/save status indicator, and creates automatic validated backups every 48 hours.
+
 ## Features
 
 - **20 columns** for tracking jobs from start to finish
