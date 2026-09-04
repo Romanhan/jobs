@@ -1,4 +1,4 @@
-import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs, setSortingState, getSortingState } from './data.js';
+import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs, setSortingState, getSortingState, getConflicts, retrySave, resolveConflict, hasUnsavedChanges } from './data.js';
 import { COLUMNS } from './config.js';
 import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
@@ -21,6 +21,132 @@ function setRowFontSize(size) {
     document.getElementById('font-size-display').textContent = size + ' px';
     document.getElementById('font-size-slider').value = size;
     updateStickyPositions();
+}
+
+let syncState = { state: 'checking' };
+let mergingConflict = null;
+const MERGEABLE_CONFLICT_FIELDS = new Set([
+    'Kommentaar(tooriku/detaili seis, muu oluline info)'
+]);
+
+function addSyncAction(container, label, handler, primary = false) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = primary ? 'btn-primary' : 'btn-secondary';
+    button.textContent = label;
+    button.addEventListener('click', handler);
+    container.appendChild(button);
+}
+
+function closeConflictMerge() {
+    const popup = document.getElementById('conflict-merge-popup');
+    if (popup) popup.style.display = 'none';
+    mergingConflict = null;
+}
+
+function openConflictMerge(conflict) {
+    const popup = document.getElementById('conflict-merge-popup');
+    const textarea = document.getElementById('conflict-merge-value');
+    const jobLabel = document.getElementById('conflict-merge-job');
+    if (!popup || !textarea || !jobLabel) return;
+    const job = getJobs().find(item => item._id === conflict.jobId);
+    jobLabel.textContent = 'Töö: ' + (job?.['Töö Nr'] || '');
+    const shared = String(conflict.currentValue ?? '');
+    const mine = String(conflict.userValue ?? '');
+    textarea.value = shared === mine ? shared : [shared, mine].filter(Boolean).join('\n\n');
+    mergingConflict = conflict;
+    document.getElementById('sync-popup').style.display = 'none';
+    document.getElementById('sync-indicator')?.setAttribute('aria-expanded', 'false');
+    popup.style.display = 'flex';
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+function renderSyncPopup() {
+    const message = document.getElementById('sync-popup-message');
+    const details = document.getElementById('sync-popup-details');
+    const actions = document.getElementById('sync-popup-actions');
+    if (!message || !details || !actions) return;
+    actions.replaceChildren();
+    details.textContent = '';
+    if (syncState.state === 'ok') {
+        message.textContent = 'Kõik muudatused on salvestatud';
+        details.textContent = syncState.savedAt ? 'Viimane salvestus: ' + new Date(syncState.savedAt).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' }) : 'Server ja andmefail on saadaval';
+    } else if (syncState.state === 'saving') {
+        message.textContent = 'Salvestan muudatusi…';
+        details.textContent = 'Palun oodake, kuni ühisketas vastab.';
+    } else if (syncState.state === 'conflict') {
+        const conflict = getConflicts()[0];
+        message.textContent = 'Muudatuste konflikt';
+        if (!conflict) return;
+        const job = getJobs().find(item => item._id === conflict.jobId);
+        const jobNumber = job?.['Töö Nr'] || conflict.currentValue?.['Töö Nr'] || '';
+        details.textContent = conflict.field === '_deleted'
+            ? `Töö ${jobNumber} muudeti või kustutati teise kasutaja poolt.`
+            : `Töö: ${jobNumber}\nVäli: ${conflict.field}\n\nSalvestatud info:\n${String(conflict.currentValue ?? '')}\n\nTeie muudatus:\n${String(conflict.userValue ?? '')}`;
+        addSyncAction(actions, 'Kasuta salvestatud', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+        if (MERGEABLE_CONFLICT_FIELDS.has(conflict.field) && typeof conflict.currentValue === 'string' && typeof conflict.userValue === 'string') {
+            addSyncAction(actions, 'Ühenda mõlemad', () => openConflictMerge(conflict));
+        }
+        addSyncAction(actions, 'Kasuta minu väärtust', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+    } else if (syncState.state === 'error') {
+        message.textContent = 'Salvestamine ebaõnnestus';
+        details.textContent = syncState.message || 'Server või K: ketas ei ole saadaval. Muudatused hoitakse selles arvutis.';
+        addSyncAction(actions, 'Proovi uuesti', retrySave, true);
+    } else {
+        message.textContent = 'Kontrollin ühendust…';
+    }
+}
+
+function setSyncState(detail) {
+    syncState = { ...syncState, ...detail };
+    const indicator = document.getElementById('sync-indicator');
+    if (!indicator) return;
+    indicator.className = 'sync-indicator is-' + syncState.state;
+    const labels = { ok: 'Kõik muudatused salvestatud', saving: 'Salvestan muudatusi', error: 'Salvestamine ebaõnnestus', conflict: 'Muudatuste konflikt', checking: 'Kontrollin ühendust' };
+    indicator.setAttribute('aria-label', labels[syncState.state] || labels.checking);
+    indicator.setAttribute('data-tooltip', labels[syncState.state] || labels.checking);
+    indicator.removeAttribute('title');
+    renderSyncPopup();
+}
+
+function setupSyncIndicator() {
+    const indicator = document.getElementById('sync-indicator');
+    const popup = document.getElementById('sync-popup');
+    indicator?.addEventListener('click', event => {
+        event.stopPropagation();
+        indicator.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+        const open = popup.style.display === 'block';
+        popup.style.display = open ? 'none' : 'block';
+        indicator.setAttribute('aria-expanded', open ? 'false' : 'true');
+        if (!open) renderSyncPopup();
+    });
+    popup?.addEventListener('click', event => event.stopPropagation());
+    document.getElementById('conflict-merge-cancel')?.addEventListener('click', closeConflictMerge);
+    document.getElementById('conflict-merge-save')?.addEventListener('click', () => {
+        if (!mergingConflict) return;
+        const value = document.getElementById('conflict-merge-value').value;
+        const { jobId, field } = mergingConflict;
+        closeConflictMerge();
+        resolveConflict(jobId, field, 'merged', value);
+    });
+    document.addEventListener('click', () => {
+        if (popup) popup.style.display = 'none';
+        indicator?.setAttribute('aria-expanded', 'false');
+    });
+    window.addEventListener('jobs-sync', event => setSyncState(event.detail));
+    window.addEventListener('jobs-data-updated', () => {
+        renderTableBody();
+        updateStats();
+        renderSyncPopup();
+        const addButton = document.getElementById('btn-add-job');
+        if (addButton) addButton.disabled = false;
+    });
+    window.addEventListener('beforeunload', event => {
+        if (!hasUnsavedChanges()) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
 }
 
 setSelectDateCallback((rowIndex, colName, dateStr) => {
@@ -86,11 +212,13 @@ async function init() {
     renderTable(true);
 
     const dataResult = await loadData();
-    if (btnAddJob) btnAddJob.disabled = false;
     if (btnMenu) btnMenu.disabled = false;
     if (dataResult && dataResult.status === 'loaded') {
+        if (btnAddJob) btnAddJob.disabled = false;
+        setSyncState({ state: 'ok' });
         showStatus('Andmed laetud! (' + dataResult.count + ' tööd)', 'success');
     } else {
+        setSyncState({ state: 'error', message: 'Serveriga puudub ühendus' });
         showStatus('Serveriga ühendamine ebaõnnestus', 'error');
     }
 
@@ -136,6 +264,7 @@ async function init() {
 
 attachSortListener();
 attachEventListeners();
+setupSyncIndicator();
 setUpButtons();
 
 window.toggleField = toggleField;

@@ -3,13 +3,61 @@ import { convertSaabunudDates, parseCSVLine, parseCSVLines, fixColumnKeys } from
 
 export let jobs = [];
 let lastSavedTimestamp = 0;
+let lastServerRevision = '';
 let isLoaded = false;
 let inFlightSaves = 0;
 let isPolling = false;
+let syncedJobs = [];
+let pendingSnapshot = null;
+let saveLoopRunning = false;
+let conflicts = [];
+let pollFailures = 0;
 let sortColumn = null;
 let sortDirection = 'asc';
 let undoStack = [];
 const MAX_UNDO = 50;
+
+const clone = value => JSON.parse(JSON.stringify(value));
+const same = (a, b) => JSON.stringify(a ?? '') === JSON.stringify(b ?? '');
+
+function emitSync(state, detail = {}) {
+    window.dispatchEvent(new CustomEvent('jobs-sync', { detail: { state, conflicts: conflicts.length, ...detail } }));
+}
+
+function ensureLocalIds(items) {
+    items.forEach(job => {
+        if (!job._id) job._id = window.crypto?.randomUUID?.() ?? 'job-' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    });
+}
+
+function applyChangesAfterSnapshot(serverJobs, sentSnapshot, currentJobs) {
+    const result = clone(serverJobs);
+    const resultById = new Map(result.map(job => [job._id, job]));
+    const sentById = new Map(sentSnapshot.map(job => [job._id, job]));
+    const currentById = new Map(currentJobs.map(job => [job._id, job]));
+    for (const [id, current] of currentById) {
+        const sent = sentById.get(id);
+        if (!sent) {
+            if (!resultById.has(id)) result.push(clone(current));
+            continue;
+        }
+        const target = resultById.get(id);
+        if (!target) {
+            if (!same(sent, current)) result.push(clone(current));
+            continue;
+        }
+        for (const field of new Set([...Object.keys(sent), ...Object.keys(current)])) {
+            if (field !== '_id' && !same(sent[field], current[field])) target[field] = current[field] ?? '';
+        }
+    }
+    for (const [id] of sentById) {
+        if (!currentById.has(id)) {
+            const index = result.findIndex(job => job._id === id);
+            if (index >= 0) result.splice(index, 1);
+        }
+    }
+    return result;
+}
 
 export function setSortingState(col, dir) {
     sortColumn = col;
@@ -62,11 +110,24 @@ export async function loadData() {
         }
         const data = await res.json();
         jobs = data.jobs || [];
+        ensureLocalIds(jobs);
+        syncedJobs = clone(jobs);
         isLoaded = true;
         lastSavedTimestamp = data.modified || Date.now();
+        lastServerRevision = data.revision || '';
         clearUndo();
+        const storedPending = localStorage.getItem('jobsPendingChanges');
+        if (storedPending) {
+            try {
+                const saved = JSON.parse(storedPending);
+                if (Array.isArray(saved.base) && Array.isArray(saved.proposed)) {
+                    jobs = applyChangesAfterSnapshot(jobs, saved.base, saved.proposed);
+                    pendingSnapshot = clone(jobs);
+                }
+            } catch {}
+        }
         const count = convertSaabunudDates(jobs);
-        if (count > 0) await autoSave();
+        if (count > 0 || pendingSnapshot) await autoSave();
         return { status: 'loaded', count: jobs.length, jobs };
     } catch (e) {
         console.error('Failed to load data:', e);
@@ -81,47 +142,149 @@ export async function loadFromFileLegacy() {
 
 export async function autoSave() {
     if (!isLoaded) return;
-    inFlightSaves++;
-    try {
-        const res = await fetch('/api/data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(jobs)
-        });
-        if (!res.ok) {
-            throw new Error("Server error: " + res.status);
+    ensureLocalIds(jobs);
+    pendingSnapshot = clone(jobs);
+    localStorage.setItem('jobsPendingChanges', JSON.stringify({ base: syncedJobs, proposed: pendingSnapshot }));
+    if (!saveLoopRunning) processSaveQueue();
+}
+
+async function processSaveQueue() {
+    saveLoopRunning = true;
+    while (pendingSnapshot) {
+        const sentSnapshot = pendingSnapshot;
+        pendingSnapshot = null;
+        const baseSnapshot = clone(syncedJobs);
+        const proposal = clone(sentSnapshot);
+        for (const conflict of conflicts) {
+            const proposedJob = proposal.find(job => job._id === conflict.jobId);
+            const baseJob = baseSnapshot.find(job => job._id === conflict.jobId);
+            if (proposedJob && baseJob && !conflict.field.startsWith('_')) {
+                conflict.userValue = proposedJob[conflict.field] ?? '';
+                proposedJob[conflict.field] = baseJob[conflict.field] ?? '';
+            }
         }
-        const data = await res.json();
-        lastSavedTimestamp = data.modified || Date.now();
-    } catch (e) {
-        console.error('Salvestamine ebaõnnestus', e);
-    } finally {
-        inFlightSaves--;
+        inFlightSaves++;
+        let slowTimer = setTimeout(() => emitSync('saving'), 500);
+        try {
+            const res = await fetch('/api/merge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ base: baseSnapshot, proposed: proposal })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !Array.isArray(data.jobs)) throw new Error(data.message || 'Server error: ' + res.status);
+            const currentJobs = jobs;
+            syncedJobs = clone(data.jobs);
+            jobs = applyChangesAfterSnapshot(data.jobs, sentSnapshot, currentJobs);
+            lastSavedTimestamp = data.modified || Date.now();
+            lastServerRevision = data.revision || lastServerRevision;
+            if (Array.isArray(data.conflicts) && data.conflicts.length) {
+                for (const conflict of data.conflicts) {
+                    const existing = conflicts.findIndex(item => item.jobId === conflict.jobId && item.field === conflict.field);
+                    if (existing >= 0) conflicts[existing] = conflict;
+                    else conflicts.push(conflict);
+                    const localJob = jobs.find(job => job._id === conflict.jobId);
+                    if (localJob && !conflict.field.startsWith('_')) localJob[conflict.field] = conflict.userValue;
+                    if (!localJob && conflict.field === '_deleted' && conflict.userValue) jobs.push(clone(conflict.userValue));
+                }
+                emitSync('conflict');
+            } else {
+                emitSync(conflicts.length ? 'conflict' : 'ok', { savedAt: Date.now() });
+            }
+            pollFailures = 0;
+            if (!pendingSnapshot && conflicts.length === 0) localStorage.removeItem('jobsPendingChanges');
+        } catch (e) {
+            console.error('Salvestamine ebaõnnestus', e);
+            pendingSnapshot = clone(jobs);
+            emitSync('error', { message: e.message || 'Salvestamine ebaõnnestus', pending: true });
+            break;
+        } finally {
+            clearTimeout(slowTimer);
+            inFlightSaves--;
+        }
     }
+    saveLoopRunning = false;
 }
 
 export async function pollChanges(tabId) {
-    if (inFlightSaves > 0 || isPolling) return false;
+    if (inFlightSaves > 0 || pendingSnapshot || isPolling || conflicts.length) return false;
     isPolling = true;
     try {
         let url = '/api/poll?since=' + lastSavedTimestamp;
+        if (lastServerRevision) url += '&revision=' + encodeURIComponent(lastServerRevision);
         if (tabId) url += '&tabId=' + encodeURIComponent(tabId);
         const res = await fetch(url);
-        if (!res.ok) return false;
+        if (!res.ok) throw new Error('Server error: ' + res.status);
         const data = await res.json();
         if (data.changed && data.jobs) {
             jobs = data.jobs;
+            ensureLocalIds(jobs);
+            syncedJobs = clone(jobs);
             convertSaabunudDates(jobs);
             lastSavedTimestamp = data.modified || Date.now();
+            lastServerRevision = data.revision || lastServerRevision;
             clearUndo();
             return true;
         }
+        pollFailures = 0;
+        if (!saveLoopRunning) emitSync('ok');
         return false;
-    } catch {
+    } catch (e) {
+        pollFailures++;
+        if (pollFailures >= 3) emitSync('error', { message: 'Serveriga puudub ühendus' });
         return false;
     } finally {
         isPolling = false;
     }
+}
+
+export function getConflicts() {
+    return conflicts.slice();
+}
+
+export async function retrySave() {
+    if (!isLoaded) {
+        const result = await loadData();
+        if (result.status === 'loaded') {
+            emitSync('ok');
+            window.dispatchEvent(new CustomEvent('jobs-data-updated'));
+        } else {
+            emitSync('error', { message: 'Server või K: ketas ei ole saadaval' });
+        }
+        return;
+    }
+    autoSave();
+}
+
+export function resolveConflict(jobId, field, choice, mergedValue = '') {
+    const index = conflicts.findIndex(item => item.jobId === jobId && item.field === field);
+    if (index < 0) return;
+    const conflict = conflicts[index];
+    const job = jobs.find(item => item._id === jobId);
+    if (field === '_deleted') {
+        if (choice === 'mine' && conflict.userValue) {
+            const currentIndex = jobs.findIndex(item => item._id === jobId);
+            if (currentIndex >= 0) jobs[currentIndex] = clone(conflict.userValue);
+            else jobs.push(clone(conflict.userValue));
+        } else if (choice === 'shared' && conflict.currentValue) {
+            const currentIndex = jobs.findIndex(item => item._id === jobId);
+            if (currentIndex >= 0) jobs[currentIndex] = clone(conflict.currentValue);
+            else jobs.push(clone(conflict.currentValue));
+        }
+    } else if (job && field !== '_job') {
+        job[field] = choice === 'merged' ? mergedValue : (choice === 'mine' ? conflict.userValue : conflict.currentValue);
+    }
+    conflicts.splice(index, 1);
+    if (choice === 'mine' || choice === 'merged') autoSave();
+    else {
+        if (!conflicts.length && !pendingSnapshot) localStorage.removeItem('jobsPendingChanges');
+        emitSync(conflicts.length ? 'conflict' : 'ok');
+    }
+    window.dispatchEvent(new CustomEvent('jobs-data-updated'));
+}
+
+export function hasUnsavedChanges() {
+    return Boolean(pendingSnapshot || inFlightSaves || conflicts.length);
 }
 
 export function reorderJobs(column, direction, shouldSave = false) {
@@ -170,6 +333,7 @@ export function reorderJobs(column, direction, shouldSave = false) {
 
 export function addJob(job) {
     pushUndo();
+    ensureLocalIds([job]);
     jobs.push(job);
     if (sortColumn && sortDirection) {
         reorderJobs(sortColumn, sortDirection, false);

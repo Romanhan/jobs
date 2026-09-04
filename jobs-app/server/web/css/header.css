@@ -26,6 +26,104 @@
     position: relative;
 }
 
+.sync-indicator {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-btn-secondary);
+    border: none;
+    border-radius: var(--radius-round);
+    box-shadow: var(--shadow-extruded-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.sync-indicator:hover {
+    background: var(--surface-btn-secondary-hover);
+    box-shadow: var(--shadow-extruded-md);
+}
+
+.sync-indicator:active,
+.sync-indicator[aria-expanded="true"] {
+    background: var(--surface-btn-secondary-active);
+    box-shadow: var(--shadow-pressed);
+    transform: translateY(1px);
+}
+
+.sync-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-round);
+    background: var(--color-completed);
+}
+
+.sync-indicator.is-ok .sync-dot { background: var(--color-success); }
+.sync-indicator.is-error .sync-dot,
+.sync-indicator.is-conflict .sync-dot { background: var(--color-danger); }
+
+.sync-indicator.is-saving .sync-dot {
+    width: 11px;
+    height: 11px;
+    background: transparent;
+    border: 2px solid var(--border-medium);
+    border-top-color: var(--color-primary);
+    animation: sync-spin 0.75s linear infinite;
+}
+
+@keyframes sync-spin {
+    to { transform: rotate(360deg); }
+}
+
+.sync-popup {
+    position: fixed;
+    z-index: 900;
+    top: 50px;
+    right: 20px;
+    min-width: 240px;
+    max-width: 320px;
+    padding: 14px 16px;
+    color: var(--text-primary);
+    background: var(--surface-menu);
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-menu);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.sync-popup-title {
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.sync-popup-details {
+    margin-top: 4px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.sync-popup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.sync-popup-actions:empty { display: none; }
+
+.sync-popup-actions button {
+    padding: 5px 8px;
+    font-size: 11px;
+}
+
 .csv-btn {
     display: inline-flex;
     align-items: center;

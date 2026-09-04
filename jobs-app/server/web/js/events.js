@@ -381,6 +381,19 @@ export function handleKeydown(e) {
     const menuDropdown = document.getElementById('menu-dropdown');
     const fontPopup = document.getElementById('font-size-popup');
     const infoPopup = document.getElementById('info-popup');
+    const syncPopup = document.getElementById('sync-popup');
+    const conflictMergePopup = document.getElementById('conflict-merge-popup');
+    if (e.key === 'Escape' && conflictMergePopup && conflictMergePopup.style.display !== 'none') {
+        document.getElementById('conflict-merge-cancel')?.click();
+        e.preventDefault();
+        return;
+    }
+    if (e.key === 'Escape' && syncPopup && syncPopup.style.display !== 'none') {
+        syncPopup.style.display = 'none';
+        document.getElementById('sync-indicator')?.setAttribute('aria-expanded', 'false');
+        e.preventDefault();
+        return;
+    }
     if (e.key === 'Escape' && fontPopup && fontPopup.style.display !== 'none') {
         fontPopup.style.display = 'none';
         e.preventDefault();
@@ -671,7 +684,7 @@ export function attachEventListeners() {
 
     document.addEventListener('mouseout', function(e) {
         const target = e.target.closest('[data-tooltip]');
-        if (!target) {
+        if (!target || !e.relatedTarget || !target.contains(e.relatedTarget)) {
             hideTooltip();
         }
     });

@@ -64,9 +64,13 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - **Keyboard shortcuts** — Menu → "Shortcuts" popup
 
 ## Collaboration (Shared Folder)
-- Copy `jobs-app/index.html` + `jobs_data.json` to shared folder
-- Coordinate saves: "I'm saving now" → Save → overwrites shared CSV
-- Last save wins
+- Each user runs the same current-version executable locally with `--data` pointing to the shared `jobs_data.json`
+- Field-level changes are merged under an exclusive shared-drive lock; different rows/fields can be edited concurrently
+- Same-field edits from stale copies create a visible conflict instead of silently overwriting either value
+- Comment conflicts offer an editable "Ühenda mõlemad" flow in addition to choosing the shared or local value
+- `jobs_data.json.version` is managed automatically beside the data file for reliable change polling
+- A validated backup is created in `backups/` when the newest backup is at least 48 hours old; the newest 36 are retained
+- All users must upgrade together when the synchronization protocol changes; older executables still use whole-file saves
 
 ## All 20 Columns
 1. Töö Nr
