@@ -3,12 +3,13 @@ import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
-import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
+import { openDateCalendarDirect, closeCalendarPopup, positionCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
 let editingCell = null;
 let tooltipEl = null;
 let tooltipTimeout = null;
 let activeDeleteKeydownHandler = null;
+let modalReturnFocus = null;
 
 function hideTooltip() {
     if (tooltipTimeout) {
@@ -34,11 +35,7 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
     const jobsArr = getJobs();
     jobsArr[cell.index][cell.col] = DATE_COLS.includes(cell.col) ? parseDate(dateStr) : dateStr;
     
-    const floatingEditor = document.querySelector('.floating-editor');
-    if (floatingEditor) floatingEditor.remove();
-    cell.td.style.visibility = '';
-    cell.td.classList.remove('editing');
-    editingCell = null;
+    finishEditing();
     
     doAutoSave(jobsArr);
     renderTableBody();
@@ -46,6 +43,7 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
 });
 
 export function editCell(td, index, col) {
+    if (document.getElementById('modal').classList.contains('active')) return;
     hideTooltip();
 
     if (editingCell) {
@@ -82,8 +80,41 @@ export function editCell(td, index, col) {
     document.body.appendChild(floatingEditor);
     
     input.value = textToMeasure;
+    const listeners = new AbortController();
+    let preferredWidth = rect.width;
+    const positionEditor = () => {
+        if (!floatingEditor.isConnected) return;
+        const margin = 8;
+        const anchor = td.getBoundingClientRect();
+        floatingEditor.style.width = Math.min(preferredWidth, window.innerWidth - margin * 2) + 'px';
+        input.style.maxWidth = '100%';
+        input.style.minWidth = '0';
+        input.style.maxHeight = Math.max(24, window.innerHeight - margin * 2 - 8) + 'px';
+        autoGrowTextarea(input);
+        input.style.overflowY = input.scrollHeight > input.clientHeight ? 'auto' : 'hidden';
+        const size = floatingEditor.getBoundingClientRect();
+        floatingEditor.style.left = Math.max(margin, Math.min(anchor.left, window.innerWidth - size.width - margin)) + 'px';
+        floatingEditor.style.top = Math.max(margin, Math.min(anchor.top, window.innerHeight - size.height - margin)) + 'px';
+        if (document.getElementById('calendar-popup')) {
+            positionCalendarPopup(floatingEditor.querySelector('.calendar-edit-btn') || floatingEditor);
+        }
+    };
+    const tableWrap = td.closest('.table-wrap');
+    const handleScroll = () => {
+        if (!floatingEditor.isConnected) return;
+        const anchor = td.getBoundingClientRect();
+        const visible = tableWrap.getBoundingClientRect();
+        const headerBottom = tableWrap.querySelector('thead').getBoundingClientRect().bottom;
+        if (anchor.bottom <= Math.max(visible.top, headerBottom) || anchor.top >= visible.bottom ||
+            anchor.right <= visible.left || anchor.left >= visible.right) {
+            saveEdited(input, index, col);
+        } else positionEditor();
+    };
+    tableWrap.addEventListener('scroll', handleScroll, { signal: listeners.signal });
+    window.addEventListener('resize', positionEditor, { signal: listeners.signal });
     
     requestAnimationFrame(() => {
+        if (!floatingEditor.isConnected) return;
         const measureDiv = document.createElement('div');
         measureDiv.style.position = 'absolute';
         measureDiv.style.visibility = 'hidden';
@@ -105,7 +136,7 @@ export function editCell(td, index, col) {
         if (isDate) {
             popupWidth = Math.max(popupWidth, Math.max(textWidth, 60) + 8 + 2 + 22 + 8);
         }
-        floatingEditor.style.width = popupWidth + 'px';
+        preferredWidth = popupWidth;
         if (isDate) {
             input.style.width = (Math.max(textWidth, 60) + 8) + 'px';
         }
@@ -115,7 +146,7 @@ export function editCell(td, index, col) {
         } else {
             input.style.whiteSpace = 'pre-wrap';
         }
-        autoGrowTextarea(input);
+        positionEditor();
     });
     
     if (isDate) {
@@ -147,25 +178,25 @@ export function editCell(td, index, col) {
         } else if (e.ctrlKey && e.key === 'b') {
             e.preventDefault();
             wrapSelection(input, '**');
-            autoGrowTextarea(input);
+            positionEditor();
         } else if (e.ctrlKey && e.key === 'i') {
             e.preventDefault();
             wrapSelection(input, '!!');
-            autoGrowTextarea(input);
+            positionEditor();
         } else if (e.ctrlKey && e.shiftKey && e.key === 'S') {
             e.preventDefault();
             wrapSelection(input, '~~');
-            autoGrowTextarea(input);
+            positionEditor();
         }
     });
     
     input.addEventListener('input', function() {
-        autoGrowTextarea(input);
+        positionEditor();
     });
     
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
-    editingCell = { td, index, col, isDate };
+    editingCell = { td, index, col, isDate, listeners };
     const onCalendarClose = isDate
         ? () => saveEdited(input, index, col)
         : finishEditing;
@@ -194,15 +225,7 @@ export function saveEdited(input, index, col) {
     const jobsArr = getJobs();
     jobsArr[index][col] = value;
 
-    const floatingEditor = document.querySelector('.floating-editor');
-    if (floatingEditor) floatingEditor.remove();
-    if (editingCell) {
-        editingCell.td.style.visibility = '';
-        editingCell.td.classList.remove('editing');
-        editingCell = null;
-    }
-
-    setEditingCellState(null, null);
+    finishEditing();
     doAutoSave(jobsArr);
     renderTableBody();
     updateStats();
@@ -210,6 +233,8 @@ export function saveEdited(input, index, col) {
 
 export function finishEditing() {
     if (!editingCell) return;
+    editingCell.listeners?.abort();
+    closeCalendarPopup();
     const floatingEditor = document.querySelector('.floating-editor');
     if (floatingEditor) floatingEditor.remove();
     if (editingCell.td) {
@@ -313,27 +338,31 @@ export function toggleField(index, col, value) {
 }
 
 export function openModal() {
+    if (editingCell) {
+        const input = document.querySelector('.floating-editor textarea');
+        if (input) saveEdited(input, editingCell.index, editingCell.col);
+        else finishEditing();
+    }
+    modalReturnFocus = document.activeElement;
     const form = document.getElementById('add-form');
     form.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
     
-    document.querySelectorAll('.table-wrap table td, .table-wrap table th').forEach(cell => {
-        if (cell.classList.contains('row-indicator')) return;
-        cell.style.pointerEvents = 'none';
-    });
+    document.querySelector('.app-container').inert = true;
     
     document.body.classList.add('modal-open');
     document.getElementById('modal').classList.add('active');
+    form.elements['Töö Nr'].focus();
 }
 
 export function closeModal() {
-    document.querySelectorAll('.table-wrap table td, .table-wrap table th').forEach(cell => {
-        if (cell.classList.contains('row-indicator')) return;
-        cell.style.pointerEvents = '';
-    });
+    closeCalendarPopup();
+    document.querySelector('.app-container').inert = false;
     
     document.body.classList.remove('modal-open');
     document.getElementById('modal').classList.remove('active');
-    document.activeElement?.blur();
+    const returnFocus = modalReturnFocus?.isConnected ? modalReturnFocus : document.getElementById('btn-add-job');
+    returnFocus?.focus();
+    modalReturnFocus = null;
 }
 
 export function addJob(e) {
@@ -377,6 +406,20 @@ export function addJob(e) {
 }
 
 export function handleKeydown(e) {
+    const modal = document.getElementById('modal');
+    if (modal.classList.contains('active') && e.key === 'Tab') {
+        const focusable = [...modal.querySelectorAll('input, button, textarea, select, [tabindex]')]
+            .filter(element => !element.disabled && element.tabIndex >= 0 && element.getClientRects().length);
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (!modal.contains(document.activeElement) || (e.shiftKey && document.activeElement === first)) {
+            e.preventDefault();
+            (e.shiftKey ? last : first)?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first?.focus();
+        }
+        return;
+    }
     const shortcutsPopup = document.getElementById('shortcuts-popup');
     const menuDropdown = document.getElementById('menu-dropdown');
     const fontPopup = document.getElementById('font-size-popup');

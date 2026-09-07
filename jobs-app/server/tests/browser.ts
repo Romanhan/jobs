@@ -68,6 +68,28 @@ export async function browser() {
     await send("Runtime.enable");
     return {
       close, evaluate,
+      viewport: (width: number, height: number) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false }),
+      async key(key: string, code: number, modifiers = 0) {
+        await send('Input.dispatchKeyEvent', { type: 'keyDown', key, windowsVirtualKeyCode: code, modifiers });
+        await send('Input.dispatchKeyEvent', { type: 'keyUp', key, windowsVirtualKeyCode: code, modifiers });
+      },
+      async click(selector: string) {
+        const position = await evaluate(`(async () => {
+          const element = document.querySelector(${JSON.stringify(selector)});
+          element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          const wrap = element.closest('.table-wrap');
+          if (wrap && element.closest('tbody')) {
+            const top = element.getBoundingClientRect().top;
+            const headerBottom = wrap.querySelector('thead').getBoundingClientRect().bottom;
+            if (top < headerBottom) wrap.scrollTop -= headerBottom - top;
+          }
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const r = element.getBoundingClientRect();
+          return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+        })()`);
+        await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...position, button: 'left', clickCount: 1 });
+        await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...position, button: 'left', clickCount: 1 });
+      },
       beforeLoad: (source: string) => send("Page.addScriptToEvaluateOnNewDocument", { source }),
       async open(url: string, requireData = true) {
         const previousLoads = loads;
