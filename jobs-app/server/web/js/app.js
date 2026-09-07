@@ -215,7 +215,7 @@ async function init() {
     if (btnMenu) btnMenu.disabled = false;
     if (dataResult && dataResult.status === 'loaded') {
         if (btnAddJob) btnAddJob.disabled = false;
-        setSyncState({ state: 'ok' });
+        setSyncState({ state: getConflicts().length ? 'conflict' : (hasUnsavedChanges() ? 'saving' : 'ok') });
         showStatus('Andmed laetud! (' + dataResult.count + ' tööd)', 'success');
     } else {
         setSyncState({ state: 'error', message: 'Serveriga puudub ühendus' });
@@ -242,7 +242,7 @@ async function init() {
             return;
         }
         try {
-            const changed = await pollChanges(tabId);
+            const changed = await pollChanges(tabId, () => !document.querySelector('.floating-editor'));
             if (changed) {
                 const { sortColumn, sortDirection } = getSortingState();
                 if (sortColumn && sortDirection) {

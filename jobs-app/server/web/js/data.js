@@ -12,6 +12,7 @@ let pendingSnapshot = null;
 let saveLoopRunning = false;
 let conflicts = [];
 let pollFailures = 0;
+let dataGeneration = 0;
 let sortColumn = null;
 let sortDirection = 'asc';
 let undoStack = [];
@@ -22,6 +23,22 @@ const same = (a, b) => JSON.stringify(a ?? '') === JSON.stringify(b ?? '');
 
 function emitSync(state, detail = {}) {
     window.dispatchEvent(new CustomEvent('jobs-sync', { detail: { state, conflicts: conflicts.length, ...detail } }));
+}
+
+function persistPendingChanges() {
+    try {
+        if (pendingSnapshot || inFlightSaves || conflicts.length) {
+            localStorage.setItem('jobsPendingChanges', JSON.stringify({ base: syncedJobs, proposed: jobs, conflicts }));
+        } else {
+            localStorage.removeItem('jobsPendingChanges');
+        }
+    } catch (error) {
+        // Browser storage failure must not prevent saving to the shared file.
+        console.error('Kohalik varukoopia ebaõnnestus', error);
+        if (pendingSnapshot || inFlightSaves || conflicts.length) {
+            emitSync('error', { message: 'Kohalik varukoopia ei ole saadaval. Ärge sulgege lehte enne muudatuste salvestamist.' });
+        }
+    }
 }
 
 function ensureLocalIds(items) {
@@ -69,6 +86,7 @@ export function getSortingState() {
 }
 
 export function setJobs(newJobs) {
+    dataGeneration++;
     jobs = newJobs;
 }
 
@@ -110,6 +128,7 @@ export async function loadData() {
         }
         const data = await res.json();
         jobs = data.jobs || [];
+        dataGeneration++;
         ensureLocalIds(jobs);
         syncedJobs = clone(jobs);
         isLoaded = true;
@@ -121,7 +140,11 @@ export async function loadData() {
             try {
                 const saved = JSON.parse(storedPending);
                 if (Array.isArray(saved.base) && Array.isArray(saved.proposed)) {
-                    jobs = applyChangesAfterSnapshot(jobs, saved.base, saved.proposed);
+                    // Replay against the original baseline so edits made while
+                    // offline still go through the server's conflict detection.
+                    syncedJobs = clone(saved.base);
+                    jobs = clone(saved.proposed);
+                    conflicts = Array.isArray(saved.conflicts) ? saved.conflicts : [];
                     pendingSnapshot = clone(jobs);
                 }
             } catch {}
@@ -142,9 +165,10 @@ export async function loadFromFileLegacy() {
 
 export async function autoSave() {
     if (!isLoaded) return;
+    dataGeneration++;
     ensureLocalIds(jobs);
     pendingSnapshot = clone(jobs);
-    localStorage.setItem('jobsPendingChanges', JSON.stringify({ base: syncedJobs, proposed: pendingSnapshot }));
+    persistPendingChanges();
     if (!saveLoopRunning) processSaveQueue();
 }
 
@@ -158,7 +182,11 @@ async function processSaveQueue() {
         for (const conflict of conflicts) {
             const proposedJob = proposal.find(job => job._id === conflict.jobId);
             const baseJob = baseSnapshot.find(job => job._id === conflict.jobId);
-            if (proposedJob && baseJob && !conflict.field.startsWith('_')) {
+            if (conflict.field === '_deleted' || conflict.field === '_job') {
+                const index = proposal.findIndex(job => job._id === conflict.jobId);
+                if (index >= 0) proposal.splice(index, 1);
+                if (baseJob) proposal.push(clone(baseJob));
+            } else if (proposedJob && baseJob) {
                 conflict.userValue = proposedJob[conflict.field] ?? '';
                 proposedJob[conflict.field] = baseJob[conflict.field] ?? '';
             }
@@ -183,16 +211,24 @@ async function processSaveQueue() {
                     const existing = conflicts.findIndex(item => item.jobId === conflict.jobId && item.field === conflict.field);
                     if (existing >= 0) conflicts[existing] = conflict;
                     else conflicts.push(conflict);
-                    const localJob = jobs.find(job => job._id === conflict.jobId);
-                    if (localJob && !conflict.field.startsWith('_')) localJob[conflict.field] = conflict.userValue;
-                    if (!localJob && conflict.field === '_deleted' && conflict.userValue) jobs.push(clone(conflict.userValue));
                 }
-                emitSync('conflict');
-            } else {
-                emitSync(conflicts.length ? 'conflict' : 'ok', { savedAt: Date.now() });
             }
+            // Unresolved values stay visible and recoverable even when this
+            // response only saved an unrelated field.
+            for (const conflict of conflicts) {
+                const localJob = jobs.find(job => job._id === conflict.jobId);
+                if (!conflict.field.startsWith('_')) {
+                    const sent = sentSnapshot.find(job => job._id === conflict.jobId);
+                    const current = currentJobs.find(job => job._id === conflict.jobId);
+                    if (sent && current && !same(sent[conflict.field], current[conflict.field])) {
+                        conflict.userValue = current[conflict.field] ?? '';
+                    }
+                    if (localJob) localJob[conflict.field] = conflict.userValue;
+                }
+                if (!localJob && conflict.field === '_deleted' && conflict.userValue) jobs.push(clone(conflict.userValue));
+            }
+            emitSync(conflicts.length ? 'conflict' : (pendingSnapshot ? 'saving' : 'ok'), { savedAt: Date.now() });
             pollFailures = 0;
-            if (!pendingSnapshot && conflicts.length === 0) localStorage.removeItem('jobsPendingChanges');
         } catch (e) {
             console.error('Salvestamine ebaõnnestus', e);
             pendingSnapshot = clone(jobs);
@@ -201,14 +237,16 @@ async function processSaveQueue() {
         } finally {
             clearTimeout(slowTimer);
             inFlightSaves--;
+            persistPendingChanges();
         }
     }
     saveLoopRunning = false;
 }
 
-export async function pollChanges(tabId) {
+export async function pollChanges(tabId, canApply = () => true) {
     if (inFlightSaves > 0 || pendingSnapshot || isPolling || conflicts.length) return false;
     isPolling = true;
+    const generation = dataGeneration;
     try {
         let url = '/api/poll?since=' + lastSavedTimestamp;
         if (lastServerRevision) url += '&revision=' + encodeURIComponent(lastServerRevision);
@@ -216,6 +254,9 @@ export async function pollChanges(tabId) {
         const res = await fetch(url);
         if (!res.ok) throw new Error('Server error: ' + res.status);
         const data = await res.json();
+        // A save may have started and finished while this request was pending.
+        // Its older response must not replace the newer state or revision.
+        if (generation !== dataGeneration || inFlightSaves || pendingSnapshot || conflicts.length || !canApply()) return false;
         if (data.changed && data.jobs) {
             jobs = data.jobs;
             ensureLocalIds(jobs);
@@ -260,24 +301,23 @@ export function resolveConflict(jobId, field, choice, mergedValue = '') {
     const index = conflicts.findIndex(item => item.jobId === jobId && item.field === field);
     if (index < 0) return;
     const conflict = conflicts[index];
+    dataGeneration++;
     const job = jobs.find(item => item._id === jobId);
-    if (field === '_deleted') {
-        if (choice === 'mine' && conflict.userValue) {
-            const currentIndex = jobs.findIndex(item => item._id === jobId);
-            if (currentIndex >= 0) jobs[currentIndex] = clone(conflict.userValue);
-            else jobs.push(clone(conflict.userValue));
-        } else if (choice === 'shared' && conflict.currentValue) {
-            const currentIndex = jobs.findIndex(item => item._id === jobId);
-            if (currentIndex >= 0) jobs[currentIndex] = clone(conflict.currentValue);
-            else jobs.push(clone(conflict.currentValue));
-        }
+    if (field === '_deleted' || field === '_job') {
+        const selected = choice === 'mine' ? conflict.userValue : conflict.currentValue;
+        const currentIndex = jobs.findIndex(item => item._id === jobId);
+        if (selected) {
+            if (currentIndex >= 0) jobs[currentIndex] = clone(selected);
+            else jobs.push(clone(selected));
+        } else if (currentIndex >= 0) jobs.splice(currentIndex, 1);
     } else if (job && field !== '_job') {
         job[field] = choice === 'merged' ? mergedValue : (choice === 'mine' ? conflict.userValue : conflict.currentValue);
     }
     conflicts.splice(index, 1);
     if (choice === 'mine' || choice === 'merged') autoSave();
     else {
-        if (!conflicts.length && !pendingSnapshot) localStorage.removeItem('jobsPendingChanges');
+        if (pendingSnapshot) pendingSnapshot = clone(jobs);
+        persistPendingChanges();
         emitSync(conflicts.length ? 'conflict' : 'ok');
     }
     window.dispatchEvent(new CustomEvent('jobs-data-updated'));

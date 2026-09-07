@@ -1,6 +1,6 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
-import { formatDate, parseDate, autoGrowTextarea, wrapSelection } from './utils.js';
+import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
@@ -32,7 +32,7 @@ setOnDateSelectedInEdit((textarea, dateStr) => {
     
     pushUndo();
     const jobsArr = getJobs();
-    jobsArr[cell.index][cell.col] = dateStr;
+    jobsArr[cell.index][cell.col] = DATE_COLS.includes(cell.col) ? parseDate(dateStr) : dateStr;
     
     const floatingEditor = document.querySelector('.floating-editor');
     if (floatingEditor) floatingEditor.remove();
@@ -184,7 +184,7 @@ export function saveEdited(input, index, col) {
             value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
         }
         const parsed = parseDate(value);
-        if (parsed && !/^\d{4}-\d{2}-\d{2}$/.test(parsed)) {
+        if (parsed && !isValidDate(parsed)) {
             showStatus('Vigane kuupäeva vorming (Kasuta: PP.KK.AAAA)', 'error');
             finishEditing();
             return;
@@ -354,7 +354,7 @@ export function addJob(e) {
                     val = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
                 }
                 val = parseDate(val);
-                if (val && !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+                if (val && !isValidDate(val)) {
                     showStatus('Vigane kuupäev: ' + f.label, 'error');
                     hasError = true;
                     return;
