@@ -6,7 +6,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ## Current version — 0.3.2
 
-Version 0.3.2 fixes offline recovery, deletion conflicts, and edits affected by delayed polling. It also validates calendar dates, safely displays imported text, and keeps shared-file saving working when browser storage is full. Automated server and browser tests now run before release, including against the compiled Windows executable. See [release notes](CHANGELOG.md).
+Version 0.3.2 fixes offline recovery, deletion conflicts, and edits affected by delayed polling. It also validates calendar dates, safely displays imported text, and keeps shared-file saving working when browser storage is full. The updated release keeps keyboard focus inside the Add dialog and cell editors within the window as you edit and scroll. All 69 automated tests run before release, including against the compiled Windows executable. See [release notes](CHANGELOG.md).
 
 ## Features
 

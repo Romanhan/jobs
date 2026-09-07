@@ -33,7 +33,7 @@ temporary directories. A restricted sandbox may require approval to run them.
 
 ## Coverage
 
-There are 65 tests: 32 browser scenarios, 28 server tests, and 5 utility tests.
+There are 69 tests: 36 browser/UI scenarios, 28 server tests, and 5 utility tests.
 
 - Server: stable IDs, two processes sharing a data file, concurrent field/row
   edits, identical edits, conflicts, additions, deletions, revision polling,
@@ -52,6 +52,10 @@ There are 65 tests: 32 browser scenarios, 28 server tests, and 5 utility tests.
   header sorting/filtering of 1,000 rows.
 - Additional server coverage: embedded assets and version, origin/path rejection,
   live locks, both sides of the 48-hour backup interval, and editing restored data.
+- UI regressions use real mouse and keyboard events: Add-dialog focus containment
+  and background-edit prevention; editor visibility at desktop and narrow window
+  sizes during typing/resizing; following scroll and saving the original row when
+  it leaves view. These scenarios exercise light and dark themes.
 - Utilities: date conversion and calendar validity, CSV quoting and multiline
   fields, HTML escaping, markdown, and legacy column normalization.
 

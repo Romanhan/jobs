@@ -2,6 +2,11 @@
 
 ## 0.3.2
 
+- Keep keyboard focus inside the Add dialog and prevent background row changes.
+- Keep long cell editors inside the viewport, with scrolling for long text.
+- Reposition editors with their rows; save and close when the row scrolls out of view.
+- Add four UI regression tests using real mouse and keyboard events.
+
 - Preserve the original save baseline when recovering offline edits, so another
   user's changes still produce conflicts instead of being overwritten.
 - Preserve unresolved local conflict values through reloads and unrelated saves.
@@ -14,7 +19,7 @@
 - Escape imported text in date cells before rendering it.
 - Continue shared-file saves when browser storage is full; warn if a pending edit
   cannot be backed up locally.
-- Add 65 automated tests covering core workflows, concurrency, recovery, CSV,
+- Add 69 automated tests covering core workflows, concurrency, recovery, CSV,
   calendar controls, preferences, filtering, sorting, backups, and a 1,000-row table.
 - Gate release builds on Linux and Windows source tests, then run the complete
   suite against the compiled Windows executable and its embedded UI.
