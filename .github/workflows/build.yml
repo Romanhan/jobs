@@ -5,8 +5,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  tests:
+    uses: ./.github/workflows/test.yml
   build:
+    needs: tests
     runs-on: windows-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
@@ -20,6 +24,15 @@ jobs:
       - name: Build executable
         working-directory: jobs-app/server
         run: deno task build
+
+      - name: Test compiled executable and embedded UI
+        working-directory: jobs-app/server
+        shell: pwsh
+        run: |
+          $env:JOBS_TEST_EXECUTABLE = (Resolve-Path jobs-app.exe).Path
+          $env:CHROME_BIN = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+          deno task test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4

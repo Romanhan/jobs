@@ -430,7 +430,18 @@ async function handleMergeData(req: Request, corsHeaders: Record<string, string>
   } catch {
     return new Response("Invalid JSON", { status: 400, headers: corsHeaders });
   }
-  if (!Array.isArray(payload.base) || !Array.isArray(payload.proposed)) {
+  const validSnapshot = (items: unknown): items is Job[] => {
+    if (!Array.isArray(items)) return false;
+    const ids = new Set<string>();
+    return items.every(job => {
+      if (!job || typeof job !== "object" || Array.isArray(job) ||
+          typeof job._id !== "string" || !job._id ||
+          typeof job["Töö Nr"] !== "string" || ids.has(job._id)) return false;
+      ids.add(job._id);
+      return true;
+    });
+  };
+  if (!payload || !validSnapshot(payload.base) || !validSnapshot(payload.proposed)) {
     return new Response("Invalid merge data", { status: 400, headers: corsHeaders });
   }
 
@@ -458,7 +469,9 @@ async function handleMergeData(req: Request, corsHeaders: Record<string, string>
         continue;
       }
       if (!current) {
-        conflicts.push({ jobId: id, field: "_deleted", baseValue: base, currentValue: null, userValue: proposed });
+        if (!valuesEqual(base, proposed)) {
+          conflicts.push({ jobId: id, field: "_deleted", baseValue: base, currentValue: null, userValue: proposed });
+        }
         continue;
       }
       const fields = new Set([...Object.keys(base), ...Object.keys(proposed)]);
@@ -723,6 +736,7 @@ async function startServer() {
           console.log("");
           setTimeout(() => void maybeCreateBackup(true), 2000);
 
+          if (args.includes("--no-browser")) return;
           let command: string[];
           if (Deno.build.os === "windows") {
             command = ["cmd.exe", "/c", "start", "", url];

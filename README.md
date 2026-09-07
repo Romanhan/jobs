@@ -4,9 +4,9 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-## Current version — 0.3.1
+## Current version — 0.3.2
 
-Version 0.3.1 makes shared-drive collaboration safer. It saves and merges individual field changes under a shared lock, retries temporary network-drive lock errors, shows conflicts instead of silently overwriting same-field edits, adds a connection/save status indicator, and creates automatic validated backups every 48 hours.
+Version 0.3.2 fixes offline recovery, deletion conflicts, and edits affected by delayed polling. It also validates calendar dates, safely displays imported text, and keeps shared-file saving working when browser storage is full. Automated server and browser tests now run before release, including against the compiled Windows executable. See [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -26,6 +26,15 @@ Version 0.3.1 makes shared-drive collaboration safer. It saves and merges indivi
 - **Conflict protection** — same-field conflicts retain both values; comments can be combined and edited before saving
 - **Connection indicator** — quiet green status dot with persistent saving, disk/server error, and conflict details
 - **Automatic backups** — creates a validated shared-data snapshot every 48 hours and retains the newest 36 in `backups/`
+
+## Tests
+
+Run `deno task test` from `jobs-app/server` with Deno 2 and Chromium installed.
+Use `CHROME_BIN` to select another Chrome executable. Tests use temporary data
+and browser profiles, including two server processes sharing a test file.
+See [test instructions and coverage](jobs-app/server/tests/README.md).
+
+Tests run on pushes and pull requests and must pass before the release build.
 
 ## Shared-drive collaboration
 
