@@ -92,3 +92,19 @@ Deno.test("browser: unresolved conflict survives reload", async () => {
     await b.run(scenarios.conflictSurvivesReload);
   } finally { if (b) await b.close(); await f.close(); }
 });
+
+Deno.test("browser: personal sorting survives save and reload", async () => {
+  const col = "EE vajaduse kuupäev (koostamiseks valmis kujul)";
+  const f = await fixture([
+    { _id: "a", "Töö Nr": "A", [col]: "2026-10-20" },
+    { _id: "b", "Töö Nr": "B", [col]: "2026-10-10" },
+    { _id: "c", "Töö Nr": "C", [col]: "" },
+  ]);
+  let b;
+  try {
+    b = await browser(); await b.open(f.url); await b.run(scenarios.setup);
+    await b.run(scenarios.personalSorting0);
+    await b.open(f.url); await b.run(scenarios.setup);
+    await b.run(scenarios.personalSorting1);
+  } finally { if (b) await b.close(); await f.close(); }
+});

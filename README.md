@@ -19,7 +19,8 @@ Version 0.3.2 fixes offline recovery, deletion conflicts, and edits affected by 
 - **CSV import/export** — save to shared folder, load from CSV
 - **Text formatting** — bold (**), important (!!), strikethrough (~~) in cells
 - **Undo** (Ctrl+Z), keyboard shortcuts
-- **Column resize & sorting** — click header to sort, drag resize handles
+- **Column resize & sorting** — click header to sort, drag resize handles. Sorting is remembered in each browser across saves and reopening; Aktiivsed resets filters and sorts by EE vajadus (earliest first, empty dates last).
+- **New job reminders** — new jobs default to a 7-day reminder. Existing reminders are unchanged.
 - **Soft neumorphic design** — matte off-white palette, mint accent, extruded dual-shadow system, inset pressed states
 - **Version info** — Menu → Info shows app name, version, author (auto-built from `server/deno.json`)
 - **Safe shared-drive editing** — field-level three-way merge preserves simultaneous changes to different jobs or fields

@@ -1,4 +1,4 @@
-import { loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs, setSortingState, getSortingState, getConflicts, retrySave, resolveConflict, hasUnsavedChanges } from './data.js';
+import { DEFAULT_SORT_COLUMN, loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs, setSortingState, getSortingState, getConflicts, retrySave, resolveConflict, hasUnsavedChanges } from './data.js';
 import { COLUMNS } from './config.js';
 import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
@@ -341,6 +341,8 @@ function setUpButtons() {
         if (!box) return;
         const filter = box.getAttribute('data-filter');
         if (filter === 'all') {
+            setSortingState(DEFAULT_SORT_COLUMN, 'asc');
+            reorderJobs(DEFAULT_SORT_COLUMN, 'asc', false);
             setStatusFilter(null);
             document.querySelectorAll('.status-box.filter-active').forEach(el => el.classList.remove('filter-active'));
             const el = document.getElementById('filter-nr');

@@ -13,10 +13,23 @@ let saveLoopRunning = false;
 let conflicts = [];
 let pollFailures = 0;
 let dataGeneration = 0;
-let sortColumn = null;
+export const DEFAULT_SORT_COLUMN = 'EE vajaduse kuupäev (koostamiseks valmis kujul)';
+let sortColumn = DEFAULT_SORT_COLUMN;
 let sortDirection = 'asc';
 let undoStack = [];
 const MAX_UNDO = 50;
+
+try {
+    const savedSort = JSON.parse(localStorage.getItem('jobsSorting') || 'null');
+    if (savedSort && COLUMNS.includes(savedSort.column) && ['asc', 'desc'].includes(savedSort.direction)) {
+        sortColumn = savedSort.column;
+        sortDirection = savedSort.direction;
+    }
+} catch {}
+
+function applySorting() {
+    reorderJobs(sortColumn, sortDirection, false);
+}
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const same = (a, b) => JSON.stringify(a ?? '') === JSON.stringify(b ?? '');
@@ -79,6 +92,9 @@ function applyChangesAfterSnapshot(serverJobs, sentSnapshot, currentJobs) {
 export function setSortingState(col, dir) {
     sortColumn = col;
     sortDirection = dir;
+    try {
+        localStorage.setItem('jobsSorting', JSON.stringify({ column: col, direction: dir }));
+    } catch {}
 }
 
 export function getSortingState() {
@@ -109,8 +125,7 @@ export function undo() {
     if (undoStack.length === 0) return false;
     const state = undoStack.pop();
     jobs = state.jobs;
-    sortColumn = state.sortColumn || null;
-    sortDirection = state.sortColumn ? state.sortDirection : 'asc';
+    setSortingState(state.sortColumn || DEFAULT_SORT_COLUMN, state.sortColumn ? state.sortDirection : 'asc');
     autoSave();
     return true;
 }
@@ -151,6 +166,7 @@ export async function loadData() {
         }
         const count = convertSaabunudDates(jobs);
         if (count > 0 || pendingSnapshot) await autoSave();
+        applySorting();
         return { status: 'loaded', count: jobs.length, jobs };
     } catch (e) {
         console.error('Failed to load data:', e);
@@ -227,6 +243,13 @@ async function processSaveQueue() {
                 }
                 if (!localJob && conflict.field === '_deleted' && conflict.userValue) jobs.push(clone(conflict.userValue));
             }
+            // Preserve row indices while an editor is open during a save.
+            const positions = new Map(currentJobs.map((job, index) => [job._id, index]));
+            jobs.sort((a, b) => (positions.get(a._id) ?? Infinity) - (positions.get(b._id) ?? Infinity));
+            if (!document.querySelector('.floating-editor')) {
+                applySorting();
+                window.dispatchEvent(new CustomEvent('jobs-data-updated'));
+            }
             emitSync(conflicts.length ? 'conflict' : (pendingSnapshot ? 'saving' : 'ok'), { savedAt: Date.now() });
             pollFailures = 0;
         } catch (e) {
@@ -265,6 +288,7 @@ export async function pollChanges(tabId, canApply = () => true) {
             lastSavedTimestamp = data.modified || Date.now();
             lastServerRevision = data.revision || lastServerRevision;
             clearUndo();
+            applySorting();
             return true;
         }
         pollFailures = 0;
@@ -320,6 +344,7 @@ export function resolveConflict(jobId, field, choice, mergedValue = '') {
         persistPendingChanges();
         emitSync(conflicts.length ? 'conflict' : 'ok');
     }
+    applySorting();
     window.dispatchEvent(new CustomEvent('jobs-data-updated'));
 }
 
@@ -373,6 +398,9 @@ export function reorderJobs(column, direction, shouldSave = false) {
 
 export function addJob(job) {
     pushUndo();
+    if (job['Meeldetuletus X päeva ennem'] == null || job['Meeldetuletus X päeva ennem'] === '') {
+        job['Meeldetuletus X päeva ennem'] = '7';
+    }
     ensureLocalIds([job]);
     jobs.push(job);
     if (sortColumn && sortDirection) {

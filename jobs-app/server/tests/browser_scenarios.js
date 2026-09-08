@@ -307,3 +307,31 @@ export async function sorting() {
     document.getElementById('confirm-ok').click();
     equal((await saved()).map(j => j._id).sort(), ['a', 'b']);
 }
+
+export async function personalSorting1() {
+      equal(testData.getSortingState(), { sortColumn: 'Töö Nr', sortDirection: 'desc' });
+      equal(testData.getJobs().map(j => j._id), ['c', 'b', 'a']);
+      document.querySelector('[data-filter="all"]').click();
+      equal(testData.getSortingState(), { sortColumn: testData.DEFAULT_SORT_COLUMN, sortDirection: 'asc' });
+      equal(testData.getJobs().map(j => j._id), ['b', 'a', 'c']);
+      document.getElementById('btn-add-job').click();
+      const form = document.getElementById('add-form');
+      form.elements['Töö Nr'].value = 'NEW';
+      form.querySelector('[type=submit]').click();
+      const rows = await saved();
+      equal(rows.find(j => j['Töö Nr'] === 'NEW')['Meeldetuletus X päeva ennem'], '7');
+      equal(testData.getJobs().at(-1)['Töö Nr'], 'NEW');
+      check(!rows.find(j => j._id === 'a')['Meeldetuletus X päeva ennem'], 'Existing reminders stay unchanged');
+}
+
+export async function personalSorting0() {
+      equal(testData.getJobs().map(j => j._id), ['b', 'a', 'c']);
+      testUI.sortBy('Töö Nr'); testUI.sortBy('Töö Nr');
+      testData.getJobs().find(j => j._id === 'a')['Täitmise koht'] = 'TOS';
+      testData.autoSave();
+      equal((await saved()).map(j => j._id), ['a', 'b', 'c']);
+      equal(testData.getJobs().map(j => j._id), ['c', 'b', 'a']);
+      await remoteEdit(rows => rows.reverse().map(j => ({ ...j, 'Täitmise koht': 'Karusel' })));
+      await testData.pollChanges('personal-sort-test');
+      equal(testData.getJobs().map(j => j._id), ['c', 'b', 'a']);
+}
