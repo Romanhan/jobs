@@ -1,6 +1,22 @@
 # Changelog
 
+## 0.3.3
+
+- Automatically retry full initialization after an initial data-load failure.
+- Restore adding and saving after access returns, including the merge baseline
+  and recovery of pending local edits.
+- Prevent polling from displaying rows while startup remains incomplete.
+- Add a browser regression test for failed startup followed by recovery and a new saved job.
+
+This fixes recovery after a loading failure; it does not change the shared-file
+locking mechanism or establish the cause of the reported lock timeouts.
+
 ## 0.3.2
+
+- Remember sorting per browser across saves and reopening; Aktiivsed resets to
+  EE vajadus ascending, with empty dates last.
+- Default new jobs to a 7-day reminder without changing existing reminders.
+
 
 - Keep keyboard focus inside the Add dialog and prevent background row changes.
 - Keep long cell editors inside the viewport, with scrolling for long text.

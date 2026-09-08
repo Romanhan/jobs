@@ -79,6 +79,16 @@ Deno.test("browser: reconnect after failed initial load", async () => {
   } finally { if (b) await b.close(); await f.close(); }
 });
 
+Deno.test("browser: automatically recover after initial data lock failure", async () => {
+  const f = await fixture(); let b;
+  try {
+    b = await browser();
+    await b.beforeLoad(`window.startupOffline = true; const originalFetch = window.fetch.bind(window); window.fetch = (...args) => window.startupOffline && args[0] === '/api/data' ? Promise.resolve(new Response('Internal Server Error', { status: 500 })) : originalFetch(...args);`);
+    await b.open(f.url, false); await b.run(scenarios.setup);
+    await b.run(extended.startupAutomaticRecovery);
+  } finally { if (b) await b.close(); await f.close(); }
+});
+
 Deno.test("browser: unresolved conflict survives reload", async () => {
   const f = await fixture();
   let b;

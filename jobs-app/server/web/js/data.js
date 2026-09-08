@@ -271,6 +271,16 @@ export async function pollChanges(tabId, canApply = () => true) {
     isPolling = true;
     const generation = dataGeneration;
     try {
+        // Polling alone cannot finish startup: loadData also establishes the
+        // merge baseline and restores pending edits before saving is enabled.
+        if (!isLoaded) {
+            const result = await loadData();
+            if (result.status !== 'loaded') return false;
+            pollFailures = 0;
+            emitSync(conflicts.length ? 'conflict' : (hasUnsavedChanges() ? 'saving' : 'ok'));
+            window.dispatchEvent(new CustomEvent('jobs-data-updated'));
+            return true;
+        }
         let url = '/api/poll?since=' + lastSavedTimestamp;
         if (lastServerRevision) url += '&revision=' + encodeURIComponent(lastServerRevision);
         if (tabId) url += '&tabId=' + encodeURIComponent(tabId);

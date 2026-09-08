@@ -191,3 +191,21 @@ export async function startupRetry() {
     equal(document.querySelectorAll('#table-body tr').length, 1);
     equal(testData.getJobs()[0]['Töö Nr'], 'A');
 }
+
+export async function startupAutomaticRecovery() {
+    check(document.getElementById('btn-add-job').disabled, 'Adding disabled after failed initial load');
+    // A successful poll endpoint must not bypass the failed full load.
+    await testData.pollChanges('startup-test');
+    check(document.getElementById('btn-add-job').disabled, 'Adding stays disabled while full load fails');
+    equal(testData.getJobs().length, 0);
+    window.startupOffline = false;
+    await waitFor(() => !document.getElementById('btn-add-job').disabled);
+    equal(testData.getJobs()[0]['Töö Nr'], 'A');
+    document.getElementById('btn-add-job').click();
+    const form = document.getElementById('add-form');
+    form.elements['Töö Nr'].value = 'RECOVERED';
+    form.querySelector('[type=submit]').click();
+    const rows = await saved();
+    equal(rows.map(j => j['Töö Nr']), ['A', 'RECOVERED']);
+    equal(rows[1]['Meeldetuletus X päeva ennem'], '7');
+}
