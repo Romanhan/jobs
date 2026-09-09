@@ -4,9 +4,9 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-## Current version — 0.3.3
+## Current version — 0.3.4
 
-Version 0.3.3 automatically retries initialization after a failed initial data load, so adding and saving work again once access returns. It retains personal sorting and the 7-day reminder default. Release tests run on Linux and Windows and against the compiled Windows executable. See [release notes](CHANGELOG.md).
+Version 0.3.4 retries shared-data lock removal after temporary filesystem errors and logs persistent cleanup failures. This prevents a temporary removal failure from leaving later saves waiting for an abandoned lock. Release tests run on Linux and Windows and against the compiled Windows executable. See [release notes](CHANGELOG.md).
 
 ## Features
 

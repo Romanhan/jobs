@@ -1,10 +1,10 @@
 {
   "name": "jobs-app-server",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "exports": "./server.ts",
   "tasks": {
     "test": "deno test -A tests",
-    "test:server": "deno test -A tests/server_test.ts tests/utils_test.ts",
+    "test:server": "deno test -A tests/server_test.ts tests/data_lock_test.ts tests/utils_test.ts",
     "test:browser": "deno test -A tests/browser_test.ts tests/ui_test.ts",
     "gen-version": "deno run -A gen-version.ts",
     "set-version-info": "deno run -A set-version-info.ts",

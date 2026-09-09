@@ -1,3 +1,5 @@
+import { releaseDataLock } from "./data-lock.ts";
+
 const DEFAULT_PORT = 8085;
 const MAX_SAVE_RETRIES = 8;
 const SAVE_RETRY_BASE_DELAY_MS = 50;
@@ -144,7 +146,11 @@ async function acquireDataLock(): Promise<() => Promise<void>> {
         }));
       } catch {}
       return async () => {
-        try { await Deno.remove(path, { recursive: true }); } catch {}
+        try {
+          await releaseDataLock(path);
+        } catch (error) {
+          logError(`Shared data lock release failed for "${path}" after retries: ${error}`);
+        }
       };
     } catch (e) {
       // Network shares can briefly report ACCESS_DENIED while another client

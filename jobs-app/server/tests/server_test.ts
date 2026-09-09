@@ -16,6 +16,22 @@ Deno.test("server: embedded UI assets, version, origin checks and invalid routes
   } finally { await f.close(); }
 });
 
+Deno.test("server: consecutive edits to different rows save without a pause", async () => {
+  const f = await fixture([job("a"), job("b")]);
+  try {
+    let base = (await f.data()).jobs;
+    for (let i = 0; i < 10; i++) {
+      const proposed = structuredClone(base);
+      proposed[i % 2]["Täitmise koht"] = `edit ${i}`;
+      const result = await f.merge(base, proposed);
+      equal(result.conflicts, []);
+      equal(result.jobs, proposed);
+      base = result.jobs;
+    }
+    equal(await f.read(), base);
+  } finally { await f.close(); }
+});
+
 Deno.test("server: live lock is respected until its owner releases it", async () => {
   const f = await fixture();
   try {

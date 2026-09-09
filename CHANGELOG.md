@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.4
+
+- Retry shared-data lock removal after temporary filesystem errors instead of
+  silently leaving the lock behind after the first failure.
+- Log lock cleanup failures if all removal attempts fail.
+- Add regression tests for temporary removal failures and consecutive row edits.
+
+The shared-data format and synchronization protocol are unchanged. This fixes
+a cleanup failure path; actual shared-drive behavior still needs verification
+on the affected computers.
+
 ## 0.3.3
 
 - Automatically retry full initialization after an initial data-load failure.
