@@ -19,3 +19,8 @@
     background: var(--color-overdue);
     color: var(--text-on-error);
 }
+
+.status-bar.info {
+    background: var(--surface-menu);
+    color: var(--text-primary);
+}

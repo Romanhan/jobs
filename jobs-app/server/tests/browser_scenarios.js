@@ -343,6 +343,8 @@ export async function duplicateRow() {
     source['Alustatud'] = true;
     source['Alustamise kpv'] = '2026-01-03';
     source['Töötlus Lõpetatud'] = true;
+    source['Töötluse algus'] = '2026-01-04';
+    source['EE töötluse lõpp'] = '2026-01-05';
     testData.autoSave();
     await saved();
 
@@ -363,8 +365,29 @@ export async function duplicateRow() {
     equal(copy['Alustatud'], false);
     equal(copy['Alustamise kpv'], '');
     equal(copy['Töötlus Lõpetatud'], false);
+    equal(copy['Töötluse algus'], '2026-01-04');
+    equal(copy['EE töötluse lõpp'], '2026-01-05');
     check(/^\d{4}-\d{2}-\d{2}$/.test(copy['Info sisestamise kuupäev']), 'Copy must set the entry date to today');
     equal(rows.find(j => j._id === 'a')['Valmis'], true);
+    equal(rows.find(j => j._id === 'a')['Töötluse algus'], '2026-01-04');
+
+    testData.undo();
+    await saved();
+    equal(testData.getJobs().length, 1);
+
+    // No row targeted: Ctrl+D shows a red error hint and adds nothing.
+    const active = document.activeElement;
+    if (active && active.blur) active.blur();
+    testUI.renderTableBody();
+    document.body.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', ctrlKey: true, bubbles: true }));
+    check(document.getElementById('status-bar').classList.contains('error'), 'Ctrl+D without a row must show an error hint');
+    equal(testData.getJobs().length, 1);
+
+    // Ctrl+D with only a hovered row (no focus, no open editor) duplicates it.
+    document.querySelector('#table-body tr td[data-col]').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', ctrlKey: true, bubbles: true }));
+    equal((await saved()).length, 2);
 
     testData.undo();
     await saved();

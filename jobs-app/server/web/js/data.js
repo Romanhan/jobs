@@ -429,7 +429,7 @@ export function deleteJob(index) {
 }
 
 const COPY_RESET_BOOLEAN_FIELDS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud'];
-const COPY_RESET_TEXT_FIELDS = ['Valmis kpv', 'Alustamise kpv', 'Töötluse algus', 'EE töötluse lõpp'];
+const COPY_RESET_TEXT_FIELDS = ['Valmis kpv', 'Alustamise kpv'];
 
 export function duplicateJob(index) {
     const source = jobs[index];

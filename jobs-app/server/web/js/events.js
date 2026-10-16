@@ -10,6 +10,7 @@ let tooltipEl = null;
 let tooltipTimeout = null;
 let activeDeleteKeydownHandler = null;
 let modalReturnFocus = null;
+let hoveredRowIndex = null;
 
 function hideTooltip() {
     if (tooltipTimeout) {
@@ -481,8 +482,9 @@ export function handleKeydown(e) {
             const row = active && active.closest ? active.closest('tr[data-index]') : null;
             if (row) index = parseInt(row.getAttribute('data-index'), 10);
         }
+        if (index == null && hoveredRowIndex != null) index = hoveredRowIndex;
         if (index == null || isNaN(index)) {
-            showStatus('Vali rida, mida kopeerida', 'info');
+            showStatus('Vali rida, mida kopeerida', 'error');
             return;
         }
         if (doDuplicateJob(index)) {
@@ -720,6 +722,8 @@ export function attachEventListeners() {
     }
 
     document.addEventListener('mouseover', function(e) {
+        const hoveredRow = e.target && e.target.closest ? e.target.closest('tr[data-index]') : null;
+        hoveredRowIndex = hoveredRow ? parseInt(hoveredRow.getAttribute('data-index'), 10) : null;
         const target = e.target.closest('[data-tooltip]');
         if (!target) {
             if (tooltipTimeout) {

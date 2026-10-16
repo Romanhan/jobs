@@ -2,11 +2,14 @@
 
 ## 0.3.6
 
-- Copy an existing row with Ctrl+D: the focused row is duplicated with a new
-  internal ID, status fields reset, and today's date set, then saved normally.
+- Duplicate a row with Ctrl+D: the focused or hovered row is copied with a new
+  internal ID, status fields reset, today's date set, and the Töötlus algus and
+  EE lõpp dates preserved. Copying with no row targeted shows a red hint.
 - Remove the temporary shared-lock and connection diagnostics added in 0.3.5
   (extended error.log context, lock-owner metadata, and the Windows PowerShell
   startup-error dialog).
+- Build the Windows executable without the rcedit version-info step, which
+  corrupted the Deno payload on both Windows and Wine.
 
 The shared-data format and synchronization protocol are unchanged.
 
