@@ -7,8 +7,6 @@
     "test:server": "deno test -A tests/server_test.ts tests/startup_test.ts tests/data_lock_test.ts tests/utils_test.ts",
     "test:browser": "deno test -A tests/browser_test.ts tests/ui_test.ts",
     "gen-version": "deno run -A gen-version.ts",
-    "set-version-info": "deno run -A set-version-info.ts",
-    "build": "deno task gen-version && deno compile --target x86_64-pc-windows-msvc --no-terminal --allow-all --icon icon.ico --include web --output jobs-app.exe server.ts && deno task set-version-info",
-  "build:quick": "deno task gen-version && deno compile --target x86_64-pc-windows-msvc --no-terminal --allow-all --icon icon.ico --include web --output jobs-app.exe server.ts"
+    "build": "deno task gen-version && deno compile --target x86_64-pc-windows-msvc --no-terminal --allow-all --icon icon.ico --include web --output jobs-app.exe server.ts"
   }
 }
