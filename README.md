@@ -6,63 +6,42 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ## Current version — 0.3.6
 
-Version 0.3.6 adds row duplication (Ctrl+D on the focused row) on top of the 0.3.5 startup changes, and removes the temporary lock/connection diagnostics that 0.3.5 used for troubleshooting. Reopening still reuses a compatible running server without killing processes. See [release notes](CHANGELOG.md).
+Version 0.3.6 adds row duplication (Ctrl+D) on top of the 0.3.5 startup changes, and removes the temporary lock/connection diagnostics that 0.3.5 used for troubleshooting. Reopening still reuses a compatible running server without killing processes. See [release notes](CHANGELOG.md).
 
 ## Features
 
 - **20 columns** for tracking jobs from start to finish
 - **Inline editing** — click any cell to edit
-- **Auto-date** — check "Alustatud" / "Valmis" sets date automatically
-- **Status indicators** — colored dots show Töös / Allhanke / Hilinenud / Valmis
-- **Row tinting** — colored status tinting by job state
-- **Filters** — by Töö Nr, by Täitmise koht, show completed/allhanke
-- **CSV import/export** — save to shared folder, load from CSV
-- **Text formatting** — bold (**), important (!!), strikethrough (~~) in cells
-- **Undo** (Ctrl+Z), keyboard shortcuts
-- **Duplicate row** (Ctrl+D) — copies the focused row with a fresh ID and reset status
-- **Column resize & sorting** — click header to sort, drag resize handles. Sorting is remembered in each browser across saves and reopening; Aktiivsed resets filters and sorts by EE vajadus (earliest first, empty dates last).
-- **New job reminders** — new jobs default to a 7-day reminder. Existing reminders are unchanged.
-- **Soft neumorphic design** — matte off-white palette, mint accent, extruded dual-shadow system, inset pressed states
-- **Version info** — Menu → Info shows app name, version, author (auto-built from `server/deno.json`)
-- **Safe shared-drive editing** — field-level three-way merge preserves simultaneous changes to different jobs or fields
-- **Conflict protection** — same-field conflicts retain both values; comments can be combined and edited before saving
-- **Connection indicator** — quiet green status dot with persistent saving, disk/server error, and conflict details
-- **Automatic backups** — creates a validated shared-data snapshot every 48 hours and retains the newest 36 in `backups/`
+- **Auto-date** — checking "Alustatud" / "Valmis" fills the matching date
+- **Status indicators & row tinting** — Töös / Allhanke / Hilinenud / Valmis
+- **Filters** — by Töö Nr and Täitmise koht, show completed / allhanke
+- **CSV import/export** and **automatic backups** (validated snapshot every 48 hours, newest 36 kept)
+- **Text formatting** — bold (`**`), important (`!!`), strikethrough (`~~`)
+- **Undo, duplicate row, sorting, column resize and font size**
+- **Light & dark theme** with a soft neumorphic look
 
-## Tests
+## Keyboard shortcuts
 
-Run `deno task test` from `jobs-app/server` with Deno 2 and Chromium installed.
-Use `CHROME_BIN` to select another Chrome executable. Tests use temporary data
-and browser profiles, including two server processes sharing a test file.
-See [test instructions and coverage](jobs-app/server/tests/README.md).
+| Key | Action |
+| --- | --- |
+| `Space` | Toggle the focused checkbox |
+| `Enter` | Save the edit |
+| `Esc` | Cancel / close |
+| `Ctrl+;` | Insert today's date |
+| `DD.MM` then `Enter` | Auto-complete the year (e.g. `20.05` → `20.05.2026`) |
+| `Ctrl+B` | Bold |
+| `Ctrl+I` | Mark as important (red) |
+| `Ctrl+Shift+S` | Strikethrough |
+| `Ctrl+Z` | Undo |
+| `Ctrl+D` | Duplicate the focused or hovered row |
 
-Tests run on pushes and pull requests and must pass before the release build.
+## How to run
 
-## Shared-drive collaboration
+1. **Locally:** open `jobs-app/server/web/index.html` in Chrome or Edge.
+2. **Windows executable (shared folder):** copy `jobs-app.exe` and `jobs_data.json` to a shared network folder and point every shortcut at the same data file:
 
-Each user runs the same current-version executable. Point every shortcut to the same shared JSON file:
+   ```text
+   "K:\your-folder\jobs-app.exe" --data "K:\your-folder\jobs_data.json"
+   ```
 
-```text
-"K:\your-folder\jobs-app.exe" --data "K:\your-folder\jobs_data.json"
-```
-
-Opening the executable again reuses a running instance only when its app version, Windows user, and absolute data path match. It opens the browser without killing the existing process or logging a normal reopen as an error. Other port conflicts are reported without stopping any process. The server still exits about five seconds after the last tab closes; reopening reserves up to 30 seconds for the new tab to connect. Different mapped-drive or UNC paths are conservatively treated as different data paths.
-
-The app assigns permanent hidden IDs to jobs and merges changes one field at a time under an exclusive shared-drive lock. Changes to different rows or fields are preserved automatically and normally appear for other users within two seconds.
-
-All users must upgrade together when the synchronization protocol changes. An older executable can still perform an unsafe whole-file save.
-
-## Shared files and backups
-
-The shared folder normally contains:
-
-```text
-jobs-app.exe
-jobs_data.json
-jobs_data.json.version
-backups/
-```
-
-The revision file supports reliable polling on network drives. A temporary `jobs_data.json.lock` directory exists only during a protected operation.
-
-The app opens its browser interface before accessing shared data and initializes and loads the data in one protected request. The startup backup check waits until the page has populated its table. Backup checks also run at most hourly after successful saves. When the newest valid backup is at least 48 hours old, it creates a validated snapshot in `backups/`. The newest 36 valid backups are retained.
+3. **Build the executable:** from `jobs-app/server`, run `deno task build`.
