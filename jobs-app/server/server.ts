@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+import { APP_VERSION } from "./web/js/version.js";
 import { releaseDataLock } from "./data-lock.ts";
 
 const DEFAULT_PORT = 8085;
@@ -38,6 +40,17 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
+const INSTANCE_PROTOCOL = 1;
+const absoluteDataPath = resolve(DATA_FILE);
+const instanceDataPath = Deno.build.os === "windows" ? absoluteDataPath.toLowerCase() : absoluteDataPath;
+const instanceUser = Deno.build.os === "windows"
+  ? `${Deno.env.get("USERDOMAIN") || ""}\\${Deno.env.get("USERNAME") || ""}`
+  : Deno.env.get("USER") || "";
+const instanceKey = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",
+  new TextEncoder().encode(JSON.stringify([instanceDataPath, instanceUser])))))
+  .map(byte => byte.toString(16).padStart(2, "0")).join("");
+let launchReservedUntil = 0;
+
 let lastActivity: number = Date.now();
 let activeTabs = new Map<string, number>();
 let exitTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -50,7 +63,7 @@ function scheduleExit() {
   exitTimeout = setTimeout(() => {
     exitTimeout = undefined;
     if (activeTabs.size === 0) abortController.abort();
-  }, 5000);
+  }, Math.max(5000, launchReservedUntil - Date.now()));
 }
 
 setInterval(() => {
@@ -298,48 +311,6 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
   }
 }
 
-function tryKillPort(port: number): void {
-  try {
-    if (Deno.build.os === "windows") {
-      const result = new Deno.Command("netstat", {
-        args: ["-ano"],
-        stdout: "piped",
-      }).outputSync();
-      const stdout = new TextDecoder().decode(result.stdout);
-      for (const line of stdout.split("\n")) {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length >= 5) {
-          const localAddress = parts[1];
-          const lastColon = localAddress.lastIndexOf(":");
-          if (lastColon !== -1) {
-            const localPort = parseInt(localAddress.substring(lastColon + 1), 10);
-            if (localPort === port) {
-              const pid = parts[parts.length - 1];
-              if (/^\d+$/.test(pid)) {
-                new Deno.Command("taskkill", { args: ["/PID", pid, "/F"] }).outputSync();
-                break;
-              }
-            }
-          }
-        }
-      }
-    } else {
-      const result = new Deno.Command("lsof", {
-        args: ["-t", `-i:${port}`],
-        stdout: "piped",
-      }).outputSync();
-      const output = new TextDecoder().decode(result.stdout).trim();
-      for (const pid of output.split(/\s+/)) {
-        if (/^\d+$/.test(pid)) {
-          try {
-            Deno.kill(parseInt(pid, 10), "SIGKILL");
-          } catch {}
-        }
-      }
-    }
-  } catch {}
-}
-
 function isLocalConnection(urlStr: string | null): boolean {
   if (!urlStr) return false;
   try {
@@ -351,57 +322,33 @@ function isLocalConnection(urlStr: string | null): boolean {
   }
 }
 
-async function ensureDataFile(): Promise<void> {
-  try {
-    const stat = await Deno.stat(DATA_FILE);
-    if (!stat.isFile) throw new Error("Not a file");
-    const content = await Deno.readTextFile(DATA_FILE);
-    if (content.trim() === "") {
-      await Deno.writeTextFile(DATA_FILE, "[]");
-    } else {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(content);
-      } catch {
-        throw new Error(
-          `Data file "${DATA_FILE}" contains invalid JSON and cannot be read. ` +
-          `Fix or delete the file, then restart the server.`
-        );
-      }
-      if (!Array.isArray(parsed)) {
-        throw new Error(
-          `Data file "${DATA_FILE}" does not contain a JSON array. ` +
-          `Fix or delete the file, then restart the server.`
-        );
-      }
-    }
-  } catch (e) {
-    if (e instanceof Deno.errors.NotFound) {
-      const dir = DATA_FILE.includes("/") || DATA_FILE.includes("\\") ? DATA_FILE.replace(/[\/\\][^\/\\]+$/, "") : null;
-      if (dir && !/^[A-Za-z]:$/.test(dir)) {
-        await Deno.mkdir(dir, { recursive: true });
-      }
-      await Deno.writeTextFile(DATA_FILE, "[]");
-    } else {
-      throw e;
-    }
-  }
-}
+// Initialization happens inside the first data request, never before serving UI.
+let dataInitialized = false;
+let startupBackupScheduled = false;
 
 async function handleGetData(corsHeaders: Record<string, string>): Promise<Response> {
   let releaseLock: (() => Promise<void>) | undefined;
   try {
+    if (!dataInitialized) await Deno.mkdir(dataDirectory(), { recursive: true });
     releaseLock = await acquireDataLock();
-    const stat = await Deno.stat(DATA_FILE);
-    let content;
+    let content: string;
     try {
       content = await Deno.readTextFile(DATA_FILE);
-    } catch {
-      return new Response("Failed to read data file", { status: 500, headers: corsHeaders });
+    } catch (e) {
+      if (!(e instanceof Deno.errors.NotFound) || dataInitialized) throw e;
+      await Deno.writeTextFile(DATA_FILE, "[]");
+      content = "[]";
     }
+    if (!dataInitialized && !content.trim()) {
+      await Deno.writeTextFile(DATA_FILE, "[]");
+      content = "[]";
+    }
+    dataInitialized = true;
+    const stat = await Deno.stat(DATA_FILE);
     let jobs;
     try {
       jobs = JSON.parse(content);
+      if (!Array.isArray(jobs)) throw new Error("Expected an array");
     } catch {
       return new Response("Invalid JSON in data file", { status: 500, headers: corsHeaders });
     }
@@ -679,6 +626,26 @@ async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
 
   try {
+    if (path === "/api/launch" && req.method === "POST") {
+      if (req.headers.get("X-Jobs-Launch") !== String(INSTANCE_PROTOCOL)) {
+        return new Response("Invalid launch protocol", { status: 400 });
+      }
+      const launch = await req.json();
+      if (launch?.app !== "jobs-app" || launch.protocol !== INSTANCE_PROTOCOL ||
+          typeof launch.nonce !== "string") return new Response("Invalid launch request", { status: 400 });
+      if (launch.version !== APP_VERSION || launch.key !== instanceKey) {
+        return Response.json({ app: "jobs-app", conflict: true, nonce: launch.nonce }, { status: 409 });
+      }
+      if (abortController.signal.aborted) return new Response("Shutting down", { status: 503 });
+      // Reserve time for the new browser tab to load and register, even on a slow drive.
+      launchReservedUntil = Date.now() + 30000;
+      if (activeTabs.size === 0) scheduleExit();
+      // The long-lived server owns the browser launcher. A second EXE exits
+      // immediately after this handoff and must not own the Windows child process.
+      if (launch.openBrowser === true) void openBrowser(`http://localhost:${url.port}`);
+      return Response.json({ app: "jobs-app", protocol: INSTANCE_PROTOCOL, nonce: launch.nonce,
+        browserLaunch: launch.openBrowser === true ? "server" : "disabled" });
+    }
     if (path === "/api/data") {
       if (req.method === "GET") return await handleGetData(CORS);
       if (req.method === "POST") return await handlePostData(req, CORS);
@@ -692,10 +659,18 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
+    if (path === "/api/ready" && req.method === "POST") {
+      if (dataInitialized && !startupBackupScheduled) {
+        startupBackupScheduled = true;
+        setTimeout(() => void maybeCreateBackup(), 2000);
+      }
+      return new Response("ok");
+    }
     if (path === "/api/enter" && req.method === "POST") {
       const tabId = url.searchParams.get("tabId");
       if (tabId) {
         activeTabs.set(tabId, Date.now());
+        launchReservedUntil = 0;
         if (exitTimeout !== undefined) {
           clearTimeout(exitTimeout);
           exitTimeout = undefined;
@@ -719,68 +694,69 @@ async function handler(req: Request): Promise<Response> {
   }
 }
 
-async function startServer() {
+async function openBrowser(url: string): Promise<void> {
+  const command = Deno.build.os === "windows" ? ["cmd.exe", "/c", "start", "", url]
+    : Deno.build.os === "darwin" ? ["open", url] : ["xdg-open", url];
   try {
-    await ensureDataFile();
+    await new Deno.Command(command[0], {
+      args: command.slice(1), stdin: "null", stdout: "null", stderr: "null",
+    }).output();
   } catch (e) {
-    logError(`Data file error: ${e}`);
+    logError(`Browser open failed: ${e}`);
   }
+}
 
-  let retried = false;
-  while (true) {
+async function reuseInstance(): Promise<"reused" | "retry" | "conflict"> {
+  const nonce = crypto.randomUUID();
+  try {
+    const response = await fetch(`http://127.0.0.1:${PORT}/api/launch`, {
+      method: "POST", redirect: "error", signal: AbortSignal.timeout(1000),
+      headers: { "Content-Type": "application/json", "X-Jobs-Launch": String(INSTANCE_PROTOCOL) },
+      body: JSON.stringify({ app: "jobs-app", protocol: INSTANCE_PROTOCOL, version: APP_VERSION, key: instanceKey, nonce, openBrowser: !args.includes("--no-browser") }),
+    });
+    if (response.status === 503) { await response.body?.cancel(); return "retry"; }
+    const result = await response.json();
+    if (result?.app !== "jobs-app" || result.nonce !== nonce) return "conflict";
+    if (response.status === 409 && result.conflict === true) return "conflict";
+    return response.ok && result.protocol === INSTANCE_PROTOCOL &&
+      (args.includes("--no-browser") || result.browserLaunch === "server") ? "reused" : "conflict";
+  } catch {
+    // The old instance may have exited between the bind attempt and this request.
+    return "retry";
+  }
+}
+
+async function startServer() {
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const server = Deno.serve({
-        port: PORT,
-        hostname: "127.0.0.1",
-        signal: abortController.signal,
+        port: PORT, hostname: "127.0.0.1", signal: abortController.signal,
         onListen({ port }) {
           const url = `http://localhost:${port}`;
           console.log(`Server running on port ${port}`);
           console.log(`Open: ${url}`);
           console.log(`Data: ${DATA_FILE}`);
-          console.log(`Close: Ctrl+C`);
-          console.log("");
-          setTimeout(() => void maybeCreateBackup(true), 2000);
-
-          if (args.includes("--no-browser")) return;
-          let command: string[];
-          if (Deno.build.os === "windows") {
-            command = ["cmd.exe", "/c", "start", "", url];
-          } else if (Deno.build.os === "darwin") {
-            command = ["open", url];
-          } else {
-            command = ["xdg-open", url];
-          }
-          try {
-            new Deno.Command(command[0], {
-              args: command.slice(1),
-              stdin: "null",
-              stdout: "null",
-              stderr: "null"
-            }).spawn();
-          } catch (e) {
-            logError(`Browser open failed: ${e}`);
-          }
-        }
+          if (!args.includes("--no-browser")) void openBrowser(url);
+        },
       }, handler);
-
       await server.finished;
       Deno.exit(0);
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
-      if (e instanceof Deno.errors.AddrInUse && !retried) {
-        logError(`Port ${PORT} in use, trying to kill old process...`);
-        tryKillPort(PORT);
-        retried = true;
-        await new Promise(r => setTimeout(r, 500));
-        continue;
-      }
-      if (retried) {
-        logError(`Port ${PORT} still in use after kill attempt`);
-      } else {
+      if (!(e instanceof Deno.errors.AddrInUse)) {
         logError(`Failed to start server: ${e}`);
+        Deno.exit(1);
       }
-      Deno.exit(1);
+      const result = await reuseInstance();
+      if (result === "reused") {
+        console.log(`Reusing existing jobs-app on port ${PORT}`);
+        Deno.exit(0);
+      }
+      if (result === "conflict" || attempt === 3) {
+        logError(`Port ${PORT} is occupied by another program, a different Jobs app version/data file/user, or an unresponsive instance. No process was stopped. Close the previous app and retry, or use --port with another port.`);
+        Deno.exit(1);
+      }
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
   }
 }

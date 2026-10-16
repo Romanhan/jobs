@@ -335,3 +335,44 @@ export async function personalSorting0() {
       await testData.pollChanges('personal-sort-test');
       equal(testData.getJobs().map(j => j._id), ['c', 'b', 'a']);
 }
+
+export async function duplicateRow() {
+    const source = testData.getJobs()[0];
+    source['Valmis'] = true;
+    source['Valmis kpv'] = '2026-01-02';
+    source['Alustatud'] = true;
+    source['Alustamise kpv'] = '2026-01-03';
+    source['Töötlus Lõpetatud'] = true;
+    testData.autoSave();
+    await saved();
+
+    document.getElementById('show-completed').checked = true;
+    testUI.renderTableBody();
+    const cell = document.querySelector('#table-body tr td[data-col]');
+    cell.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', ctrlKey: true, bubbles: true }));
+
+    const rows = await saved();
+    equal(rows.length, 2);
+    const copy = rows.find(j => j._id !== 'a');
+    check(!!copy, 'Ctrl+D must add a row with a fresh id');
+    equal(copy['Töö Nr'], 'A');
+    equal(copy['Täitmise koht'], 'TOS');
+    equal(copy['Valmis'], false);
+    equal(copy['Valmis kpv'], '');
+    equal(copy['Alustatud'], false);
+    equal(copy['Alustamise kpv'], '');
+    equal(copy['Töötlus Lõpetatud'], false);
+    check(/^\d{4}-\d{2}-\d{2}$/.test(copy['Info sisestamise kuupäev']), 'Copy must set the entry date to today');
+    equal(rows.find(j => j._id === 'a')['Valmis'], true);
+
+    testData.undo();
+    await saved();
+    equal(testData.getJobs().length, 1);
+
+    // Ctrl+D while a cell editor is open duplicates the row being edited.
+    testUI.renderTableBody();
+    document.querySelector('#table-body tr td[data-col]').click();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', ctrlKey: true, bubbles: true }));
+    equal((await saved()).length, 2);
+}

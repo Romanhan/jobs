@@ -33,13 +33,19 @@ temporary directories. A restricted sandbox may require approval to run them.
 
 ## Coverage
 
-There are 69 tests: 36 browser/UI scenarios, 28 server tests, and 5 utility tests.
+The suite covers browser/UI workflows, server synchronization, startup lifecycle, shared-drive lock cleanup, and utilities.
 
 - Server: stable IDs, two processes sharing a data file, concurrent field/row
   edits, identical edits, conflicts, additions, deletions, revision polling,
   corrupt/missing data, malformed merge requests, stale locks, backup creation
   and retention, and skipping a recent valid backup.
-- Browser: add/edit/delete/undo, editing filtered rows, sorting mixed date
+- Startup: repeated and simultaneous launches, reuse without error logs, reopening
+  during pending shutdown, unchanged five-second exit after tab close, different
+  data paths, incompatible instances, unrelated port owners, bounded timeouts,
+  and retrying when the previous listener shuts down. A Linux regression uses
+  a delayed desktop opener to verify that the surviving server owns browser
+  opening after the second executable exits.
+- Browser: add/edit/delete/duplicate/undo, editing filtered rows, sorting mixed date
   formats, completion visibility, automatic dates, required fields, invalid
   dates, theme switching, CSV round trips across all columns, deduplication,
   delayed saves and polls, failed saves and retries, offline reload recovery,

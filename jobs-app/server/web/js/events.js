@@ -1,7 +1,7 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection } from './utils.js';
-import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
+import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, duplicateJob as doDuplicateJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
 import { openDateCalendarDirect, closeCalendarPopup, positionCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
@@ -466,6 +466,29 @@ export function handleKeydown(e) {
             renderTable();
             updateStats();
             showStatus('Tagasi võetud', 'success');
+        }
+        return;
+    }
+    if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) {
+        if (document.getElementById('modal').classList.contains('active')) return;
+        e.preventDefault();
+        let index;
+        if (editingCell) {
+            index = editingCell.index;
+            finishEditing();
+        } else {
+            const active = document.activeElement;
+            const row = active && active.closest ? active.closest('tr[data-index]') : null;
+            if (row) index = parseInt(row.getAttribute('data-index'), 10);
+        }
+        if (index == null || isNaN(index)) {
+            showStatus('Vali rida, mida kopeerida', 'info');
+            return;
+        }
+        if (doDuplicateJob(index)) {
+            renderTable();
+            updateStats();
+            showStatus('Rida kopeeritud', 'success');
         }
         return;
     }
