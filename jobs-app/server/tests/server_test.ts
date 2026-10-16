@@ -307,22 +307,11 @@ Deno.test("server: initializes missing data once but does not recreate a disconn
   } finally { await f.close(); }
 });
 
-Deno.test("server: blocked load logs lock owner, future timestamp and filesystem failure", async () => {
+Deno.test("server: stale lock is reclaimed", async () => {
   const f = await fixture();
   try {
     const path = `${f.file}.lock`;
     await Deno.mkdir(path);
-    await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({ host: "test-owner", operation: "backup" }));
-    const future = new Date(Date.now() + 30 * 60 * 1000);
-    await Deno.utime(path, future, future);
-    const response = await f.request('/api/data');
-    equal(response.status, 500);
-    await response.text();
-    const log = await Deno.readTextFile(`${f.dir}/error.log`);
-    for (const detail of ['host=', 'pid=', 'version=', 'Data load failed', 'operation=load',
-      'observedAgeMs=-', 'lastFailure=mkdir:', 'test-owner', 'backup', 'localHolders=[]']) {
-      assert(log.includes(detail), `Missing diagnostic: ${detail}`);
-    }
     const old = new Date(Date.now() - 180000);
     await Deno.utime(path, old, old);
     equal((await f.data()).jobs.length, 1);
