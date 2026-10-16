@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.6
+
+- Copy an existing row with Ctrl+D: the focused row is duplicated with a new
+  internal ID, status fields reset, and today's date set, then saved normally.
+- Remove the temporary shared-lock and connection diagnostics added in 0.3.5
+  (extended error.log context, lock-owner metadata, and the Windows PowerShell
+  startup-error dialog).
+
+The shared-data format and synchronization protocol are unchanged.
+
 ## 0.3.5
 
 - Open the browser interface before accessing shared data, and combine initial

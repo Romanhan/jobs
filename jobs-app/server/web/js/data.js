@@ -428,6 +428,29 @@ export function deleteJob(index) {
     autoSave();
 }
 
+const COPY_RESET_BOOLEAN_FIELDS = ['Valmis', 'Alustatud', 'Töötlus Lõpetatud'];
+const COPY_RESET_TEXT_FIELDS = ['Valmis kpv', 'Alustamise kpv', 'Töötluse algus', 'EE töötluse lõpp'];
+
+export function duplicateJob(index) {
+    const source = jobs[index];
+    if (!source) return false;
+    pushUndo();
+    const copy = clone(source);
+    delete copy._id;
+    COPY_RESET_BOOLEAN_FIELDS.forEach(col => copy[col] = false);
+    COPY_RESET_TEXT_FIELDS.forEach(col => copy[col] = '');
+    const now = new Date();
+    copy['Info sisestamise kuupäev'] =
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    ensureLocalIds([copy]);
+    jobs.push(copy);
+    if (sortColumn && sortDirection) {
+        reorderJobs(sortColumn, sortDirection, false);
+    }
+    autoSave();
+    return true;
+}
+
 let columnWidths = {};
 let hiddenColumns = {};
 

@@ -21,6 +21,7 @@ const cases = [
   ["restore locally edited row after shared deletion", scenarios.retainLocalRow],
   ["keep shared row after local deletion", scenarios.retainSharedRow],
   ["add form rejects blank work number and invalid dates", scenarios.validateAddForm],
+  ["duplicate a row with Ctrl+D", scenarios.duplicateRow],
   ["mixed-format date sorting, blanks last, deletion after sorting", scenarios.sorting],
   ["combined filters and exact status counters", extended.filtersAndCounters],
   ["calendar navigation, leap day, today and cancel", extended.calendarControls],

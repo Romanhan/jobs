@@ -4,9 +4,9 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-## Current version — 0.3.5
+## Current version — 0.3.6
 
-Version 0.3.5 opens the interface before shared-data loading, avoids a duplicate startup read, and defers the startup backup check until the table is populated. Reopening reuses a compatible running server without killing processes; that server owns browser opening so the second executable can exit safely. See [release notes](CHANGELOG.md).
+Version 0.3.6 adds row duplication (Ctrl+D on the focused row) on top of the 0.3.5 startup changes, and removes the temporary lock/connection diagnostics that 0.3.5 used for troubleshooting. Reopening still reuses a compatible running server without killing processes. See [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -19,6 +19,7 @@ Version 0.3.5 opens the interface before shared-data loading, avoids a duplicate
 - **CSV import/export** — save to shared folder, load from CSV
 - **Text formatting** — bold (**), important (!!), strikethrough (~~) in cells
 - **Undo** (Ctrl+Z), keyboard shortcuts
+- **Duplicate row** (Ctrl+D) — copies the focused row with a fresh ID and reset status
 - **Column resize & sorting** — click header to sort, drag resize handles. Sorting is remembered in each browser across saves and reopening; Aktiivsed resets filters and sorts by EE vajadus (earliest first, empty dates last).
 - **New job reminders** — new jobs default to a 7-day reminder. Existing reminders are unchanged.
 - **Soft neumorphic design** — matte off-white palette, mint accent, extruded dual-shadow system, inset pressed states

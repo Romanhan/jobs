@@ -45,7 +45,7 @@ The suite covers browser/UI workflows, server synchronization, startup lifecycle
   and retrying when the previous listener shuts down. A Linux regression uses
   a delayed desktop opener to verify that the surviving server owns browser
   opening after the second executable exits.
-- Browser: add/edit/delete/undo, editing filtered rows, sorting mixed date
+- Browser: add/edit/delete/duplicate/undo, editing filtered rows, sorting mixed date
   formats, completion visibility, automatic dates, required fields, invalid
   dates, theme switching, CSV round trips across all columns, deduplication,
   delayed saves and polls, failed saves and retries, offline reload recovery,
