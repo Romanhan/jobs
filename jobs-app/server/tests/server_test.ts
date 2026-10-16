@@ -241,6 +241,8 @@ Deno.test("server: backups retain 36 valid snapshots and ignore corrupt newest b
       const old = new Date(Date.now() - (100 - i) * 3600000);
       await Deno.utime(name, old, old);
     }
+    await f.data();
+    const ready = await f.request('/api/ready', {}); equal(ready.status, 200); await ready.text();
     const backups = () => Array.fromAsync(Deno.readDir(dir));
     await until(async () => (await backups()).some(e => !e.name.startsWith("jobs_data_2025") && e.name.endsWith(".json")));
     await until(async () => (await backups()).length === 37);
@@ -263,5 +265,66 @@ Deno.test("server: recent valid backup prevents another snapshot", async () => {
     // Acquiring the lock waits for the background backup check to finish.
     await f.data();
     equal((await Array.fromAsync(Deno.readDir(`${f.dir}/backups`))).map(e => e.name), [name]);
+  } finally { await f.close(); }
+});
+
+Deno.test("server: startup backups wait for the populated page", async () => {
+  const f = await fixture();
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2200));
+    const hasBackups = async () => {
+      try { await Deno.stat(`${f.dir}/backups`); return true; }
+      catch (e) { if (e instanceof Deno.errors.NotFound) return false; throw e; }
+    };
+    equal(await hasBackups(), false);
+    await f.data();
+    equal(await hasBackups(), false);
+    const ready = await f.request('/api/ready', {}); equal(ready.status, 200); await ready.text();
+    await until(hasBackups);
+  } finally { await f.close(); }
+});
+
+for (const content of ['', '{bad', '{}']) {
+  Deno.test(`server: first load validates shared data (${JSON.stringify(content)})`, async () => {
+    const f = await fixture();
+    try {
+      await Deno.writeTextFile(f.file, content);
+      const response = await f.request('/api/data');
+      equal(response.status, content === '' ? 200 : 500);
+      await response.text();
+      equal(await Deno.readTextFile(f.file), content === '' ? '[]' : content);
+    } finally { await f.close(); }
+  });
+}
+
+Deno.test("server: initializes missing data once but does not recreate a disconnected file", async () => {
+  const f = await fixture();
+  try {
+    await Deno.remove(f.file);
+    equal((await f.data()).jobs, []);
+    await Deno.remove(f.file);
+    const response = await f.request('/api/data'); equal(response.status, 503); await response.text();
+  } finally { await f.close(); }
+});
+
+Deno.test("server: blocked load logs lock owner, future timestamp and filesystem failure", async () => {
+  const f = await fixture();
+  try {
+    const path = `${f.file}.lock`;
+    await Deno.mkdir(path);
+    await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({ host: "test-owner", operation: "backup" }));
+    const future = new Date(Date.now() + 30 * 60 * 1000);
+    await Deno.utime(path, future, future);
+    const response = await f.request('/api/data');
+    equal(response.status, 500);
+    await response.text();
+    const log = await Deno.readTextFile(`${f.dir}/error.log`);
+    for (const detail of ['host=', 'pid=', 'version=', 'Data load failed', 'operation=load',
+      'observedAgeMs=-', 'lastFailure=mkdir:', 'test-owner', 'backup', 'localHolders=[]']) {
+      assert(log.includes(detail), `Missing diagnostic: ${detail}`);
+    }
+    const old = new Date(Date.now() - 180000);
+    await Deno.utime(path, old, old);
+    equal((await f.data()).jobs.length, 1);
   } finally { await f.close(); }
 });

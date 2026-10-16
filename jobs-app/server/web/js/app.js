@@ -208,9 +208,30 @@ async function init() {
     if (btnAddJob) btnAddJob.disabled = true;
     if (btnMenu) btnMenu.disabled = true;
 
+    // Register before shared-data loading so a slow drive cannot trigger shutdown.
+    const tabId = window.crypto?.randomUUID?.() ?? Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
+
+    window.addEventListener('pagehide', () => {
+        if (typeof navigator.sendBeacon === 'function') {
+            navigator.sendBeacon('/api/exit?tabId=' + tabId);
+        }
+    });
+
     renderForm();
     renderTable(true);
 
+    showStatus('Andmete laadimine…', 'info');
+    let readyNotified = false;
+    const notifyReady = () => {
+        if (readyNotified) return;
+        // Yield to the browser so the populated table can paint first.
+        setTimeout(() => {
+            fetch('/api/ready', { method: 'POST' }).then(response => {
+                if (response.ok) readyNotified = true;
+            }).catch(() => {});
+        }, 0);
+    };
     const dataResult = await loadData();
     if (btnMenu) btnMenu.disabled = false;
     if (dataResult && dataResult.status === 'loaded') {
@@ -227,9 +248,7 @@ async function init() {
     // Re-render with actual data
     renderTableBody();
     updateStats();
-
-    const tabId = window.crypto?.randomUUID?.() ?? Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-    fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
+    if (dataResult?.status === 'loaded') notifyReady();
 
     let lastKeepAlive = Date.now();
     setInterval(async () => {
@@ -250,15 +269,10 @@ async function init() {
                 }
                 renderTableBody();
                 updateStats();
+                notifyReady();
             }
         } catch {}
     }, 2000);
-
-    window.addEventListener('pagehide', () => {
-        if (typeof navigator.sendBeacon === 'function') {
-            navigator.sendBeacon('/api/exit?tabId=' + tabId);
-        }
-    });
 
 }
 

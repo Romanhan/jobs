@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.5
+
+- Open the browser interface before accessing shared data, and combine initial
+  validation and loading into one protected read.
+- Defer the startup backup check until the page has populated the table.
+- Reuse a running instance with the same version, user, and data path instead
+  of killing the process occupying its port.
+- Let the surviving server open the browser on repeat launches; the second
+  executable no longer starts a browser helper immediately before exiting.
+- Record browser helper failures, including unsuccessful exit codes.
+- Preserve the five-second shutdown delay after the last tab closes, with a
+  temporary reservation while a reopened tab connects.
+- Add startup, port-conflict, and browser-launch ownership regression tests.
+
+The shared-data format and synchronization protocol are unchanged. Windows
+interactive launching and shared-drive behavior still require testing on the
+work computers.
+
 ## 0.3.4
 
 - Retry shared-data lock removal after temporary filesystem errors instead of

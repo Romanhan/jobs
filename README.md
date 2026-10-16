@@ -4,9 +4,9 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-## Current version — 0.3.4
+## Current version — 0.3.5
 
-Version 0.3.4 retries shared-data lock removal after temporary filesystem errors and logs persistent cleanup failures. This prevents a temporary removal failure from leaving later saves waiting for an abandoned lock. Release tests run on Linux and Windows and against the compiled Windows executable. See [release notes](CHANGELOG.md).
+Version 0.3.5 opens the interface before shared-data loading, avoids a duplicate startup read, and defers the startup backup check until the table is populated. Reopening reuses a compatible running server without killing processes; that server owns browser opening so the second executable can exit safely. See [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -45,6 +45,8 @@ Each user runs the same current-version executable. Point every shortcut to the 
 "K:\your-folder\jobs-app.exe" --data "K:\your-folder\jobs_data.json"
 ```
 
+Opening the executable again reuses a running instance only when its app version, Windows user, and absolute data path match. It opens the browser without killing the existing process or logging a normal reopen as an error. Other port conflicts are reported without stopping any process. The server still exits about five seconds after the last tab closes; reopening reserves up to 30 seconds for the new tab to connect. Different mapped-drive or UNC paths are conservatively treated as different data paths.
+
 The app assigns permanent hidden IDs to jobs and merges changes one field at a time under an exclusive shared-drive lock. Changes to different rows or fields are preserved automatically and normally appear for other users within two seconds.
 
 All users must upgrade together when the synchronization protocol changes. An older executable can still perform an unsafe whole-file save.
@@ -62,4 +64,4 @@ backups/
 
 The revision file supports reliable polling on network drives. A temporary `jobs_data.json.lock` directory exists only during a protected operation.
 
-The first running app checks for backups shortly after startup and at most hourly after successful saves. When the newest valid backup is at least 48 hours old, it creates a validated snapshot in `backups/`. The newest 36 valid backups are retained.
+The app opens its browser interface before accessing shared data and initializes and loads the data in one protected request. The startup backup check waits until the page has populated its table. Backup checks also run at most hourly after successful saves. When the newest valid backup is at least 48 hours old, it creates a validated snapshot in `backups/`. The newest 36 valid backups are retained.
