@@ -26,6 +26,18 @@ jobs:
         working-directory: jobs-app/server
         run: deno task build
 
+      - name: Verify embedded file version
+        working-directory: jobs-app/server
+        shell: pwsh
+        run: |
+          $expected = (Get-Content deno.json | ConvertFrom-Json).version
+          $actual = (Get-Item jobs-app.exe).VersionInfo.FileVersion
+          Write-Host "expected=$expected actual=$actual"
+          if ($actual -notlike "$expected*") {
+            Write-Error "jobs-app.exe reports version '$actual', expected '$expected'"
+            exit 1
+          }
+
       - name: Test compiled executable and embedded UI
         working-directory: jobs-app/server
         shell: pwsh

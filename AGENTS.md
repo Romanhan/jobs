@@ -37,12 +37,13 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 ## How to Run
 1. **Local:** Open `jobs-app/server/web/index.html` in Chrome/Edge
 2. **Shared folder:** Copy `jobs-app/index.html` + `jobs_data.json` to shared network folder
-3. **Build .exe:** `cd jobs-app/server && deno task build` (cross-compiles to a Windows PE; the app version lives in `web/js/version.js`, no PE version resource)
+3. **Build .exe:** `cd jobs-app/server && deno task build` (cross-compiles to a Windows PE and stamps the file version; `deno task build:quick` compiles without the version resource)
 
 ## Version Info
 - Version managed in `jobs-app/server/deno.json` (field `"version"`)
 - `deno task gen-version` reads `deno.json` and generates `web/js/version.js`
-- `deno task build` runs gen-version then compiles the .exe
+- `deno task build` runs gen-version, compiles the .exe, then `deno task set-version-info` stamps the file version (RT_VERSION)
+- `set-version-info.ts` merges the version resource next to Deno's embedded payload resource — never use rcedit, which drops that payload and breaks startup with "Could not find standalone binary section"
 - Info popup (Menu → Info) displays app name, version, author (English labels)
 - App icon — `icon.ico` in `server/` (16×16, 32×32, 64×64 combined), baked via `--icon icon.ico`
 
