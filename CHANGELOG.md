@@ -13,6 +13,10 @@
   alongside Deno's embedded payload instead of being written by rcedit, which
   dropped that payload and made the executable fail with "Could not find
   standalone binary section".
+- Pin the build toolchain to Deno 2.9.6: 2.9.7 `deno compile` output is
+  quarantined by WithSecure as `Trojan.TR/W64.Malware`. The detection is a false
+  positive on the compiled shell and also hits a hello-world build, while 2.9.6
+  output is accepted.
 
 The shared-data format and synchronization protocol are unchanged.
 

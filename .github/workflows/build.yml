@@ -20,7 +20,9 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v2.x
+          # Pinned on purpose: Deno 2.9.7 `deno compile` output is flagged by
+          # WithSecure as Trojan.TR/W64.Malware (false positive). 2.9.6 is clean.
+          deno-version: v2.9.6
       
       - name: Build executable
         working-directory: jobs-app/server
