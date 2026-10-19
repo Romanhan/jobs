@@ -38,6 +38,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 1. **Local:** Open `jobs-app/server/web/index.html` in Chrome/Edge
 2. **Shared folder:** Copy `jobs-app/index.html` + `jobs_data.json` to shared network folder
 3. **Build .exe:** `cd jobs-app/server && deno task build` (cross-compiles to a Windows PE and stamps the file version; `deno task build:quick` compiles without the version resource)
+   - **Use Deno 2.9.6.** Deno 2.9.7 `deno compile` output is quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build is flagged too). CI pins `v2.9.6`; `set-version-info.ts` warns when another version is used.
 
 ## Version Info
 - Version managed in `jobs-app/server/deno.json` (field `"version"`)

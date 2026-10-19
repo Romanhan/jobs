@@ -8,10 +8,11 @@
 // resource, which makes the finished executable fail with
 // "Could not find standalone binary section".
 //
-// This script instead rebuilds the resource directory, keeping every existing
-// entry untouched and adding RT_VERSION next to it. The rebuilt directory and
-// the version data are appended to the file inside the existing .pedata
-// section; no section is added or reordered, so the embedded payload keeps
+// This script instead rebuilds the resource directory in place, keeping every
+// existing entry untouched and adding RT_VERSION next to it. The directory is
+// the first thing in the .pedata section, so it simply grows there and the
+// resource data behind it shifts along; no section is added or reordered, the
+// file keeps a single resource directory, and the embedded payload keeps
 // working.
 
 import { APP_NAME } from "./web/js/version.js";
@@ -175,7 +176,9 @@ function buildResourceTree(entries: ResourceEntry[]): Uint8Array {
       if (typeof n === "string") {
         const bytes = n.length * 2;
         strOffset.set(`${String(t)}\u0000${n}`, off);
-        off += 2 + bytes + (bytes % 2);
+        // WORD length prefix + UTF-16 characters, padded so the next
+        // structure stays DWORD aligned.
+        off += Math.ceil((2 + bytes) / 4) * 4;
       }
     }
   }
@@ -338,36 +341,57 @@ function mergeVersionResource(buf: Uint8Array, versionBlob: Uint8Array): Uint8Ar
 
   const sectionAlign = dv.getUint32(pe.pe + 24 + 32, true);
   const fileAlign = dv.getUint32(pe.pe + 24 + 36, true);
+  const alignUp = (value: number, align: number) => Math.ceil(value / align) * align;
 
-  const treeOffset = buf.length;
-  const treeRva = pedata.va + (treeOffset - pedata.ptr);
+  // Resource data is packed right behind the directory inside .pedata, so the
+  // smallest data offset is also the end of the original directory.
+  let treeSize = Number.POSITIVE_INFINITY;
+  for (const e of entries) {
+    const off = rvaToOffset(pe.sections, e.rva) - pedata.ptr;
+    if (off < 0 || off >= pedata.size) {
+      throw new Error("resource data outside .pedata; refusing to rewrite the directory");
+    }
+    treeSize = Math.min(treeSize, off);
+  }
+  if (!Number.isFinite(treeSize)) throw new Error("no resource data found");
+  treeSize = alignUp(treeSize, 8);
 
-  const placeholder = buildResourceTree([
+  // Stored RVAs do not change the encoded length, so the merged directory can
+  // be measured up front with placeholder values.
+  const treeLength = buildResourceTree([
     ...entries,
-    { type: RT_VERSION, name: 1, lang: 0x409, rva: 0, size: 0, cp: 0 },
-  ]);
-  const versionOffset = treeOffset + Math.ceil(placeholder.length / 16) * 16;
+    { type: RT_VERSION, name: 1, lang: 0x409, rva: 0, size: versionBlob.length, cp: 0x4b0 },
+  ]).length;
+  const shift = alignUp(Math.max(0, treeLength - treeSize), 8);
+
+  // The version data goes after the existing resource data, still inside
+  // .pedata, so the file never grows an overlay past the last section.
+  const versionOffset = alignUp(pedata.ptr + pedata.size + shift, 8);
   const versionRva = pedata.va + (versionOffset - pedata.ptr);
 
   const tree = buildResourceTree([
-    ...entries,
+    ...entries.map((e) => ({ ...e, rva: e.rva + shift })),
     { type: RT_VERSION, name: 1, lang: 0x409, rva: versionRva, size: versionBlob.length, cp: 0x4b0 },
   ]);
 
-  const total = versionOffset + versionBlob.length;
-  const padded = Math.ceil(total / fileAlign) * fileAlign;
-  const out = new Uint8Array(padded);
-  out.set(buf, 0);
-  out.set(tree, treeOffset);
+  const rawSize = alignUp(versionOffset + versionBlob.length - pedata.ptr, fileAlign);
+  const virtualSize = Math.max(pedata.vsize, rawSize);
+
+  // Grow the directory in place: everything behind it shifts by `shift`, so
+  // the finished file keeps a single resource directory and no stray copies.
+  const treeOffset = pedata.ptr + treeSize;
+  const out = new Uint8Array(pedata.ptr + rawSize);
+  out.set(buf.subarray(0, treeOffset), 0);
+  out.set(buf.subarray(treeOffset), treeOffset + shift);
+  out.set(tree, pedata.ptr);
   out.set(versionBlob, versionOffset);
 
   const odv = new DataView(out.buffer);
-  const newRawSize = padded - pedata.ptr;
-  odv.setUint32(pedata.hdr + 8, Math.max(pedata.vsize, newRawSize), true);
-  odv.setUint32(pedata.hdr + 16, newRawSize, true);
-  odv.setUint32(dataDirOffset(pe.pe, 2), treeRva, true);
-  odv.setUint32(dataDirOffset(pe.pe, 2) + 4, tree.length, true);
-  odv.setUint32(pe.pe + 24 + 56, Math.ceil((pedata.va + Math.max(pedata.vsize, newRawSize)) / sectionAlign) * sectionAlign, true);
+  odv.setUint32(pedata.hdr + 8, virtualSize, true);
+  odv.setUint32(pedata.hdr + 16, rawSize, true);
+  odv.setUint32(dataDirOffset(pe.pe, 2), pedata.va, true);
+  odv.setUint32(dataDirOffset(pe.pe, 2) + 4, rawSize, true);
+  odv.setUint32(pe.pe + 24 + 56, alignUp(pedata.va + virtualSize, sectionAlign), true);
 
   return out;
 }
@@ -375,15 +399,38 @@ function mergeVersionResource(buf: Uint8Array, versionBlob: Uint8Array): Uint8Ar
 const exePath = "jobs-app.exe";
 const { version } = JSON.parse(await Deno.readTextFile(new URL("./deno.json", import.meta.url)));
 
+// Deno 2.9.7 `deno compile` output is detected by WithSecure as
+// Trojan.TR/W64.Malware (a false positive on the compiled shell); 2.9.6 output
+// is not. Warn loudly so a 2.9.7 build is never shipped by accident.
+if (Deno.version.deno !== "2.9.6") {
+  console.warn(
+    `\nWARNING: built with Deno ${Deno.version.deno}; CI pins v2.9.6 because ` +
+      `2.9.7 executables are quarantined by WithSecure. Use Deno 2.9.6 for release builds.\n`,
+  );
+}
+
 const original = await Deno.readFile(exePath);
 const merged = mergeVersionResource(original, buildVersionInfo(version));
 
-// Safety net: the embedded payload resource must survive, otherwise the
-// executable would fail with "Could not find standalone binary section".
+// Safety net: the embedded payload resource must survive byte for byte,
+// otherwise the executable would fail with "Could not find standalone binary
+// section".
 const check = readResourceEntries(merged, parsePe(merged));
 const payload = check.find((e) => e.type === RT_RCDATA);
 if (!payload) throw new Error("payload resource lost while adding version info");
 if (!check.find((e) => e.type === RT_VERSION)) throw new Error("version resource was not added");
+
+const before = readResourceEntries(original, parsePe(original)).find((e) => e.type === RT_RCDATA);
+if (!before) throw new Error("payload resource missing from the compiled executable");
+const slice = (bytes: Uint8Array, entry: { rva: number; size: number }) => {
+  const off = rvaToOffset(parsePe(bytes).sections, entry.rva);
+  return bytes.subarray(off, off + entry.size);
+};
+const oldPayload = slice(original, before);
+const newPayload = slice(merged, payload);
+if (oldPayload.length !== newPayload.length || oldPayload.some((b, i) => b !== newPayload[i])) {
+  throw new Error("payload bytes changed while adding version info");
+}
 
 await Deno.writeFile(exePath, merged);
 console.log(`Set ${exePath} file version to ${version} (payload resource kept: ${payload.size} bytes)`);
