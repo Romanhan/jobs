@@ -29,6 +29,9 @@ export async function startServer(dataFile: string, cwd: string) {
   const child = new Deno.Command(executable || Deno.execPath(), {
     args: [...(executable ? [] : ["run", "-A", fileURLToPath(new URL("../server.ts", import.meta.url))]),
       "--port", "0", "--data", dataFile, "--no-browser"],
+    // Pin the log next to the fixture data so tests never write next to the
+    // executable (a compiled exe keeps its log beside itself).
+    env: { JOBS_LOG_FILE: `${cwd}/error.log` },
     cwd, stdout: "piped", stderr: "piped",
   }).spawn();
   let output = "";

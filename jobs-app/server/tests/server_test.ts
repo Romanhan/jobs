@@ -307,6 +307,48 @@ Deno.test("server: initializes missing data once but does not recreate a disconn
   } finally { await f.close(); }
 });
 
+Deno.test("server: blocked load logs lock owner, future timestamp and filesystem failure", async () => {
+  const f = await fixture();
+  try {
+    const path = `${f.file}.lock`;
+    await Deno.mkdir(path);
+    await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({ host: "test-owner", operation: "backup" }));
+    const future = new Date(Date.now() + 30 * 60 * 1000);
+    await Deno.utime(path, future, future);
+    const response = await f.request('/api/data');
+    equal(response.status, 500);
+    await response.text();
+    const log = await Deno.readTextFile(`${f.dir}/error.log`);
+    for (const detail of ['host=', 'pid=', 'version=', 'Data load failed', 'operation=load',
+      'observedAgeMs=-', 'lastFailure=mkdir:', 'test-owner', 'backup', 'localHolders=[]']) {
+      assert(log.includes(detail), `Missing diagnostic: ${detail}`);
+    }
+    await Deno.remove(path, { recursive: true });
+    equal((await f.data()).jobs.length, 1);
+  } finally { await f.close(); }
+});
+
+Deno.test("server: client connection reports are written to the log", async () => {
+  const f = await fixture();
+  try {
+    const response = await f.request('/api/client-log', {
+      kind: 'poll-failed', tabId: 'tab-1', message: 'failures=3 error=TypeError: Failed to fetch',
+      online: false, visibility: 'hidden',
+    });
+    equal(response.status, 200);
+    await response.text();
+    const log = await until(async () => {
+      try { return await Deno.readTextFile(`${f.dir}/error.log`); } catch { return ""; }
+    });
+    for (const detail of ['Client reported:', 'kind=poll-failed', 'tab=tab-1',
+      'online=false', 'visibility=hidden', 'Failed to fetch']) {
+      assert(log.includes(detail), `Missing diagnostic: ${detail}`);
+    }
+    const invalid = await fetch(f.url + '/api/client-log', { method: 'POST', body: '{bad' });
+    equal(invalid.status, 400); await invalid.text();
+  } finally { await f.close(); }
+});
+
 Deno.test("server: stale lock is reclaimed", async () => {
   const f = await fixture();
   try {

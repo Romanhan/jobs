@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.3.7
+
+- Record a diagnostics log next to the executable, so `error.log` is easy to find
+  on the work computers regardless of the shortcut's working directory. The log
+  rotates to `error.log.1` at 1 MB, and falls back to the working directory when
+  the executable's folder is read-only. `JOBS_LOG_FILE` overrides the location.
+- Log every line with host, process ID, and app version.
+- Record the reason for connection loss: server start and reuse, tab connect and
+  expiry, idle shutdown, poll and data-load failures with the underlying error,
+  slow shared-lock waits with the lock owner, and the lock diagnostics from
+  0.3.5 (owner metadata, future timestamps, filesystem failures).
+- Add `/api/client-log`, so the browser reports poll and save failures with its
+  tab ID, `navigator.onLine`, and page visibility. Repeated conditions are
+  throttled to keep the log readable.
+- Restore the Windows message box for startup failures (port conflict or server
+  error) that would otherwise be invisible without a console, and record the
+  browser-launch exit code.
+- Keep the tab registered with the server every 60 s even while a cell editor is
+  open, and raise the tab-expiry timeout from 5 to 15 minutes. Previously a tab
+  left open in an editor for over five minutes expired, the server shut down,
+  and the app reported "Serveriga puudub ühendus".
+
+The shared-data format and synchronization protocol are unchanged.
+
 ## 0.3.6
 
 - Duplicate a row with Ctrl+D: the focused or hovered row is copied with a new
