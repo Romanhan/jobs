@@ -24,7 +24,7 @@ function launch(file: string, port: number, cwd: string, options: { browser?: bo
   };
 }
 
-Deno.test("startup: repeated and concurrent launches reuse the server without error.log", async () => {
+Deno.test("startup: repeated and concurrent launches reuse the server without logging failures", async () => {
   const f = await fixture();
   const launches: ReturnType<typeof launch>[] = [];
   try {
@@ -36,8 +36,11 @@ Deno.test("startup: repeated and concurrent launches reuse the server without er
       for (const item of batch) assert(item.output().includes("Reusing existing jobs-app"));
     }
     equal((await f.data()).jobs.length, 1);
-    try { await Deno.stat(`${f.dir}/error.log`); throw new Error("Unexpected error.log"); }
-    catch (e) { if (!(e instanceof Deno.errors.NotFound)) throw e; }
+    const log = await Deno.readTextFile(`${f.dir}/error.log`);
+    assert(log.includes("Server started:"), "Startup should be recorded");
+    for (const failure of ["Failed to start", "is occupied", "Data load failed", "Poll failed"]) {
+      assert(!log.includes(failure), `Unexpected failure in log: ${failure}`);
+    }
   } finally { await Promise.all(launches.map(item => item.close())); await f.close(); }
 });
 

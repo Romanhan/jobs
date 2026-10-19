@@ -1,6 +1,6 @@
 {
   "name": "jobs-app-server",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "exports": "./server.ts",
   "tasks": {
     "test": "deno test -A tests",

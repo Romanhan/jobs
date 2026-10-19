@@ -252,14 +252,15 @@ async function init() {
 
     let lastKeepAlive = Date.now();
     setInterval(async () => {
-        if (document.querySelector('.floating-editor')) {
-            const now = Date.now();
-            if (now - lastKeepAlive > 60000) {
-                lastKeepAlive = now;
-                fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
-            }
-            return;
+        // Keep the tab registered with the server even while an editor is open
+        // or while polling is paused; otherwise the server ages the tab out and
+        // exits, which shows up as "server connection lost".
+        const now = Date.now();
+        if (now - lastKeepAlive > 60000) {
+            lastKeepAlive = now;
+            fetch('/api/enter?tabId=' + tabId, { method: 'POST', keepalive: true }).catch(() => {});
         }
+        if (document.querySelector('.floating-editor')) return;
         try {
             const changed = await pollChanges(tabId, () => !document.querySelector('.floating-editor'));
             if (changed) {

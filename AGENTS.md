@@ -63,6 +63,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - **Row colors** — Menu → "Color rows" toggles status row tinting
 - **Font size** — Menu → "Font size" slider
 - **Theme toggle** — Top-right moon/sun icon button
+- **Diagnostics log** — `error.log` next to the executable (1 MB rotation to `error.log.1`, `JOBS_LOG_FILE` overrides), with host/pid/version prefixes, tab and shutdown lifecycle, poll/data failures, lock-owner dumps, and browser reports via `POST /api/client-log`
 - **Keyboard shortcuts** — Menu → "Shortcuts" popup
 
 ## Collaboration (Shared Folder)

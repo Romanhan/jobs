@@ -56,33 +56,42 @@ let activeTabs = new Map<string, number>();
 let exitTimeout: ReturnType<typeof setTimeout> | undefined;
 const abortController = new AbortController();
 
+const TAB_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const IDLE_SHUTDOWN_MS = 30 * 60 * 1000;
+
 function scheduleExit() {
   if (exitTimeout !== undefined) {
     clearTimeout(exitTimeout);
   }
   exitTimeout = setTimeout(() => {
     exitTimeout = undefined;
-    if (activeTabs.size === 0) abortController.abort();
+    if (activeTabs.size === 0) {
+      logEvent("Server exiting: no active tabs remain");
+      abortController.abort();
+    }
   }, Math.max(5000, launchReservedUntil - Date.now()));
 }
 
 setInterval(() => {
-  if (Date.now() - lastActivity > 1800000) abortController.abort();
+  if (Date.now() - lastActivity > IDLE_SHUTDOWN_MS) {
+    logEvent(`Server exiting: idle for ${Math.round((Date.now() - lastActivity) / 60000)} minutes`);
+    abortController.abort();
+  }
 }, 60000);
 
 setInterval(() => {
   const now = Date.now();
-  const toDelete: string[] = [];
+  const expired: [string, number][] = [];
   for (const [tabId, lastSeen] of activeTabs.entries()) {
-    if (now - lastSeen > 300000) {
-      toDelete.push(tabId);
+    if (now - lastSeen > TAB_IDLE_TIMEOUT_MS) {
+      expired.push([tabId, now - lastSeen]);
     }
   }
-  let changed = toDelete.length > 0;
-  for (const tabId of toDelete) {
+  for (const [tabId, idleMs] of expired) {
     activeTabs.delete(tabId);
+    logEvent(`Tab expired: tab=${tabId} idleMs=${idleMs} remaining=${activeTabs.size}`);
   }
-  if (changed && activeTabs.size === 0) {
+  if (expired.length && activeTabs.size === 0) {
     scheduleExit();
   }
 }, 5000);
@@ -98,11 +107,71 @@ try {
   });
 } catch {}
 
+const diagnosticHost = Deno.hostname();
+
+// A compiled executable keeps its log next to itself, so it can be found
+// without knowing which directory a shortcut starts in. Development runs
+// (`deno run`, tests) keep using the working directory.
+function logDirectory(): string {
+  try {
+    const executable = Deno.execPath();
+    const name = executable.split(/[\\/]/).pop() || "";
+    if (!/^deno(?:\.exe)?$/i.test(name)) {
+      const dir = executable.slice(0, executable.length - name.length).replace(/[\\/]+$/, "");
+      if (dir) return dir;
+    }
+  } catch { /* fall through to the working directory */ }
+  return ".";
+}
+
+const LOG_FILE = Deno.env.get("JOBS_LOG_FILE") || joinPath(logDirectory(), "error.log");
+const LOG_MAX_BYTES = 1024 * 1024;
+
+function rotateLog(path: string): void {
+  try {
+    if (Deno.statSync(path).size < LOG_MAX_BYTES) return;
+    const backup = `${path}.1`;
+    try {
+      Deno.removeSync(backup);
+    } catch { /* first rotation */ }
+    Deno.renameSync(path, backup);
+  } catch { /* missing file or read-only log directory */ }
+}
+
+function writeLogLine(line: string): void {
+  // Prefer the configured location; fall back to the working directory so a
+  // read-only installation still records something.
+  for (const file of new Set([LOG_FILE, "error.log"])) {
+    try {
+      rotateLog(file);
+      Deno.writeTextFileSync(file, line, { append: true });
+      return;
+    } catch { /* try the next candidate */ }
+  }
+}
+
+function logPrefix(): string {
+  return `[${new Date().toISOString()}] [host=${diagnosticHost} pid=${Deno.pid} version=${APP_VERSION}]`;
+}
+
 function logError(msg: string) {
   console.error(msg);
-  try {
-    Deno.writeTextFileSync("error.log", `[${new Date().toISOString()}] ${msg}\n`, { append: true });
-  } catch {}
+  writeLogLine(`${logPrefix()} ${msg}\n`);
+}
+
+function logEvent(msg: string) {
+  console.log(msg);
+  writeLogLine(`${logPrefix()} ${msg}\n`);
+}
+
+// Polling runs every couple of seconds per tab, so an unreachable share would
+// otherwise fill the log. Repeat a failing condition at most every 30s.
+const throttledAt = new Map<string, number>();
+function logThrottled(key: string, msg: string, intervalMs = 30000): void {
+  const now = Date.now();
+  if (now - (throttledAt.get(key) || 0) < intervalMs) return;
+  throttledAt.set(key, now);
+  logError(msg);
 }
 
 function lockPath(): string {
@@ -146,26 +215,50 @@ async function writeRevision(stat: Deno.FileInfo): Promise<string> {
   return `${revision}-${stat.mtime?.getTime() || 0}-${stat.size}`;
 }
 
-async function acquireDataLock(): Promise<() => Promise<void>> {
+const heldDataLocks = new Map<string, { operation: string; acquired: number }>();
+
+async function acquireDataLock(operation: string): Promise<() => Promise<void>> {
   const path = lockPath();
   const started = Date.now();
+  let lastFailure = "none";
+  let observedAge: number | null = null;
+  let observedOwner = "unavailable";
   while (Date.now() - started < LOCK_MAX_WAIT_MS) {
     try {
       await Deno.mkdir(path);
+      const token = crypto.randomUUID();
+      const acquired = Date.now();
+      heldDataLocks.set(token, { operation, acquired });
+      const slowLockTimer = setTimeout(() => {
+        logError(`Shared data lock held for ${Date.now() - acquired}ms: operation=${operation} path="${path}" token=${token}`);
+      }, LOCK_MAX_WAIT_MS);
       try {
         await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({
           pid: Deno.pid,
-          created: Date.now(),
+          host: diagnosticHost,
+          version: APP_VERSION,
+          operation,
+          token,
+          created: acquired,
         }));
-      } catch {}
+      } catch (error) {
+        logError(`Shared data lock owner metadata write failed: operation=${operation} path="${path}": ${error}`);
+      }
       return async () => {
         try {
           await releaseDataLock(path);
         } catch (error) {
-          logError(`Shared data lock release failed for "${path}" after retries: ${error}`);
+          logError(`Shared data lock release failed for "${path}" after retries: operation=${operation} token=${token}: ${error}`);
+        } finally {
+          clearTimeout(slowLockTimer);
+          heldDataLocks.delete(token);
+          if (Date.now() - acquired >= LOCK_MAX_WAIT_MS) {
+            logError(`Shared data lock operation finished after ${Date.now() - acquired}ms: operation=${operation} token=${token}`);
+          }
         }
       };
     } catch (e) {
+      lastFailure = `mkdir: ${e}`;
       // Network shares can briefly report ACCESS_DENIED while another client
       // is creating/removing the lock directory. Treat that like contention
       // and retry instead of failing the save immediately.
@@ -177,11 +270,21 @@ async function acquireDataLock(): Promise<() => Promise<void>> {
       try {
         const stat = await Deno.stat(path);
         const age = Date.now() - (stat.mtime?.getTime() || Date.now());
+        observedAge = age;
+        if (observedOwner === "unavailable") {
+          try {
+            observedOwner = (await Deno.readTextFile(`${path}/owner.json`)).slice(0, 2048);
+          } catch (error) {
+            observedOwner = `unreadable: ${error}`;
+          }
+        }
         if (age > LOCK_STALE_MS) {
+          logEvent(`Shared data lock reclaimed as stale after ${age}ms: path="${path}" owner=${observedOwner}`);
           await Deno.remove(path, { recursive: true });
           continue;
         }
       } catch (statError) {
+        lastFailure = `inspect/remove stale lock: ${statError}`;
         if (statError instanceof Deno.errors.PermissionDenied) {
           await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
           continue;
@@ -193,7 +296,10 @@ async function acquireDataLock(): Promise<() => Promise<void>> {
       await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
     }
   }
-  throw new Error(`Timed out waiting for shared data lock "${path}"`);
+  const localHolders = [...heldDataLocks.values()].map(holder => ({
+    operation: holder.operation, heldMs: Date.now() - holder.acquired,
+  }));
+  throw new Error(`Timed out waiting for shared data lock "${path}"; operation=${operation}; waitedMs=${Date.now() - started}; observedAgeMs=${observedAge}; lastFailure=${lastFailure}; observedOwner=${observedOwner}; localHolders=${JSON.stringify(localHolders)}`);
 }
 
 function ensureJobIds(jobs: Job[]): boolean {
@@ -259,7 +365,7 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
   lastBackupCheck = now;
   let releaseLock: (() => Promise<void>) | undefined;
   try {
-    releaseLock = await acquireDataLock();
+    releaseLock = await acquireDataLock("backup");
     const backupDir = joinPath(dataDirectory(), "backups");
     await Deno.mkdir(backupDir, { recursive: true });
     const backups: { name: string; path: string; modified: number }[] = [];
@@ -330,7 +436,7 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
   let releaseLock: (() => Promise<void>) | undefined;
   try {
     if (!dataInitialized) await Deno.mkdir(dataDirectory(), { recursive: true });
-    releaseLock = await acquireDataLock();
+    releaseLock = await acquireDataLock("load");
     let content: string;
     try {
       content = await Deno.readTextFile(DATA_FILE);
@@ -368,8 +474,10 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
     }, { headers: corsHeaders });
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
+      logThrottled("load-missing", `Data load failed: shared data file is unavailable: "${DATA_FILE}": ${e}`);
       return new Response("Shared data file is unavailable", { status: 503, headers: corsHeaders });
     }
+    logThrottled("load-error", `Data load failed: "${DATA_FILE}": ${e}`);
     return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
   } finally {
     if (releaseLock) await releaseLock();
@@ -400,7 +508,7 @@ async function handleMergeData(req: Request, corsHeaders: Record<string, string>
 
   let releaseLock: (() => Promise<void>) | undefined;
   try {
-    releaseLock = await acquireDataLock();
+    releaseLock = await acquireDataLock("merge");
     const latest = await readJobsFile();
     ensureJobIds(latest);
     const baseById = new Map(payload.base.map(job => [String(job._id || ""), job]));
@@ -515,6 +623,9 @@ async function handlePostData(req: Request, corsHeaders: Record<string, string>)
 async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promise<Response> {
   const tabId = url.searchParams.get("tabId");
   if (tabId) {
+    if (!activeTabs.has(tabId)) {
+      logEvent(`Tab connected: tab=${tabId} active=${activeTabs.size + 1}`);
+    }
     activeTabs.set(tabId, Date.now());
     if (exitTimeout !== undefined) {
       clearTimeout(exitTimeout);
@@ -528,8 +639,10 @@ async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promis
     stat = await Deno.stat(DATA_FILE);
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
+      logThrottled("poll-missing", `Poll failed: shared data file is unavailable: "${DATA_FILE}": ${e}`);
       return new Response("Shared data file is unavailable", { status: 503, headers: corsHeaders });
     }
+    logThrottled("poll-stat", `Poll failed: cannot stat "${DATA_FILE}": ${e}`);
     return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
   }
   const mtime = stat.mtime?.getTime() || 0;
@@ -539,13 +652,15 @@ async function handlePoll(url: URL, corsHeaders: Record<string, string>): Promis
     let content;
     try {
       content = await Deno.readTextFile(DATA_FILE);
-    } catch {
+    } catch (e) {
+      logThrottled("poll-read", `Poll failed: cannot read "${DATA_FILE}": ${e}`);
       return new Response("Failed to read data file", { status: 500, headers: corsHeaders });
     }
     let jobs;
     try {
       jobs = JSON.parse(content);
-    } catch {
+    } catch (e) {
+      logThrottled("poll-json", `Poll failed: invalid JSON in "${DATA_FILE}": ${e}`);
       return new Response("Invalid JSON in data file", { status: 500, headers: corsHeaders });
     }
     return Response.json({ changed: true, jobs, modified: mtime, revision }, { headers: corsHeaders });
@@ -659,6 +774,25 @@ async function handler(req: Request): Promise<Response> {
     if (path === "/api/poll" && req.method === "GET") {
       return await handlePoll(url, CORS);
     }
+    if (path === "/api/client-log" && req.method === "POST") {
+      let payload: { tabId?: string; kind?: string; message?: string; online?: boolean; visibility?: string };
+      try {
+        payload = await req.json();
+      } catch {
+        return new Response("Bad Request", { status: 400, headers: CORS });
+      }
+      const clean = (value: unknown, max: number) =>
+        typeof value === "string" ? value.replace(/\s+/g, " ").slice(0, max) : "";
+      const detail = [
+        `kind=${clean(payload.kind, 40) || "unknown"}`,
+        `tab=${clean(payload.tabId, 60) || "-"}`,
+        `online=${payload.online === true}`,
+        `visibility=${clean(payload.visibility, 20) || "-"}`,
+        `message=${clean(payload.message, 500) || "-"}`,
+      ].join(" ");
+      logThrottled(`client:${clean(payload.kind, 40) || "unknown"}`, `Client reported: ${detail}`, 10000);
+      return new Response("ok", { headers: CORS });
+    }
     if (path === "/api/ready" && req.method === "POST") {
       if (dataInitialized && !startupBackupScheduled) {
         startupBackupScheduled = true;
@@ -698,11 +832,27 @@ async function openBrowser(url: string): Promise<void> {
   const command = Deno.build.os === "windows" ? ["cmd.exe", "/c", "start", "", url]
     : Deno.build.os === "darwin" ? ["open", url] : ["xdg-open", url];
   try {
-    await new Deno.Command(command[0], {
-      args: command.slice(1), stdin: "null", stdout: "null", stderr: "null",
+    const result = await new Deno.Command(command[0], {
+      args: command.slice(1), stdin: "null", stdout: "null", stderr: "piped",
     }).output();
+    if (!result.success) {
+      throw new Error(`Launcher exited with code ${result.code}: ${new TextDecoder().decode(result.stderr).trim()}`);
+    }
   } catch (e) {
     logError(`Browser open failed: ${e}`);
+  }
+}
+
+async function reportStartupError(message: string) {
+  logError(message);
+  // The Windows executable has no console: make a real conflict visible there.
+  if (Deno.build.os === "windows" && !args.includes("--no-browser")) {
+    try {
+      const literal = message.replaceAll("'", "''");
+      await new Deno.Command("powershell.exe", { args: ["-NoProfile", "-NonInteractive", "-Command",
+        `Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('${literal}', 'Jobs app') | Out-Null`],
+        stdin: "null", stdout: "null", stderr: "null" }).output();
+    } catch { /* error.log remains available if workplace policy blocks PowerShell */ }
   }
 }
 
@@ -736,6 +886,8 @@ async function startServer() {
           console.log(`Server running on port ${port}`);
           console.log(`Open: ${url}`);
           console.log(`Data: ${DATA_FILE}`);
+          console.log(`Log: ${LOG_FILE}`);
+          logEvent(`Server started: port=${port} data="${DATA_FILE}" log="${LOG_FILE}" host=${diagnosticHost} pid=${Deno.pid}`);
           if (!args.includes("--no-browser")) void openBrowser(url);
         },
       }, handler);
@@ -744,16 +896,17 @@ async function startServer() {
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") Deno.exit(0);
       if (!(e instanceof Deno.errors.AddrInUse)) {
-        logError(`Failed to start server: ${e}`);
+        await reportStartupError(`Failed to start server: ${e}`);
         Deno.exit(1);
       }
       const result = await reuseInstance();
       if (result === "reused") {
         console.log(`Reusing existing jobs-app on port ${PORT}`);
+        logEvent(`Reusing existing instance on port ${PORT}`);
         Deno.exit(0);
       }
       if (result === "conflict" || attempt === 3) {
-        logError(`Port ${PORT} is occupied by another program, a different Jobs app version/data file/user, or an unresponsive instance. No process was stopped. Close the previous app and retry, or use --port with another port.`);
+        await reportStartupError(`Port ${PORT} is occupied by another program, a different Jobs app version/data file/user, or an unresponsive instance. No process was stopped. Close the previous app and retry, or use --port with another port.`);
         Deno.exit(1);
       }
       await new Promise(resolve => setTimeout(resolve, 250));

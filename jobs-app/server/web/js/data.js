@@ -254,6 +254,7 @@ async function processSaveQueue() {
             pollFailures = 0;
         } catch (e) {
             console.error('Salvestamine ebaõnnestus', e);
+            reportClientProblem('save-failed', undefined, e);
             pendingSnapshot = clone(jobs);
             emitSync('error', { message: e.message || 'Salvestamine ebaõnnestus', pending: true });
             break;
@@ -264,6 +265,24 @@ async function processSaveQueue() {
         }
     }
     saveLoopRunning = false;
+}
+
+function reportClientProblem(kind, tabId, error, extra = '') {
+    try {
+        const message = `${extra}error=${String(error && error.message ? error.message : error)}`;
+        fetch('/api/client-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                kind,
+                tabId,
+                message,
+                online: navigator.onLine,
+                visibility: document.visibilityState,
+            }),
+            keepalive: true,
+        }).catch(() => {});
+    } catch { /* diagnostics must never break the app */ }
 }
 
 export async function pollChanges(tabId, canApply = () => true) {
@@ -306,6 +325,9 @@ export async function pollChanges(tabId, canApply = () => true) {
         return false;
     } catch (e) {
         pollFailures++;
+        if (pollFailures === 3 || pollFailures % 10 === 0) {
+            reportClientProblem('poll-failed', tabId, e, `failures=${pollFailures} `);
+        }
         if (pollFailures >= 3) emitSync('error', { message: 'Serveriga puudub ühendus' });
         return false;
     } finally {
