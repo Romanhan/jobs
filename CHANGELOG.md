@@ -8,8 +8,11 @@
 - Remove the temporary shared-lock and connection diagnostics added in 0.3.5
   (extended error.log context, lock-owner metadata, and the Windows PowerShell
   startup-error dialog).
-- Build the Windows executable without the rcedit version-info step, which
-  corrupted the Deno payload on both Windows and Wine.
+- Stamp the Windows executable with its file version, so Explorer's Details tab
+  and PowerShell `VersionInfo` report 0.3.6. The version resource is merged
+  alongside Deno's embedded payload instead of being written by rcedit, which
+  dropped that payload and made the executable fail with "Could not find
+  standalone binary section".
 
 The shared-data format and synchronization protocol are unchanged.
 
