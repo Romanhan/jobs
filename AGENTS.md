@@ -38,7 +38,9 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 1. **Local:** Open `jobs-app/server/web/index.html` in Chrome/Edge
 2. **Shared folder:** Copy `jobs-app/index.html` + `jobs_data.json` to shared network folder
 3. **Build .exe:** `cd jobs-app/server && deno task build` (cross-compiles to a Windows PE and stamps the file version; `deno task build:quick` compiles without the version resource)
-   - **Use Deno 2.9.6.** Deno 2.9.7 `deno compile` output is quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build is flagged too). CI pins `v2.9.6`; `set-version-info.ts` warns when another version is used.
+   - **Always build with Deno 2.9.6 — for every future release.** This is the project's fixed release toolchain, not a one-off workaround for 0.3.6/0.3.7. Deno 2.9.7 `deno compile` output is quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build is flagged too), and it also breaks the resource merge that `set-version-info.ts` relies on. CI pins the exact tag `v2.9.6` (never `v2.x` or a newer release); `set-version-info.ts` warns when another version is used.
+   - Do not bump the pin casually. Only change it after a fresh WithSecure scan of both a hello-world build and a real app build shows the new Deno is clean; then update the pin in `.github/workflows/build.yml`, `.github/workflows/test.yml`, this note, and the version check in `set-version-info.ts` together.
+   - Local builds: the `deno` on `PATH` may be newer, so run `PATH="$HOME/.cache/deno-2.9.6:$PATH" deno task build` (pinned binary at `~/.cache/deno-2.9.6/deno`).
 
 ## Version Info
 - Version managed in `jobs-app/server/deno.json` (field `"version"`)
@@ -47,6 +49,13 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - `set-version-info.ts` merges the version resource next to Deno's embedded payload resource — never use rcedit, which drops that payload and breaks startup with "Could not find standalone binary section"
 - Info popup (Menu → Info) displays app name, version, author (English labels)
 - App icon — `icon.ico` in `server/` (16×16, 32×32, 64×64 combined), baked via `--icon icon.ico`
+
+## Release
+- **Toolchain is fixed for all releases: Deno 2.9.6** (see "How to Run"). Every release from 0.3.7 onward is built with it until the AV false positive is re-verified as gone.
+- Flow: branch → PR → CI green (tests run on ubuntu and windows) → merge to `main` → annotated tag `vX.Y.Z` on `main` → push the tag.
+- CI (`build.yml`, `windows-latest`, Deno `v2.9.6`) builds, verifies `VersionInfo.FileVersion` matches `deno.json`, runs the full test suite against the compiled exe, and attaches `jobs-app.exe` to the GitHub release.
+- Bump `jobs-app/server/deno.json` and add a `CHANGELOG.md` entry before tagging.
+- Never commit `jobs-app.exe` or archives — the release asset (or CI artifact) is the only binary.
 
 ## Features
 - **Load data** — Reads from `jobs_data.json` or localStorage on page load
