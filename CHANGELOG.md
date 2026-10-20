@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.10
+
+- Resolve a conflict with one click. After a poll updated an open conflict,
+  the tab still compared the decision with the row's old base, so the save
+  came back as the same conflict: "Taasta minu versioon" on a row deleted
+  elsewhere, "Jäta kustutatuks", and "Kasuta minu väärtust" after the other
+  user changed the value again all needed a second click. The decision is now
+  made against the shared value shown in the popup.
+- Name both sides of a row-level conflict (same ID, different content) as
+  "Kasuta salvestatud rida" / "Kasuta minu rida" instead of showing the raw
+  field name. "Kasuta minu rida" applies my values on top of the shared row, so
+  columns my row does not carry are kept instead of being blanked.
+
+The data format and the synchronization protocol are unchanged.
+
 ## 0.3.9
 
 - Keep polling while a conflict is open. A tab with an unresolved conflict used

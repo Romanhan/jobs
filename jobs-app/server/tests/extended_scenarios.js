@@ -203,6 +203,72 @@ export async function conflictDoesNotFreezePolling() {
     equal(document.querySelectorAll('#table-body tr.row-conflict').length, 0);
 }
 
+// Restoring a row that polling found deleted elsewhere takes one click, not two.
+export async function restoreDeletedRowOnce() {
+    await remoteEdit([]);
+    await waitFor(() => testData.getConflicts()[0]?.field === '_deleted');
+    window.openConflicts();
+    [...document.querySelectorAll('#sync-popup-actions button')].find(b => b.textContent === 'Taasta minu versioon').click();
+    await waitFor(() => !testData.hasUnsavedChanges());
+    equal(testData.getConflicts().length, 0);
+    const shared = await saved();
+    equal(shared.length, 1);
+    equal(shared[0]['Täitmise koht'], 'Local edit');
+}
+
+// Keeping my value after the other user changed the field again (seen through
+// polling) saves it instead of reopening the same conflict.
+export async function keepMineAfterRemoteChangedAgain() {
+    await remoteEdit(base => base.map(j => ({ ...j, 'Täitmise koht': 'Remote edit 2' })));
+    await waitFor(() => testData.getConflicts()[0]?.currentValue === 'Remote edit 2');
+    window.openConflicts();
+    [...document.querySelectorAll('#sync-popup-actions button')].find(b => b.textContent === 'Kasuta minu väärtust').click();
+    await waitFor(() => !testData.hasUnsavedChanges());
+    equal(testData.getConflicts().length, 0);
+    equal((await saved())[0]['Täitmise koht'], 'Local edit');
+}
+
+// Deleting a row the other user changed takes one click, and the row really
+// leaves the shared file instead of coming back on the next poll.
+export async function keepLocalDeletionOnce() {
+    await remoteEdit(base => base.map(j => ({ ...j, 'Täitmise koht': 'Remote edit' })));
+    testData.deleteJob(0);
+    await waitFor(() => testData.getConflicts()[0]?.field === '_deleted');
+    window.openConflicts();
+    const labels = [...document.querySelectorAll('#sync-popup-actions button')].map(b => b.textContent);
+    check(labels.includes('Jäta kustutatuks'), `Unexpected actions: ${labels}`);
+    [...document.querySelectorAll('#sync-popup-actions button')].find(b => b.textContent === 'Jäta kustutatuks').click();
+    await waitFor(() => !testData.hasUnsavedChanges());
+    equal(testData.getConflicts().length, 0);
+    equal(await saved(), []);
+}
+
+// A pending save whose baseline lost a row the shared file already has is the
+// "_job" conflict: same id, different content, seen as a whole row.
+export async function prepareJobConflict() {
+    await remoteEdit(base => base.map(j => ({ ...j, 'Otsuse/Tegevuse vastutaja': 'Remote owner' })));
+    localStorage.setItem('jobsPendingChanges', JSON.stringify({
+        base: [],
+        proposed: [{ _id: 'a', 'Töö Nr': 'A', 'Täitmise koht': 'My row' }],
+        conflicts: [],
+    }));
+}
+
+export async function resolveJobConflictOnce() {
+    await waitFor(() => testData.getConflicts()[0]?.field === '_job');
+    window.openConflicts();
+    const labels = [...document.querySelectorAll('#sync-popup-actions button')].map(b => b.textContent);
+    check(labels.includes('Kasuta minu rida'), `Unexpected actions: ${labels}`);
+    [...document.querySelectorAll('#sync-popup-actions button')].find(b => b.textContent === 'Kasuta minu rida').click();
+    await waitFor(() => !testData.hasUnsavedChanges());
+    equal(testData.getConflicts().length, 0);
+    const shared = (await saved())[0];
+    equal(shared['Täitmise koht'], 'My row');
+    // "Minu rida" is my values on top of the shared row: columns the partial row
+    // never carried must survive instead of being blanked.
+    equal(shared['Otsuse/Tegevuse vastutaja'], 'Remote owner');
+}
+
 // The marker opens the resolution popup.
 export async function conflictMarkerOpensPopup() {
     equal(testData.getConflicts().length, 1);

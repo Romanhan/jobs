@@ -546,23 +546,54 @@ export async function retrySave() {
     autoSave();
 }
 
+// A decision is made against the shared value the user was shown. refreshBaseline
+// keeps a conflicted row's old base, so without this the save that carries the
+// decision is compared with that stale base and comes back as the same conflict
+// ("Taasta minu versioon" needed a second click). This runs only after an
+// explicit choice, so the base still stops silent re-creation until then.
+function rebaseOnSharedValue(conflict) {
+    const index = syncedJobs.findIndex(job => job._id === conflict.jobId);
+    if (conflict.field === '_deleted' || conflict.field === '_job') {
+        if (conflict.currentValue) {
+            if (index >= 0) syncedJobs[index] = clone(conflict.currentValue);
+            else syncedJobs.push(clone(conflict.currentValue));
+        } else if (index >= 0) syncedJobs.splice(index, 1);
+    } else if (index >= 0) {
+        syncedJobs[index][conflict.field] = clone(conflict.currentValue ?? '');
+    }
+}
+
 export function resolveConflict(jobId, field, choice, mergedValue = '') {
     const index = conflicts.findIndex(item => item.jobId === jobId && item.field === field);
     if (index < 0) return;
     const conflict = conflicts[index];
     dataGeneration++;
     const job = jobs.find(item => item._id === jobId);
-    if (field === '_deleted' || field === '_job') {
+    if (field === '_job') {
+        // "Minu rida" means my values on top of the shared row, not a replacement
+        // with missing columns: a saved row must never lose fields it does not
+        // carry (an imported or restored row can be partial).
+        const shared = conflict.currentValue;
+        const selected = choice === 'mine'
+            ? (shared ? { ...clone(shared), ...clone(conflict.userValue) } : clone(conflict.userValue))
+            : (shared ? clone(shared) : null);
+        const currentIndex = jobs.findIndex(item => item._id === jobId);
+        if (selected) {
+            if (currentIndex >= 0) jobs[currentIndex] = selected;
+            else jobs.push(selected);
+        } else if (currentIndex >= 0) jobs.splice(currentIndex, 1);
+    } else if (field === '_deleted') {
         const selected = choice === 'mine' ? conflict.userValue : conflict.currentValue;
         const currentIndex = jobs.findIndex(item => item._id === jobId);
         if (selected) {
             if (currentIndex >= 0) jobs[currentIndex] = clone(selected);
             else jobs.push(clone(selected));
         } else if (currentIndex >= 0) jobs.splice(currentIndex, 1);
-    } else if (job && field !== '_job') {
+    } else if (job) {
         job[field] = choice === 'merged' ? mergedValue : (choice === 'mine' ? conflict.userValue : conflict.currentValue);
     }
     conflicts.splice(index, 1);
+    rebaseOnSharedValue(conflict);
     reportClientProblem('conflict-resolved', undefined, new Error(choice), `field=${field} job=${jobId} left=${conflicts.length} `);
     reportConflictState();
     if (choice === 'mine' || choice === 'merged') autoSave();
