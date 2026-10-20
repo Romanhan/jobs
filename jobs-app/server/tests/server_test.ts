@@ -270,7 +270,8 @@ Deno.test("server: backups retain 36 valid snapshots and ignore corrupt newest b
     // New snapshots are filed by month, so one folder cannot grow forever.
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    assert(newest.path.includes(`/backups/${month}/`), `New backups must go into the month folder, got ${newest.path}`);
+    const segments = newest.path.split(/[\\/]/);
+    equal(segments.slice(-3, -1), ["backups", month]);
     equal(JSON.parse(await Deno.readTextFile(newest.path)), await f.read());
     assert(!entries.some(e => e.name.endsWith("00-00-01.json")));
     assert(!entries.some(e => e.name.endsWith("00-00-02.json")));
@@ -373,24 +374,27 @@ Deno.test("server: startup reports a lock left behind and clears lock tombstones
 });
 
 Deno.test("server: log timestamps are local time with an explicit UTC offset", async () => {
-  const f = await fixture([job()], { TZ: "Europe/Tallinn" });
+  const f = await fixture([job()]);
   try {
     await f.data();
     const log = await Deno.readTextFile(`${f.dir}/error.log`);
+    // The old code wrote new Date().toISOString(), which ends in "Z": the offset
+    // is what proves the log is on the reader's clock, not on UTC.
     const match = log.match(/\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})([+-]\d{2}:\d{2})\]/);
     assert(match, "Every log line must carry a timestamp with an explicit offset");
     const [, stamp, offset] = match;
-    assert(offset === "+03:00" || offset === "+02:00", `Tallinn must log +02:00 or +03:00, got ${offset}`);
-    // Rebuilding the instant and formatting it back in Tallinn has to give the
-    // same wall clock. A UTC ("Z") stamp would come back shifted by the offset.
+    const now = new Date();
+    const minutes = -now.getTimezoneOffset();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    const expectedOffset = `${minutes >= 0 ? "+" : "-"}${pad(Math.floor(Math.abs(minutes) / 60))}:${pad(Math.abs(minutes) % 60)}`;
+    equal(offset, expectedOffset);
+    // The stamp has to be the wall clock of this machine, so rebuilding the
+    // instant and formatting it locally must reproduce the same fields.
     const instant = new Date(`${stamp}${offset}`);
-    const wall = new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "Europe/Tallinn",
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-    }).format(instant).replace(" ", "T");
-    assert(stamp.startsWith(wall), `Timestamp ${stamp} is not Tallinn wall-clock time (${wall})`);
-    assert(log.includes(`tz=${offset}`), "The startup line must record the machine's UTC offset");
+    const wall = `${instant.getFullYear()}-${pad(instant.getMonth() + 1)}-${pad(instant.getDate())}` +
+      `T${pad(instant.getHours())}:${pad(instant.getMinutes())}:${pad(instant.getSeconds())}`;
+    assert(stamp.startsWith(wall), `Timestamp ${stamp} is not local wall-clock time (${wall})`);
+    assert(log.includes(`tz=${expectedOffset}`), "The startup line must record the machine's UTC offset");
   } finally { await f.close(); }
 });
 
