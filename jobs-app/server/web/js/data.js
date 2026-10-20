@@ -13,6 +13,7 @@ let saveLoopRunning = false;
 let conflicts = [];
 let pollFailures = 0;
 let dataGeneration = 0;
+let loadFailure = null;
 export const DEFAULT_SORT_COLUMN = 'EE vajaduse kuupäev (koostamiseks valmis kujul)';
 let sortColumn = DEFAULT_SORT_COLUMN;
 let sortDirection = 'asc';
@@ -110,6 +111,17 @@ export function getJobs() {
     return jobs;
 }
 
+// True once the shared data file has been read successfully at least once.
+// Until then the table has no data to show and editing stays disabled.
+export function isDataLoaded() {
+    return isLoaded;
+}
+
+// Reason for the last failed load, or null when the data file was read fine.
+export function getLoadFailure() {
+    return loadFailure;
+}
+
 export function pushUndo() {
     try {
         undoStack.push({
@@ -138,9 +150,25 @@ export async function loadData() {
     try {
         const res = await fetch('/api/data');
         if (!res.ok) {
-            console.error('Server error:', res.status, await res.text());
+            // The server answers load failures with JSON (error, dataFile,
+            // detail); keep it so the UI and the diagnostics log can explain
+            // which file is unavailable instead of showing an empty table.
+            const detail = await res.json().catch(() => ({}));
+            const dataFile = typeof detail?.dataFile === 'string' ? detail.dataFile : '';
+            const message = detail?.detail || detail?.error || `Server error: ${res.status}`;
+            console.error('Server error:', res.status, message);
+            loadFailure = {
+                status: res.status,
+                dataFile,
+                detail: String(message),
+                message: dataFile
+                    ? `Jagatud andmefaili ei ole saadaval: ${dataFile}`
+                    : 'Server või võrguketas (K:) ei ole saadaval',
+            };
+            reportClientProblem('load-failed', undefined, new Error(String(message)), `status=${res.status} file=${dataFile} `);
             return { status: 'error', count: jobs.length, jobs };
         }
+        loadFailure = null;
         const data = await res.json();
         jobs = data.jobs || [];
         dataGeneration++;
@@ -170,6 +198,12 @@ export async function loadData() {
         return { status: 'loaded', count: jobs.length, jobs };
     } catch (e) {
         console.error('Failed to load data:', e);
+        loadFailure = {
+            status: 0,
+            dataFile: '',
+            detail: String(e),
+            message: 'Serveriga puudub ühendus',
+        };
         // Keep existing jobs on error — don't silently clear data
         return { status: 'error', count: jobs.length, jobs };
     }
@@ -343,10 +377,11 @@ export async function retrySave() {
     if (!isLoaded) {
         const result = await loadData();
         if (result.status === 'loaded') {
+            loadFailure = null;
             emitSync('ok');
             window.dispatchEvent(new CustomEvent('jobs-data-updated'));
         } else {
-            emitSync('error', { message: 'Server või K: ketas ei ole saadaval' });
+            emitSync('error', { message: loadFailure?.message || 'Server või K: ketas ei ole saadaval' });
         }
         return;
     }

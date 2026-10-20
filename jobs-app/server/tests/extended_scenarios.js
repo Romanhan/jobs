@@ -184,12 +184,29 @@ export async function headerSortingAndScale() {
 
 export async function startupRetry() {
     check(document.getElementById('btn-add-job').disabled, 'Adding disabled after failed initial load');
+    check(document.getElementById('data-unavailable').classList.contains('visible'), 'A failed load must explain the empty table');
     window.startupOffline = false;
     document.getElementById('sync-indicator').click();
     [...document.querySelectorAll('#sync-popup-actions button')].find(b => b.textContent === 'Proovi uuesti').click();
     await waitFor(() => !document.getElementById('btn-add-job').disabled);
+    check(!document.getElementById('data-unavailable').classList.contains('visible'), 'The panel must disappear once data loads');
     equal(document.querySelectorAll('#table-body tr').length, 1);
     equal(testData.getJobs()[0]['Töö Nr'], 'A');
+}
+
+// The panel explains why the table is empty and names the unreadable file, so
+// an unavailable K: is not mistaken for lost data.
+export async function startupUnavailablePanel() {
+    const panel = document.getElementById('data-unavailable');
+    check(panel.classList.contains('visible'), 'A failed load must show the unavailable panel');
+    check(panel.textContent.includes('Andmed ei ole saadaval'), 'The panel must state the problem');
+    const path = document.getElementById('data-unavailable-path');
+    equal(path.textContent, 'K:/Projektid/jobs_data.json');
+    check(!panel.textContent.includes('undefined'), 'The panel must not render placeholder text');
+    check(document.getElementById('btn-add-job').disabled, 'Adding stays disabled while data is unavailable');
+    window.startupOffline = false;
+    await waitFor(() => !panel.classList.contains('visible'));
+    equal(document.querySelectorAll('#table-body tr').length, 1);
 }
 
 export async function startupAutomaticRecovery() {

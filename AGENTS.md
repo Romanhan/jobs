@@ -78,6 +78,9 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 ## Collaboration (Shared Folder)
 - Each user runs the same current-version executable locally with `--data` pointing to the shared `jobs_data.json`
 - Field-level changes are merged under an exclusive shared-drive lock; different rows/fields can be edited concurrently
+- The lock is a directory (`jobs_data.json.lock`) with an `owner.json` inside it that doubles as a 5 s heartbeat. A create refused with `ACCESS_DENIED` is inspected, not just retried, because SMB reports a pending-deletion directory that way; stale locks (both directory and heartbeat older than 2 min) are reclaimed by renaming them to `jobs_data.json.lock.broken-*` and deleting that tombstone. Writes wait up to 90 s for a lock; reads never take it
+- Lock timings can be overridden for tests: `JOBS_LOCK_MAX_WAIT_MS`, `JOBS_LOCK_STALE_MS`, `JOBS_LOCK_HEARTBEAT_MS`, `JOBS_LOCK_PROGRESS_MS`
+- While the shared file cannot be read the page shows an "Andmed ei ole saadaval" panel with the file path instead of an empty table, and retries every 2 s
 - Same-field edits from stale copies create a visible conflict instead of silently overwriting either value
 - Comment conflicts offer an editable "Ühenda mõlemad" flow in addition to choosing the shared or local value
 - `jobs_data.json.version` is managed automatically beside the data file for reliable change polling

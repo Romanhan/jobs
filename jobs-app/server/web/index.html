@@ -80,6 +80,14 @@
         </div>
         
         <div class="table-wrap">
+        <div class="data-unavailable" id="data-unavailable" role="alert">
+            <div class="data-unavailable-icon" aria-hidden="true">&#9888;</div>
+            <div class="data-unavailable-title">Andmed ei ole saadaval</div>
+            <p class="data-unavailable-text">Server ei saa jagatud andmefaili lugeda, seega tabel on tühi. Kontrolli, et võrguketas (K:) on ühendatud.</p>
+            <p class="data-unavailable-path" id="data-unavailable-path"></p>
+            <p class="data-unavailable-hint">Ühenduse taastudes laaditakse andmed automaatselt.</p>
+            <button type="button" class="btn-primary" id="btn-data-retry">Proovi uuesti</button>
+        </div>
         <table id="jobs-table" style="table-layout: fixed">
             <thead id="table-head"></thead>
             <tbody id="table-body"></tbody>

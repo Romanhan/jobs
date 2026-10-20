@@ -1,16 +1,31 @@
 import { resolve } from "node:path";
 import { APP_VERSION } from "./web/js/version.js";
-import { releaseDataLock } from "./data-lock.ts";
+import {
+  acquireDataLock as acquireSharedLock,
+  LOCK_DEFAULTS,
+  lockTombstonePrefix,
+  releaseDataLock,
+  type LockProbe,
+} from "./data-lock.ts";
 
 const DEFAULT_PORT = 8085;
 const MAX_SAVE_RETRIES = 8;
 const SAVE_RETRY_BASE_DELAY_MS = 50;
-const LOCK_RETRY_DELAY_MS = 100;
-const LOCK_MAX_WAIT_MS = 15000;
-const LOCK_STALE_MS = 120000;
 const BACKUP_INTERVAL_MS = 48 * 60 * 60 * 1000;
 const BACKUP_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 const BACKUP_RETENTION_COUNT = 36;
+
+// Lock timings are tunable so tests can exercise the wait and reclaim paths
+// quickly; production uses the shared-lock defaults.
+function envMilliseconds(name: string, fallback: number): number {
+  const raw = Deno.env.get(name);
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+const LOCK_MAX_WAIT_MS = envMilliseconds("JOBS_LOCK_MAX_WAIT_MS", LOCK_DEFAULTS.maxWaitMs);
+const LOCK_STALE_MS = envMilliseconds("JOBS_LOCK_STALE_MS", LOCK_DEFAULTS.staleMs);
+const LOCK_HEARTBEAT_MS = envMilliseconds("JOBS_LOCK_HEARTBEAT_MS", LOCK_DEFAULTS.heartbeatMs);
+const LOCK_PROGRESS_MS = envMilliseconds("JOBS_LOCK_PROGRESS_MS", LOCK_DEFAULTS.progressMs);
 
 let DATA_FILE = "jobs_data.json";
 const args = Deno.args;
@@ -215,91 +230,64 @@ async function writeRevision(stat: Deno.FileInfo): Promise<string> {
   return `${revision}-${stat.mtime?.getTime() || 0}-${stat.size}`;
 }
 
-const heldDataLocks = new Map<string, { operation: string; acquired: number }>();
+// Shared-drive lock handling lives in data-lock.ts; this wrapper supplies the
+// app-specific path, owner metadata, logging and the writability probe.
+function acquireDataLock(operation: string): Promise<() => Promise<void>> {
+  return acquireSharedLock({
+    path: lockPath(),
+    operation,
+    owner: { pid: Deno.pid, host: diagnosticHost, version: APP_VERSION },
+    log: logEvent,
+    logError,
+    maxWaitMs: LOCK_MAX_WAIT_MS,
+    staleMs: LOCK_STALE_MS,
+    heartbeatMs: LOCK_HEARTBEAT_MS,
+    progressMs: LOCK_PROGRESS_MS,
+    probeWritable: probeDataDirectory,
+  });
+}
 
-async function acquireDataLock(operation: string): Promise<() => Promise<void>> {
+// Separates "the lock directory cannot be reclaimed" from "the share is not
+// writable at all": the first is waiting, the second needs the network.
+async function probeDataDirectory(): Promise<LockProbe> {
+  try {
+    const probePath = joinPath(dataDirectory(), `jobs_data_probe-${crypto.randomUUID()}.tmp`);
+    await Deno.writeTextFile(probePath, "probe");
+    try { await Deno.remove(probePath); } catch { /* a leftover temp file is harmless */ }
+    return "ok";
+  } catch (error) {
+    if (error instanceof Deno.errors.PermissionDenied) return "denied";
+    return "unknown";
+  }
+}
+
+// Records what the shared lock looked like when this server started and clears
+// tombstones left behind by an interrupted reclaim. Never blocks startup.
+async function inspectSharedLockAtStartup(): Promise<void> {
   const path = lockPath();
-  const started = Date.now();
-  let lastFailure = "none";
-  let observedAge: number | null = null;
-  let observedOwner = "unavailable";
-  while (Date.now() - started < LOCK_MAX_WAIT_MS) {
+  try {
+    const stat = await Deno.stat(path);
+    let owner = "unavailable";
     try {
-      await Deno.mkdir(path);
-      const token = crypto.randomUUID();
-      const acquired = Date.now();
-      heldDataLocks.set(token, { operation, acquired });
-      const slowLockTimer = setTimeout(() => {
-        logError(`Shared data lock held for ${Date.now() - acquired}ms: operation=${operation} path="${path}" token=${token}`);
-      }, LOCK_MAX_WAIT_MS);
-      try {
-        await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({
-          pid: Deno.pid,
-          host: diagnosticHost,
-          version: APP_VERSION,
-          operation,
-          token,
-          created: acquired,
-        }));
-      } catch (error) {
-        logError(`Shared data lock owner metadata write failed: operation=${operation} path="${path}": ${error}`);
-      }
-      return async () => {
-        try {
-          await releaseDataLock(path);
-        } catch (error) {
-          logError(`Shared data lock release failed for "${path}" after retries: operation=${operation} token=${token}: ${error}`);
-        } finally {
-          clearTimeout(slowLockTimer);
-          heldDataLocks.delete(token);
-          if (Date.now() - acquired >= LOCK_MAX_WAIT_MS) {
-            logError(`Shared data lock operation finished after ${Date.now() - acquired}ms: operation=${operation} token=${token}`);
-          }
-        }
-      };
-    } catch (e) {
-      lastFailure = `mkdir: ${e}`;
-      // Network shares can briefly report ACCESS_DENIED while another client
-      // is creating/removing the lock directory. Treat that like contention
-      // and retry instead of failing the save immediately.
-      if (e instanceof Deno.errors.PermissionDenied) {
-        await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
-        continue;
-      }
-      if (!(e instanceof Deno.errors.AlreadyExists)) throw e;
-      try {
-        const stat = await Deno.stat(path);
-        const age = Date.now() - (stat.mtime?.getTime() || Date.now());
-        observedAge = age;
-        if (observedOwner === "unavailable") {
-          try {
-            observedOwner = (await Deno.readTextFile(`${path}/owner.json`)).slice(0, 2048);
-          } catch (error) {
-            observedOwner = `unreadable: ${error}`;
-          }
-        }
-        if (age > LOCK_STALE_MS) {
-          logEvent(`Shared data lock reclaimed as stale after ${age}ms: path="${path}" owner=${observedOwner}`);
-          await Deno.remove(path, { recursive: true });
-          continue;
-        }
-      } catch (statError) {
-        lastFailure = `inspect/remove stale lock: ${statError}`;
-        if (statError instanceof Deno.errors.PermissionDenied) {
-          await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
-          continue;
-        }
-        if (!(statError instanceof Deno.errors.NotFound)) throw statError;
-        // The lock disappeared between mkdir and stat; retry immediately.
-        continue;
-      }
-      await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
+      owner = (await Deno.readTextFile(`${path}/owner.json`)).slice(0, 2048);
+    } catch { /* owner metadata is optional */ }
+    logEvent(`Shared data lock present at startup: path="${path}" ageMs=${Date.now() - (stat.mtime?.getTime() || Date.now())} owner=${owner}`);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) {
+      logError(`Shared data lock inspection at startup failed: path="${path}": ${error}`);
     }
   }
-  const localHolders = [...heldDataLocks.values()].map(holder => ({
-    operation: holder.operation, heldMs: Date.now() - holder.acquired,
-  }));
-  throw new Error(`Timed out waiting for shared data lock "${path}"; operation=${operation}; waitedMs=${Date.now() - started}; observedAgeMs=${observedAge}; lastFailure=${lastFailure}; observedOwner=${observedOwner}; localHolders=${JSON.stringify(localHolders)}`);
+  const directory = dataDirectory();
+  const prefix = lockTombstonePrefix(DATA_FILE.split(/[\\/]/).pop() || DATA_FILE);
+  try {
+    for await (const entry of Deno.readDir(directory)) {
+      if (!entry.name.startsWith(prefix)) continue;
+      try {
+        await releaseDataLock(joinPath(directory, entry.name), { attempts: 2, log: logError });
+        logEvent(`Removed stale lock tombstone: "${entry.name}"`);
+      } catch { /* it may already be gone */ }
+    }
+  } catch { /* the directory may not exist yet, or may not be readable */ }
 }
 
 function ensureJobIds(jobs: Job[]): boolean {
@@ -363,9 +351,7 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
   const now = Date.now();
   if (!forceCheck && now - lastBackupCheck < BACKUP_CHECK_INTERVAL_MS) return;
   lastBackupCheck = now;
-  let releaseLock: (() => Promise<void>) | undefined;
   try {
-    releaseLock = await acquireDataLock("backup");
     const backupDir = joinPath(dataDirectory(), "backups");
     await Deno.mkdir(backupDir, { recursive: true });
     const backups: { name: string; path: string; modified: number }[] = [];
@@ -387,20 +373,29 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
     }
     if (newestValidBackup && now - newestValidBackup.modified < BACKUP_INTERVAL_MS) return;
 
-    const jobs = await readJobsFile();
-    const backupName = `jobs_data_${backupTimestamp()}.json`;
-    const finalPath = joinPath(backupDir, backupName);
-    const tempPath = `${finalPath}.tmp-${crypto.randomUUID()}`;
+    // Scanning and validating up to 36 backups over a network share is slow, so
+    // the lock is held only around the copy itself. Reading the data file is
+    // safe outside it: writes replace the file atomically.
+    let releaseLock: (() => Promise<void>) | undefined;
     try {
-      await Deno.writeTextFile(tempPath, JSON.stringify(jobs));
-      if (!await isValidBackup(tempPath)) throw new Error("Backup validation failed");
-      await Deno.rename(tempPath, finalPath);
-    } catch (e) {
-      try { await Deno.remove(tempPath); } catch {}
-      throw e;
+      releaseLock = await acquireDataLock("backup");
+      const jobs = await readJobsFile();
+      const backupName = `jobs_data_${backupTimestamp()}.json`;
+      const finalPath = joinPath(backupDir, backupName);
+      const tempPath = `${finalPath}.tmp-${crypto.randomUUID()}`;
+      try {
+        await Deno.writeTextFile(tempPath, JSON.stringify(jobs));
+        if (!await isValidBackup(tempPath)) throw new Error("Backup validation failed");
+        await Deno.rename(tempPath, finalPath);
+      } catch (e) {
+        try { await Deno.remove(tempPath); } catch {}
+        throw e;
+      }
+      backups.unshift({ name: backupName, path: finalPath, modified: now });
+    } finally {
+      if (releaseLock) await releaseLock();
     }
 
-    backups.unshift({ name: backupName, path: finalPath, modified: now });
     const validBackups: { name: string; path: string; modified: number }[] = [];
     for (const backup of backups) {
       if (await isValidBackup(backup.path)) validBackups.push(backup);
@@ -412,8 +407,6 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
     }
   } catch (e) {
     logError(`Automatic backup failed: ${e}`);
-  } finally {
-    if (releaseLock) await releaseLock();
   }
 }
 
@@ -432,23 +425,45 @@ function isLocalConnection(urlStr: string | null): boolean {
 let dataInitialized = false;
 let startupBackupScheduled = false;
 
-async function handleGetData(corsHeaders: Record<string, string>): Promise<Response> {
+// Creating the data file on first use is the one write a plain load performs.
+// Writes are atomic (temp file plus rename), so reads need no lock at all;
+// only this bootstrap must not race with a second client doing the same.
+async function bootstrapDataFile(): Promise<string> {
   let releaseLock: (() => Promise<void>) | undefined;
   try {
+    releaseLock = await acquireDataLock("load-initialize");
+    try {
+      const existing = await Deno.readTextFile(DATA_FILE);
+      if (existing.trim()) return existing;
+    } catch (e) {
+      if (!(e instanceof Deno.errors.NotFound)) throw e;
+    }
+    await Deno.writeTextFile(DATA_FILE, "[]");
+    return "[]";
+  } finally {
+    if (releaseLock) await releaseLock();
+  }
+}
+
+function dataFileUnavailable(e: unknown, status: number, corsHeaders: Record<string, string>): Response {
+  return Response.json({
+    error: "shared data file is unavailable",
+    dataFile: DATA_FILE,
+    detail: String(e),
+  }, { status, headers: corsHeaders });
+}
+
+async function handleGetData(corsHeaders: Record<string, string>): Promise<Response> {
+  try {
     if (!dataInitialized) await Deno.mkdir(dataDirectory(), { recursive: true });
-    releaseLock = await acquireDataLock("load");
     let content: string;
     try {
       content = await Deno.readTextFile(DATA_FILE);
     } catch (e) {
       if (!(e instanceof Deno.errors.NotFound) || dataInitialized) throw e;
-      await Deno.writeTextFile(DATA_FILE, "[]");
-      content = "[]";
+      content = await bootstrapDataFile();
     }
-    if (!dataInitialized && !content.trim()) {
-      await Deno.writeTextFile(DATA_FILE, "[]");
-      content = "[]";
-    }
+    if (!dataInitialized && !content.trim()) content = await bootstrapDataFile();
     dataInitialized = true;
     const stat = await Deno.stat(DATA_FILE);
     let jobs;
@@ -460,10 +475,20 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
     }
     let modified = stat.mtime?.getTime() || Date.now();
     let revision: string;
-    if (ensureJobIds(jobs)) {
-      const saved = await writeJobsFile(jobs);
-      modified = saved.modified;
-      revision = saved.revision;
+    if (jobs.some((job: Job) => typeof job?._id !== "string" || !job._id) || hasDuplicateIds(jobs)) {
+      // Older data files have no row IDs; assigning them writes, so it needs
+      // the lock and a fresh read of the file.
+      let releaseLock: (() => Promise<void>) | undefined;
+      try {
+        releaseLock = await acquireDataLock("load-ids");
+        jobs = await readJobsFile();
+        ensureJobIds(jobs);
+        const saved = await writeJobsFile(jobs);
+        modified = saved.modified;
+        revision = saved.revision;
+      } finally {
+        if (releaseLock) await releaseLock();
+      }
     } else {
       revision = await readRevision();
     }
@@ -475,13 +500,22 @@ async function handleGetData(corsHeaders: Record<string, string>): Promise<Respo
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
       logThrottled("load-missing", `Data load failed: shared data file is unavailable: "${DATA_FILE}": ${e}`);
-      return new Response("Shared data file is unavailable", { status: 503, headers: corsHeaders });
+      return dataFileUnavailable(e, 503, corsHeaders);
     }
     logThrottled("load-error", `Data load failed: "${DATA_FILE}": ${e}`);
-    return new Response("Internal Server Error", { status: 500, headers: corsHeaders });
-  } finally {
-    if (releaseLock) await releaseLock();
+    return dataFileUnavailable(e, 500, corsHeaders);
   }
+}
+
+function hasDuplicateIds(jobs: Job[]): boolean {
+  const seen = new Set<string>();
+  for (const job of jobs) {
+    const id = job?._id;
+    if (typeof id !== "string" || !id) continue;
+    if (seen.has(id)) return true;
+    seen.add(id);
+  }
+  return false;
 }
 
 async function handleMergeData(req: Request, corsHeaders: Record<string, string>): Promise<Response> {
@@ -888,6 +922,7 @@ async function startServer() {
           console.log(`Data: ${DATA_FILE}`);
           console.log(`Log: ${LOG_FILE}`);
           logEvent(`Server started: port=${port} data="${DATA_FILE}" log="${LOG_FILE}" host=${diagnosticHost} pid=${Deno.pid}`);
+          void inspectSharedLockAtStartup();
           if (!args.includes("--no-browser")) void openBrowser(url);
         },
       }, handler);

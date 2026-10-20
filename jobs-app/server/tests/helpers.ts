@@ -10,6 +10,15 @@ export function equal(actual: unknown, expected: unknown) {
   }
 }
 
+export async function exists(path: string): Promise<boolean> {
+  try {
+    await Deno.stat(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const job = (id = "a", extra = {}) => ({
   _id: id, "Töö Nr": id.toUpperCase(), "Täitmise koht": "TOS", ...extra,
 });
@@ -30,8 +39,14 @@ export async function startServer(dataFile: string, cwd: string) {
     args: [...(executable ? [] : ["run", "-A", fileURLToPath(new URL("../server.ts", import.meta.url))]),
       "--port", "0", "--data", dataFile, "--no-browser"],
     // Pin the log next to the fixture data so tests never write next to the
-    // executable (a compiled exe keeps its log beside itself).
-    env: { JOBS_LOG_FILE: `${cwd}/error.log` },
+    // executable (a compiled exe keeps its log beside itself). Lock waits are
+    // shortened: production waits 90 s for a lock, tests cannot.
+    env: {
+      JOBS_LOG_FILE: `${cwd}/error.log`,
+      JOBS_LOCK_MAX_WAIT_MS: Deno.env.get("JOBS_LOCK_MAX_WAIT_MS") || "1500",
+      JOBS_LOCK_HEARTBEAT_MS: Deno.env.get("JOBS_LOCK_HEARTBEAT_MS") || "250",
+      JOBS_LOCK_PROGRESS_MS: Deno.env.get("JOBS_LOCK_PROGRESS_MS") || "400",
+    },
     cwd, stdout: "piped", stderr: "piped",
   }).spawn();
   let output = "";
