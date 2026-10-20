@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.3.9
+
+- Keep polling while a conflict is open. A tab with an unresolved conflict used
+  to stop receiving updates, which is how one user kept seeing a row another
+  user had already deleted. The tab now follows the shared file and only keeps
+  the values that are actually in conflict.
+- A field conflict on a row that was deleted elsewhere becomes a deletion
+  conflict instead of pointing at a row that no longer exists, and a conflict
+  whose shared value already equals the local value is dropped.
+- Mark conflicted rows in the table with an amber tint and a `!` marker that
+  opens the resolution popup, and count pending conflicts in the popup title.
+- Name the outcome in the deletion popup ("Kustuta töö" / "Taasta minu
+  versioon") instead of "Kasuta minu väärtust", which silently re-created a
+  deleted row.
+- Retry a failed save automatically with 5 s → 30 s backoff, paused while the
+  tab is hidden and resumed on focus or reconnect. A rejected request (invalid
+  merge) is not retried, so its error stays visible.
+- Log conflict lifecycle events (`conflict-open`, `conflict-resolved`) and
+  throttle repeated save failures, so `error.log` can answer who still holds a
+  deleted row.
+- Write log timestamps in local time with an explicit UTC offset (for example
+  `2026-10-19T14:54:55.330+03:00`) and record the offset on the startup line.
+  Previously the log was UTC, which looked three hours behind on a Tallinn PC.
+- File backup snapshots by month in `backups/<YYYY-MM>/`. Existing snapshots in
+  `backups/` are still counted, kept and pruned; retention is unchanged at the
+  newest 36, and empty month folders are removed.
+- Rewrite the README in English and document the shared-folder rules, backups
+  and diagnostics.
+
+The data format and the synchronization protocol are unchanged.
+
 ## 0.3.8
 
 - Fix the first reported shared-drive outage: a lock directory that a network

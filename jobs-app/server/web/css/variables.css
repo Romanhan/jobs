@@ -40,6 +40,7 @@
   --color-allhanke: #a78ad4;
   --color-overdue: #d47a7a;
   --color-completed: #6a7a8e;
+  --color-warning: #c98a3c;
   --color-success: #6abf9e;
   --color-danger: #e74c3c;
   --color-danger-rgb: 231, 76, 60;
@@ -109,6 +110,8 @@
   --row-tint-allhanke: rgba(167, 138, 212, 0.12);
   --row-tint-overdue: rgba(212, 122, 122, 0.12);
   --row-tint-completed: rgba(106, 122, 142, 0.12);
+  --row-tint-conflict: rgba(201, 138, 60, 0.18);
+  --text-on-warning: #17212e;
 
   --calendar-icon-filter: none;
   --calendar-day-hover: #dce0e6;
@@ -155,6 +158,7 @@
   --color-allhanke: #b8a9e8;
   --color-overdue: #e8a9a9;
   --color-completed: #7a8290;
+  --color-warning: #dda75f;
   --color-success: #4a8e7a;
   --color-danger: #c0392b;
   --color-danger-rgb: 192, 57, 43;
@@ -201,6 +205,8 @@
   --row-tint-allhanke: rgba(184, 169, 232, 0.15);
   --row-tint-overdue: rgba(232, 169, 169, 0.15);
   --row-tint-completed: rgba(122, 130, 144, 0.15);
+  --row-tint-conflict: rgba(221, 167, 95, 0.20);
+  --text-on-warning: #17212e;
 
   --calendar-icon-filter: brightness(0) invert(1);
   --calendar-day-hover: #2a2e36;

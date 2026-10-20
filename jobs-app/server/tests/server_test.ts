@@ -1,4 +1,4 @@
-import { assert, equal, exists, fixture, job, until } from "./helpers.ts";
+import { assert, backupEntries, equal, exists, fixture, job, until } from "./helpers.ts";
 
 Deno.test("server: embedded UI assets, version, origin checks and invalid routes", async () => {
   const f = await fixture();
@@ -74,12 +74,13 @@ Deno.test("server: restored backup can be loaded and edited", async () => {
   try {
     await f.merge([job()], [job('a', { 'Täitmise koht': 'snapshot' })]);
     const dir = `${f.dir}/backups`;
-    let backup = '';
+    let backup: { name: string; path: string } | undefined;
     await until(async () => {
-      try { backup = (await Array.fromAsync(Deno.readDir(dir))).find(e => e.name.endsWith('.json'))?.name || ''; } catch { return false; }
-      return backup;
+      backup = (await backupEntries(dir))[0];
+      return Boolean(backup);
     });
-    const content = await Deno.readTextFile(`${dir}/${backup}`);
+    assert(backup, "A backup must be created");
+    const content = await Deno.readTextFile(backup.path);
     await f.merge((await f.data()).jobs, []);
     // Simulate an operator restoring a validated snapshot with no active writers.
     await Deno.writeTextFile(f.file, content);
@@ -261,12 +262,17 @@ Deno.test("server: backups retain 36 valid snapshots and ignore corrupt newest b
     }
     await f.data();
     const ready = await f.request('/api/ready', {}); equal(ready.status, 200); await ready.text();
-    const backups = () => Array.fromAsync(Deno.readDir(dir));
+    const backups = () => backupEntries(dir);
     await until(async () => (await backups()).some(e => !e.name.startsWith("jobs_data_2025") && e.name.endsWith(".json")));
     await until(async () => (await backups()).length === 37);
     const entries = await backups();
     const newest = entries.find(e => !e.name.startsWith("jobs_data_2025"))!;
-    equal(JSON.parse(await Deno.readTextFile(`${dir}/${newest.name}`)), await f.read());
+    // New snapshots are filed by month, so one folder cannot grow forever.
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const segments = newest.path.split(/[\\/]/);
+    equal(segments.slice(-3, -1), ["backups", month]);
+    equal(JSON.parse(await Deno.readTextFile(newest.path)), await f.read());
     assert(!entries.some(e => e.name.endsWith("00-00-01.json")));
     assert(!entries.some(e => e.name.endsWith("00-00-02.json")));
     assert(entries.some(e => e.name.endsWith("00-00-38.json")));
@@ -364,6 +370,31 @@ Deno.test("server: startup reports a lock left behind and clears lock tombstones
     assert(!(await exists(tombstone)), 'Tombstones must be cleared at startup');
     await Deno.remove(path, { recursive: true });
     equal((await f.data()).jobs.length, 1);
+  } finally { await f.close(); }
+});
+
+Deno.test("server: log timestamps are local time with an explicit UTC offset", async () => {
+  const f = await fixture([job()]);
+  try {
+    await f.data();
+    const log = await Deno.readTextFile(`${f.dir}/error.log`);
+    // The old code wrote new Date().toISOString(), which ends in "Z": the offset
+    // is what proves the log is on the reader's clock, not on UTC.
+    const match = log.match(/\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})([+-]\d{2}:\d{2})\]/);
+    assert(match, "Every log line must carry a timestamp with an explicit offset");
+    const [, stamp, offset] = match;
+    const now = new Date();
+    const minutes = -now.getTimezoneOffset();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    const expectedOffset = `${minutes >= 0 ? "+" : "-"}${pad(Math.floor(Math.abs(minutes) / 60))}:${pad(Math.abs(minutes) % 60)}`;
+    equal(offset, expectedOffset);
+    // The stamp has to be the wall clock of this machine, so rebuilding the
+    // instant and formatting it locally must reproduce the same fields.
+    const instant = new Date(`${stamp}${offset}`);
+    const wall = `${instant.getFullYear()}-${pad(instant.getMonth() + 1)}-${pad(instant.getDate())}` +
+      `T${pad(instant.getHours())}:${pad(instant.getMinutes())}:${pad(instant.getSeconds())}`;
+    assert(stamp.startsWith(wall), `Timestamp ${stamp} is not local wall-clock time (${wall})`);
+    assert(log.includes(`tz=${expectedOffset}`), "The startup line must record the machine's UTC offset");
   } finally { await f.close(); }
 });
 

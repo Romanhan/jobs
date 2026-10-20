@@ -334,6 +334,32 @@ body.modal-open .row-indicator {
 #table-body tr.row-completed td:not(.row-indicator) {
     background: linear-gradient(0deg, var(--row-tint-completed), var(--row-tint-completed)), var(--bg-table);
 }
+/* An unresolved conflict outranks the status tint: the row must look different
+   from a normal one, otherwise a stale or contested row is invisible. */
+#table-body tr.row-conflict td:not(.row-indicator) {
+    background: linear-gradient(0deg, var(--row-tint-conflict), var(--row-tint-conflict)), var(--bg-table);
+}
+
+.conflict-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-on-warning);
+    background: var(--color-warning);
+    border-radius: var(--radius-round);
+    box-shadow: var(--shadow-pill);
+    cursor: pointer;
+}
+
+.conflict-dot:focus-visible {
+    outline: 2px solid var(--color-warning);
+    outline-offset: 2px;
+}
 
 #table-body tr.row-in-progress:hover td:not(.row-indicator),
 #table-body tr.row-allhanke:hover td:not(.row-indicator),

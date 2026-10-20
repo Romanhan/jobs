@@ -165,8 +165,24 @@ function writeLogLine(line: string): void {
   }
 }
 
+// Local time with an explicit UTC offset, because the log is compared with the
+// clock on the wall and with the share's file timestamps, not with UTC.
+function logTimestamp(date = new Date()): string {
+  const pad = (value: number, width = 2) => String(value).padStart(width, "0");
+  const offsetMinutes = -date.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absolute = Math.abs(offsetMinutes);
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}` +
+    `.${pad(date.getMilliseconds(), 3)}${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
+}
+
+function utcOffsetLabel(): string {
+  return logTimestamp().slice(-6);
+}
+
 function logPrefix(): string {
-  return `[${new Date().toISOString()}] [host=${diagnosticHost} pid=${Deno.pid} version=${APP_VERSION}]`;
+  return `[${logTimestamp()}] [host=${diagnosticHost} pid=${Deno.pid} version=${APP_VERSION}]`;
 }
 
 function logError(msg: string) {
@@ -347,23 +363,65 @@ async function isValidBackup(path: string): Promise<boolean> {
   }
 }
 
+const BACKUP_NAME_PATTERN = /^jobs_data_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/;
+const BACKUP_MONTH_PATTERN = /^\d{4}-\d{2}$/;
+
+function backupMonth(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// Snapshots are filed by month (backups/2026-10/...) so one folder never grows
+// into hundreds of entries, which is also slow to list on a network share.
+// Files that older versions left in backups/ are still counted and pruned.
+async function listBackups(): Promise<{ name: string; path: string; modified: number }[]> {
+  const root = joinPath(dataDirectory(), "backups");
+  const found: { name: string; path: string; modified: number }[] = [];
+  const collect = async (directory: string) => {
+    try {
+      for await (const entry of Deno.readDir(directory)) {
+        if (!entry.isFile || !BACKUP_NAME_PATTERN.test(entry.name)) continue;
+        const path = joinPath(directory, entry.name);
+        try {
+          const stat = await Deno.stat(path);
+          found.push({ name: entry.name, path, modified: stat.mtime?.getTime() || 0 });
+        } catch { /* removed while scanning */ }
+      }
+    } catch { /* a missing month folder is normal */ }
+  };
+  await collect(root);
+  try {
+    for await (const entry of Deno.readDir(root)) {
+      if (!entry.isDirectory || !BACKUP_MONTH_PATTERN.test(entry.name)) continue;
+      await collect(joinPath(root, entry.name));
+    }
+  } catch { /* the backups folder may not exist yet */ }
+  return found.sort((a, b) => b.modified - a.modified);
+}
+
+async function pruneEmptyBackupMonths(): Promise<void> {
+  const root = joinPath(dataDirectory(), "backups");
+  try {
+    for await (const entry of Deno.readDir(root)) {
+      if (!entry.isDirectory || !BACKUP_MONTH_PATTERN.test(entry.name)) continue;
+      const directory = joinPath(root, entry.name);
+      try {
+        let empty = true;
+        for await (const _ of Deno.readDir(directory)) {
+          empty = false;
+          break;
+        }
+        if (empty) await Deno.remove(directory);
+      } catch { /* another client is writing there */ }
+    }
+  } catch { /* best effort */ }
+}
+
 async function maybeCreateBackup(forceCheck = false): Promise<void> {
   const now = Date.now();
   if (!forceCheck && now - lastBackupCheck < BACKUP_CHECK_INTERVAL_MS) return;
   lastBackupCheck = now;
   try {
-    const backupDir = joinPath(dataDirectory(), "backups");
-    await Deno.mkdir(backupDir, { recursive: true });
-    const backups: { name: string; path: string; modified: number }[] = [];
-    for await (const entry of Deno.readDir(backupDir)) {
-      if (!entry.isFile || !/^jobs_data_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/.test(entry.name)) continue;
-      const path = joinPath(backupDir, entry.name);
-      try {
-        const stat = await Deno.stat(path);
-        backups.push({ name: entry.name, path, modified: stat.mtime?.getTime() || 0 });
-      } catch {}
-    }
-    backups.sort((a, b) => b.modified - a.modified);
+    const backups = await listBackups();
     let newestValidBackup: { name: string; path: string; modified: number } | undefined;
     for (const backup of backups) {
       if (await isValidBackup(backup.path)) {
@@ -373,6 +431,9 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
     }
     if (newestValidBackup && now - newestValidBackup.modified < BACKUP_INTERVAL_MS) return;
 
+    const monthDir = joinPath(joinPath(dataDirectory(), "backups"), backupMonth());
+    await Deno.mkdir(monthDir, { recursive: true });
+
     // Scanning and validating up to 36 backups over a network share is slow, so
     // the lock is held only around the copy itself. Reading the data file is
     // safe outside it: writes replace the file atomically.
@@ -381,7 +442,7 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
       releaseLock = await acquireDataLock("backup");
       const jobs = await readJobsFile();
       const backupName = `jobs_data_${backupTimestamp()}.json`;
-      const finalPath = joinPath(backupDir, backupName);
+      const finalPath = joinPath(monthDir, backupName);
       const tempPath = `${finalPath}.tmp-${crypto.randomUUID()}`;
       try {
         await Deno.writeTextFile(tempPath, JSON.stringify(jobs));
@@ -405,6 +466,7 @@ async function maybeCreateBackup(forceCheck = false): Promise<void> {
         try { await Deno.remove(backup.path); } catch (e) { logError(`Old backup cleanup failed for "${backup.path}": ${e}`); }
       }
     }
+    await pruneEmptyBackupMonths();
   } catch (e) {
     logError(`Automatic backup failed: ${e}`);
   }
@@ -921,7 +983,7 @@ async function startServer() {
           console.log(`Open: ${url}`);
           console.log(`Data: ${DATA_FILE}`);
           console.log(`Log: ${LOG_FILE}`);
-          logEvent(`Server started: port=${port} data="${DATA_FILE}" log="${LOG_FILE}" host=${diagnosticHost} pid=${Deno.pid}`);
+          logEvent(`Server started: port=${port} data="${DATA_FILE}" log="${LOG_FILE}" host=${diagnosticHost} pid=${Deno.pid} tz=${utcOffsetLabel()}`);
           void inspectSharedLockAtStartup();
           if (!args.includes("--no-browser")) void openBrowser(url);
         },

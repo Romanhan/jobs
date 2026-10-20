@@ -19,6 +19,22 @@ export async function exists(path: string): Promise<boolean> {
   }
 }
 
+// Backup snapshots are filed by month; tests search the whole tree.
+export async function backupEntries(directory: string): Promise<{ name: string; path: string }[]> {
+  const entries: { name: string; path: string }[] = [];
+  const collect = async (dir: string) => {
+    try {
+      for await (const entry of Deno.readDir(dir)) {
+        const path = `${dir}/${entry.name}`;
+        if (entry.isDirectory) await collect(path);
+        else if (entry.name.endsWith(".json")) entries.push({ name: entry.name, path });
+      }
+    } catch { /* missing or unreadable folder */ }
+  };
+  await collect(directory);
+  return entries;
+}
+
 export const job = (id = "a", extra = {}) => ({
   _id: id, "Töö Nr": id.toUpperCase(), "Täitmise koht": "TOS", ...extra,
 });
@@ -33,7 +49,7 @@ export async function until<T>(fn: () => Promise<T>, timeout = 10000): Promise<T
   throw new Error("Timed out waiting for condition");
 }
 
-export async function startServer(dataFile: string, cwd: string) {
+export async function startServer(dataFile: string, cwd: string, extraEnv: Record<string, string> = {}) {
   const executable = Deno.env.get("JOBS_TEST_EXECUTABLE");
   const child = new Deno.Command(executable || Deno.execPath(), {
     args: [...(executable ? [] : ["run", "-A", fileURLToPath(new URL("../server.ts", import.meta.url))]),
@@ -46,6 +62,7 @@ export async function startServer(dataFile: string, cwd: string) {
       JOBS_LOCK_MAX_WAIT_MS: Deno.env.get("JOBS_LOCK_MAX_WAIT_MS") || "1500",
       JOBS_LOCK_HEARTBEAT_MS: Deno.env.get("JOBS_LOCK_HEARTBEAT_MS") || "250",
       JOBS_LOCK_PROGRESS_MS: Deno.env.get("JOBS_LOCK_PROGRESS_MS") || "400",
+      ...extraEnv,
     },
     cwd, stdout: "piped", stderr: "piped",
   }).spawn();
@@ -73,13 +90,13 @@ export async function startServer(dataFile: string, cwd: string) {
   return { url, close };
 }
 
-export async function fixture(jobs: unknown = [job()]) {
+export async function fixture(jobs: unknown = [job()], env: Record<string, string> = {}) {
   const dir = await Deno.makeTempDir({ prefix: "jobs-tests-" });
   const file = `${dir}/jobs_data.json`;
   await Deno.writeTextFile(file, JSON.stringify(jobs));
   const servers: Awaited<ReturnType<typeof startServer>>[] = [];
   const start = async () => {
-    const server = await startServer(file, dir);
+    const server = await startServer(file, dir, env);
     servers.push(server);
     return server;
   };
