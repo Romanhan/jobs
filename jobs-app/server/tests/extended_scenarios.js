@@ -203,6 +203,31 @@ export async function conflictDoesNotFreezePolling() {
     equal(document.querySelectorAll('#table-body tr.row-conflict').length, 0);
 }
 
+// Restoring a row that polling found deleted elsewhere takes one click, not two.
+export async function restoreDeletedRowOnce() {
+    await remoteEdit([]);
+    await waitFor(() => testData.getConflicts()[0]?.field === '_deleted');
+    window.openConflicts();
+    [...document.querySelectorAll('#sync-popup-actions button')].find(b => b.textContent === 'Taasta minu versioon').click();
+    await waitFor(() => !testData.hasUnsavedChanges());
+    equal(testData.getConflicts().length, 0);
+    const shared = await saved();
+    equal(shared.length, 1);
+    equal(shared[0]['Täitmise koht'], 'Local edit');
+}
+
+// Keeping my value after the other user changed the field again (seen through
+// polling) saves it instead of reopening the same conflict.
+export async function keepMineAfterRemoteChangedAgain() {
+    await remoteEdit(base => base.map(j => ({ ...j, 'Täitmise koht': 'Remote edit 2' })));
+    await waitFor(() => testData.getConflicts()[0]?.currentValue === 'Remote edit 2');
+    window.openConflicts();
+    [...document.querySelectorAll('#sync-popup-actions button')].find(b => b.textContent === 'Kasuta minu väärtust').click();
+    await waitFor(() => !testData.hasUnsavedChanges());
+    equal(testData.getConflicts().length, 0);
+    equal((await saved())[0]['Täitmise koht'], 'Local edit');
+}
+
 // The marker opens the resolution popup.
 export async function conflictMarkerOpensPopup() {
     equal(testData.getConflicts().length, 1);

@@ -546,6 +546,22 @@ export async function retrySave() {
     autoSave();
 }
 
+// A decision is made against the shared value the user was shown. refreshBaseline
+// keeps a conflicted row's old base, so without this the save that carries the
+// decision is compared with that stale base and comes back as the same conflict
+// ("Taasta minu versioon" needed a second click).
+function acceptSharedAsBaseline(conflict) {
+    const index = syncedJobs.findIndex(job => job._id === conflict.jobId);
+    if (conflict.field === '_deleted' || conflict.field === '_job') {
+        if (conflict.currentValue) {
+            if (index >= 0) syncedJobs[index] = clone(conflict.currentValue);
+            else syncedJobs.push(clone(conflict.currentValue));
+        } else if (index >= 0) syncedJobs.splice(index, 1);
+    } else if (index >= 0) {
+        syncedJobs[index][conflict.field] = clone(conflict.currentValue ?? '');
+    }
+}
+
 export function resolveConflict(jobId, field, choice, mergedValue = '') {
     const index = conflicts.findIndex(item => item.jobId === jobId && item.field === field);
     if (index < 0) return;
@@ -563,6 +579,7 @@ export function resolveConflict(jobId, field, choice, mergedValue = '') {
         job[field] = choice === 'merged' ? mergedValue : (choice === 'mine' ? conflict.userValue : conflict.currentValue);
     }
     conflicts.splice(index, 1);
+    acceptSharedAsBaseline(conflict);
     reportClientProblem('conflict-resolved', undefined, new Error(choice), `field=${field} job=${jobId} left=${conflicts.length} `);
     reportConflictState();
     if (choice === 'mine' || choice === 'merged') autoSave();

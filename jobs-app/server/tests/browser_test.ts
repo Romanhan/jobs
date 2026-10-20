@@ -99,6 +99,24 @@ Deno.test("browser: an open conflict does not freeze the row another user delete
   } finally { if (b) await b.close(); await f.close(); }
 });
 
+Deno.test("browser: restoring a row deleted elsewhere takes one click", async () => {
+  const f = await fixture(); let b;
+  try {
+    b = await browser(); await b.open(f.url); await b.run(scenarios.setup);
+    await b.run(scenarios.prepareConflict);
+    await b.run(extended.restoreDeletedRowOnce);
+  } finally { if (b) await b.close(); await f.close(); }
+});
+
+Deno.test("browser: keeping my value after a newer remote change saves it", async () => {
+  const f = await fixture(); let b;
+  try {
+    b = await browser(); await b.open(f.url); await b.run(scenarios.setup);
+    await b.run(scenarios.prepareConflict);
+    await b.run(extended.keepMineAfterRemoteChangedAgain);
+  } finally { if (b) await b.close(); await f.close(); }
+});
+
 Deno.test("browser: a conflicted row is marked and the marker opens the popup", async () => {
   const f = await fixture(); let b;
   try {
