@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.3.8
+
+- Fix the first reported shared-drive outage: a lock directory that a network
+  share refuses to recreate (`ACCESS_DENIED`, not "already exists") was retried
+  forever, so one stranded `jobs_data.json.lock` blocked saving and loading for
+  every user until someone cleared it by hand. A refused create is now
+  inspected: the lock owner is read, a stale lock is reclaimed, and only a
+  genuinely live lock is waited for.
+- Reclaim a stale lock by renaming it to a unique tombstone before deleting it,
+  so two waiting computers can no longer delete each other's freshly acquired
+  lock. Tombstones are invisible to older versions and are cleared at startup.
+- Confirm that the lock directory is really gone after a "successful" removal.
+  Network shares can report a completed delete while the directory is still
+  pending removal, which is what makes later creates fail with access denied.
+- Wait up to 90 s for a lock instead of 15 s, and back off between attempts
+  instead of retrying every 100 ms. Real merges on the work share hold the lock
+  for 25–35 s, so the old timeout failed every save that overlapped another
+  user's save.
+- Refresh the lock owner file every 5 s while holding the lock, and require both
+  the directory and that heartbeat to look stale before reclaiming anything, so
+  a slow but live save is never broken into.
+- Shrink the time spent holding the lock: the automatic backup now scans and
+  validates old snapshots outside the lock, and reading the shared file no
+  longer needs the lock at all (writes are already atomic).
+- Add a per-attempt progress line, the observed lock state, the lock owner and a
+  data-directory writability probe to the diagnostics log, so the next outage
+  distinguishes a stranded lock from an unreachable share.
+- Record the lock state at startup and clear leftover tombstones.
+- Show an explicit "Andmed ei ole saadaval" panel with the unreadable file path
+  while the shared file cannot be read, instead of a silently empty table. The
+  two-second poll still recovers automatically, and the panel names the file in
+  the browser diagnostics log.
+
+The shared-data format and synchronization protocol are unchanged.
+
 ## 0.3.7
 
 - Record a diagnostics log next to the executable, so `error.log` is easy to find

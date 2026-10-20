@@ -1,4 +1,4 @@
-import { DEFAULT_SORT_COLUMN, loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs, setSortingState, getSortingState, getConflicts, retrySave, resolveConflict, hasUnsavedChanges } from './data.js';
+import { DEFAULT_SORT_COLUMN, loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs, setSortingState, getSortingState, getConflicts, retrySave, resolveConflict, hasUnsavedChanges, isDataLoaded, getLoadFailure } from './data.js';
 import { COLUMNS } from './config.js';
 import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
@@ -108,6 +108,22 @@ function setSyncState(detail) {
     indicator.setAttribute('data-tooltip', labels[syncState.state] || labels.checking);
     indicator.removeAttribute('title');
     renderSyncPopup();
+    renderDataUnavailable();
+}
+
+// A failed start-up load leaves the table empty, which looks like lost data.
+// Say so explicitly until the shared file can be read again; the 2 s poll then
+// recovers by itself, so this panel is informative, not a dead end.
+function renderDataUnavailable() {
+    const panel = document.getElementById('data-unavailable');
+    if (!panel) return;
+    const failure = getLoadFailure();
+    const unavailable = !isDataLoaded() && (syncState.state === 'error' || Boolean(failure));
+    panel.classList.toggle('visible', unavailable);
+    const path = document.getElementById('data-unavailable-path');
+    if (!path) return;
+    path.textContent = failure?.dataFile ? failure.dataFile : '';
+    path.style.display = failure?.dataFile ? '' : 'none';
 }
 
 function setupSyncIndicator() {
@@ -139,6 +155,7 @@ function setupSyncIndicator() {
         renderTableBody();
         updateStats();
         renderSyncPopup();
+        renderDataUnavailable();
         const addButton = document.getElementById('btn-add-job');
         if (addButton) addButton.disabled = false;
     });
@@ -239,8 +256,8 @@ async function init() {
         setSyncState({ state: getConflicts().length ? 'conflict' : (hasUnsavedChanges() ? 'saving' : 'ok') });
         showStatus('Andmed laetud! (' + dataResult.count + ' tööd)', 'success');
     } else {
-        setSyncState({ state: 'error', message: 'Serveriga puudub ühendus' });
-        showStatus('Serveriga ühendamine ebaõnnestus', 'error');
+        setSyncState({ state: 'error', message: getLoadFailure()?.message || 'Serveriga puudub ühendus' });
+        showStatus('Andmete laadimine ebaõnnestus', 'error');
     }
 
     document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
@@ -296,6 +313,9 @@ window.startResize = startResize;
 function setUpButtons() {
     document.getElementById('btn-add-job').addEventListener('click', openModal);
     document.getElementById('btn-cancel').addEventListener('click', closeModal);
+    document.getElementById('btn-data-retry')?.addEventListener('click', () => {
+        void retrySave();
+    });
 
     document.getElementById('btn-theme').addEventListener('click', function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';

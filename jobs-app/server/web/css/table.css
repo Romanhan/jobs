@@ -7,6 +7,70 @@
     border-radius: var(--radius-md);
     border: none;
     box-shadow: var(--shadow-extruded-sm);
+    position: relative;
+}
+
+/* Shown while the shared data file cannot be read. The table below stays
+   empty, so this panel explains the empty state instead of hiding it. */
+.data-unavailable {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    text-align: center;
+    background: var(--bg-app);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-inset);
+    z-index: 5;
+}
+
+.data-unavailable.visible {
+    display: flex;
+}
+
+.data-unavailable-icon {
+    font-size: 32px;
+    line-height: 1;
+    color: var(--color-overdue);
+}
+
+.data-unavailable-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.data-unavailable-text {
+    margin: 0;
+    max-width: 420px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.data-unavailable-path {
+    margin: 0;
+    padding: 8px 12px;
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg-input);
+    border-radius: var(--radius-xs);
+    box-shadow: var(--shadow-inset-input);
+    word-break: break-all;
+}
+
+.data-unavailable-hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.data-unavailable #btn-data-retry {
+    margin-top: 6px;
 }
 
 table {
