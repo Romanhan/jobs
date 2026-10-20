@@ -1,4 +1,4 @@
-import { assert, equal, exists, fixture, job, until } from "./helpers.ts";
+import { assert, backupEntries, equal, exists, fixture, job, until } from "./helpers.ts";
 
 Deno.test("server: embedded UI assets, version, origin checks and invalid routes", async () => {
   const f = await fixture();
@@ -74,12 +74,13 @@ Deno.test("server: restored backup can be loaded and edited", async () => {
   try {
     await f.merge([job()], [job('a', { 'Täitmise koht': 'snapshot' })]);
     const dir = `${f.dir}/backups`;
-    let backup = '';
+    let backup: { name: string; path: string } | undefined;
     await until(async () => {
-      try { backup = (await Array.fromAsync(Deno.readDir(dir))).find(e => e.name.endsWith('.json'))?.name || ''; } catch { return false; }
-      return backup;
+      backup = (await backupEntries(dir))[0];
+      return Boolean(backup);
     });
-    const content = await Deno.readTextFile(`${dir}/${backup}`);
+    assert(backup, "A backup must be created");
+    const content = await Deno.readTextFile(backup.path);
     await f.merge((await f.data()).jobs, []);
     // Simulate an operator restoring a validated snapshot with no active writers.
     await Deno.writeTextFile(f.file, content);
@@ -261,12 +262,16 @@ Deno.test("server: backups retain 36 valid snapshots and ignore corrupt newest b
     }
     await f.data();
     const ready = await f.request('/api/ready', {}); equal(ready.status, 200); await ready.text();
-    const backups = () => Array.fromAsync(Deno.readDir(dir));
+    const backups = () => backupEntries(dir);
     await until(async () => (await backups()).some(e => !e.name.startsWith("jobs_data_2025") && e.name.endsWith(".json")));
     await until(async () => (await backups()).length === 37);
     const entries = await backups();
     const newest = entries.find(e => !e.name.startsWith("jobs_data_2025"))!;
-    equal(JSON.parse(await Deno.readTextFile(`${dir}/${newest.name}`)), await f.read());
+    // New snapshots are filed by month, so one folder cannot grow forever.
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    assert(newest.path.includes(`/backups/${month}/`), `New backups must go into the month folder, got ${newest.path}`);
+    equal(JSON.parse(await Deno.readTextFile(newest.path)), await f.read());
     assert(!entries.some(e => e.name.endsWith("00-00-01.json")));
     assert(!entries.some(e => e.name.endsWith("00-00-02.json")));
     assert(entries.some(e => e.name.endsWith("00-00-38.json")));
@@ -364,6 +369,28 @@ Deno.test("server: startup reports a lock left behind and clears lock tombstones
     assert(!(await exists(tombstone)), 'Tombstones must be cleared at startup');
     await Deno.remove(path, { recursive: true });
     equal((await f.data()).jobs.length, 1);
+  } finally { await f.close(); }
+});
+
+Deno.test("server: log timestamps are local time with an explicit UTC offset", async () => {
+  const f = await fixture([job()], { TZ: "Europe/Tallinn" });
+  try {
+    await f.data();
+    const log = await Deno.readTextFile(`${f.dir}/error.log`);
+    const match = log.match(/\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})([+-]\d{2}:\d{2})\]/);
+    assert(match, "Every log line must carry a timestamp with an explicit offset");
+    const [, stamp, offset] = match;
+    assert(offset === "+03:00" || offset === "+02:00", `Tallinn must log +02:00 or +03:00, got ${offset}`);
+    // Rebuilding the instant and formatting it back in Tallinn has to give the
+    // same wall clock. A UTC ("Z") stamp would come back shifted by the offset.
+    const instant = new Date(`${stamp}${offset}`);
+    const wall = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Europe/Tallinn",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    }).format(instant).replace(" ", "T");
+    assert(stamp.startsWith(wall), `Timestamp ${stamp} is not Tallinn wall-clock time (${wall})`);
+    assert(log.includes(`tz=${offset}`), "The startup line must record the machine's UTC offset");
   } finally { await f.close(); }
 });
 

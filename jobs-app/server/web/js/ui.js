@@ -1,6 +1,6 @@
 import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
 import { formatDate, renderMarkdown, escapeHTML } from './utils.js';
-import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs, setSortingState, getSortingState, pushUndo } from './data.js';
+import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs, setSortingState, getSortingState, pushUndo, getConflicts } from './data.js';
 import { openDateCalendar } from './calendar.js';
 
 let statusFilter = null;
@@ -148,14 +148,21 @@ export function renderTableBody() {
         });
     
     const widths = getColumnWidths();
+    const conflictedIds = new Set(getConflicts().map(conflict => conflict.jobId));
     let html = '';
     filteredJobs.forEach(({ job, index }) => {
         const status = getStatus(job);
         const valmis = job['Valmis'];
+        const conflicted = conflictedIds.has(job._id);
         const showRowColors = localStorage.getItem('showRowColors') !== 'false';
         const statusClass = status && showRowColors ? 'row-' + status : '';
-        html += '<tr class="' + (valmis ? 'done-row ' : '') + statusClass + '" data-index="' + index + '">';
-        html += '<td class="row-indicator"><span class="cell-inner">' + (status ? '<span class="status-dot status-dot--' + status + '"></span>' : '') + '</span></td>';
+        html += '<tr class="' + (valmis ? 'done-row ' : '') + statusClass + (conflicted ? ' row-conflict' : '') + '" data-index="' + index + '">';
+        // A conflicted row must be visible as conflicted: the header dot alone
+        // let a user stare at a row another user had already changed or deleted.
+        const indicator = conflicted
+            ? '<span class="conflict-dot" role="button" tabindex="0" onclick="openConflicts()" data-tooltip="Muudatuste konflikt – klõpsa lahendamiseks">!</span>'
+            : (status ? '<span class="status-dot status-dot--' + status + '"></span>' : '');
+        html += '<td class="row-indicator"><span class="cell-inner">' + indicator + '</span></td>';
         
         COLUMNS.forEach(col => {
             const value = job[col];

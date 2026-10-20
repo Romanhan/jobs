@@ -90,6 +90,32 @@ Deno.test("browser: automatically recover after initial data lock failure", asyn
   } finally { if (b) await b.close(); await f.close(); }
 });
 
+Deno.test("browser: an open conflict does not freeze the row another user deleted", async () => {
+  const f = await fixture(); let b;
+  try {
+    b = await browser(); await b.open(f.url); await b.run(scenarios.setup);
+    await b.run(scenarios.prepareConflict);
+    await b.run(extended.conflictDoesNotFreezePolling);
+  } finally { if (b) await b.close(); await f.close(); }
+});
+
+Deno.test("browser: a conflicted row is marked and the marker opens the popup", async () => {
+  const f = await fixture(); let b;
+  try {
+    b = await browser(); await b.open(f.url); await b.run(scenarios.setup);
+    await b.run(scenarios.prepareConflict);
+    await b.run(extended.conflictMarkerOpensPopup);
+  } finally { if (b) await b.close(); await f.close(); }
+});
+
+Deno.test("browser: a failed save retries by itself", async () => {
+  const f = await fixture(); let b;
+  try {
+    b = await browser(); await b.open(f.url); await b.run(scenarios.setup);
+    await b.run(extended.automaticSaveRetry);
+  } finally { if (b) await b.close(); await f.close(); }
+});
+
 Deno.test("browser: an unreadable shared file explains the empty table", async () => {
   const f = await fixture(); let b;
   try {

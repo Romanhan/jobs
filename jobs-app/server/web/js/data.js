@@ -14,6 +14,12 @@ let conflicts = [];
 let pollFailures = 0;
 let dataGeneration = 0;
 let loadFailure = null;
+const SAVE_RETRY_MIN_MS = 5000;
+const SAVE_RETRY_MAX_MS = 30000;
+let saveRetryTimer = null;
+let saveRetryDelay = SAVE_RETRY_MIN_MS;
+let saveFailures = 0;
+let lastConflictReport = '';
 export const DEFAULT_SORT_COLUMN = 'EE vajaduse kuupäev (koostamiseks valmis kujul)';
 let sortColumn = DEFAULT_SORT_COLUMN;
 let sortDirection = 'asc';
@@ -250,7 +256,11 @@ async function processSaveQueue() {
                 body: JSON.stringify({ base: baseSnapshot, proposed: proposal })
             });
             const data = await res.json().catch(() => ({}));
-            if (!res.ok || !Array.isArray(data.jobs)) throw new Error(data.message || 'Server error: ' + res.status);
+            if (!res.ok || !Array.isArray(data.jobs)) {
+                const error = new Error(data.message || 'Server error: ' + res.status);
+                error.status = res.status;
+                throw error;
+            }
             const currentJobs = jobs;
             syncedJobs = clone(data.jobs);
             jobs = applyChangesAfterSnapshot(data.jobs, sentSnapshot, currentJobs);
@@ -286,11 +296,25 @@ async function processSaveQueue() {
             }
             emitSync(conflicts.length ? 'conflict' : (pendingSnapshot ? 'saving' : 'ok'), { savedAt: Date.now() });
             pollFailures = 0;
+            saveFailures = 0;
+            saveRetryDelay = SAVE_RETRY_MIN_MS;
+            cancelSaveRetry();
+            reportConflictState();
         } catch (e) {
-            console.error('Salvestamine ebaõnnestus', e);
-            reportClientProblem('save-failed', undefined, e);
+            const error = e instanceof Error ? e : new Error(String(e));
+            console.error('Salvestamine ebaõnnestus', error);
+            saveFailures++;
+            if (saveFailures === 1 || saveFailures % 5 === 0) {
+                reportClientProblem('save-failed', undefined, error, `attempt=${saveFailures} `);
+            }
             pendingSnapshot = clone(jobs);
-            emitSync('error', { message: e.message || 'Salvestamine ebaõnnestus', pending: true });
+            emitSync('error', {
+                message: retryableSaveError(error)
+                    ? `${error.message || 'Salvestamine ebaõnnestus'} Proovin automaatselt uuesti.`
+                    : (error.message || 'Salvestamine ebaõnnestus'),
+                pending: true,
+            });
+            if (retryableSaveError(error)) scheduleSaveRetry();
             break;
         } finally {
             clearTimeout(slowTimer);
@@ -319,8 +343,137 @@ function reportClientProblem(kind, tabId, error, extra = '') {
     } catch { /* diagnostics must never break the app */ }
 }
 
+// A rejected request (invalid merge, too large) will not get better by itself;
+// a network drop or a 5xx on the share will.
+function retryableSaveError(error) {
+    const status = Number(error && error.status) || 0;
+    if (status === 0) return true;
+    return status >= 500 || status === 429;
+}
+
+function cancelSaveRetry() {
+    if (saveRetryTimer !== null) {
+        clearTimeout(saveRetryTimer);
+        saveRetryTimer = null;
+    }
+}
+
+// Retry a failed save on its own instead of waiting for someone to press
+// "Proovi uuesti" — that click is exactly what a stuck lock used to swallow.
+function scheduleSaveRetry() {
+    if (saveRetryTimer !== null || !pendingSnapshot) return;
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+    const wait = saveRetryDelay;
+    saveRetryDelay = Math.min(SAVE_RETRY_MAX_MS, Math.round(saveRetryDelay * 2));
+    saveRetryTimer = setTimeout(() => {
+        saveRetryTimer = null;
+        if (!pendingSnapshot || inFlightSaves > 0) return;
+        autoSave();
+    }, wait);
+}
+
+function resumeSaveRetry() {
+    if (!pendingSnapshot || saveRetryTimer !== null) return;
+    saveRetryDelay = SAVE_RETRY_MIN_MS;
+    scheduleSaveRetry();
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('online', resumeSaveRetry);
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') resumeSaveRetry();
+        });
+    }
+}
+
+// One line per conflict change, so error.log can answer "who still holds the
+// deleted row" instead of us guessing from a screenshot.
+function reportConflictState() {
+    const summary = conflicts.map(conflict => `${conflict.jobId}:${conflict.field}`).join(',');
+    if (summary === lastConflictReport) return;
+    lastConflictReport = summary;
+    if (!summary) return;
+    reportClientProblem('conflict-open', undefined, new Error(summary.slice(0, 200)), `count=${conflicts.length} `);
+}
+
+// A poll must not freeze while a conflict is open, but the conflicting values
+// still belong to the user. Everything else follows the shared file, and each
+// open conflict is re-pointed at what the file holds now.
+function adoptPolledConflicts(serverJobs) {
+    const display = clone(serverJobs);
+    const byId = new Map(display.map(job => [job._id, job]));
+    const putLocal = job => {
+        display.push(clone(job));
+        byId.set(job._id, display[display.length - 1]);
+    };
+    const drop = id => {
+        const index = display.findIndex(job => job._id === id);
+        if (index >= 0) display.splice(index, 1);
+        byId.delete(id);
+    };
+    const open = [];
+    for (const conflict of conflicts) {
+        const localJob = jobs.find(job => job._id === conflict.jobId) || null;
+        const shared = byId.get(conflict.jobId) || null;
+        if (conflict.field === '_deleted') {
+            if (conflict.userValue) {
+                // The user still has a row someone else deleted.
+                if (shared) conflict.currentValue = clone(shared);
+                else {
+                    putLocal(conflict.userValue);
+                    conflict.currentValue = null;
+                }
+                open.push(conflict);
+            } else if (shared) {
+                // The user deleted the row: keep it out of view while undecided.
+                conflict.currentValue = clone(shared);
+                drop(conflict.jobId);
+                open.push(conflict);
+            }
+            // Gone on both sides: the deletion is settled.
+            continue;
+        }
+        if (conflict.field === '_job') {
+            if (shared) conflict.currentValue = clone(shared);
+            else if (conflict.userValue) putLocal(conflict.userValue);
+            open.push(conflict);
+            continue;
+        }
+        if (!shared) {
+            // The row was deleted elsewhere, so a field conflict becomes a
+            // deletion conflict instead of pointing at a missing row.
+            conflict.field = '_deleted';
+            conflict.currentValue = null;
+            conflict.userValue = clone(localJob || conflict.userValue || conflict.currentValue);
+            if (localJob) putLocal(localJob);
+            open.push(conflict);
+            continue;
+        }
+        conflict.currentValue = shared[conflict.field] ?? '';
+        if (same(conflict.currentValue, conflict.userValue)) continue; // solved elsewhere
+        shared[conflict.field] = conflict.userValue;
+        open.push(conflict);
+    }
+    conflicts = open;
+    return display;
+}
+
+// The merge baseline follows the file except for rows with an open conflict:
+// keeping their old base is what stops "Kasuta minu väärtust" from silently
+// re-creating a row that another user deleted.
+function refreshBaseline(serverJobs) {
+    const conflictedIds = new Set(conflicts.map(conflict => conflict.jobId));
+    syncedJobs = [
+        ...clone(serverJobs).filter(job => !conflictedIds.has(job._id)),
+        ...clone(syncedJobs.filter(job => conflictedIds.has(job._id))),
+    ];
+}
+
 export async function pollChanges(tabId, canApply = () => true) {
-    if (inFlightSaves > 0 || pendingSnapshot || isPolling || conflicts.length) return false;
+    // Conflicts no longer pause polling: a tab that never refreshes is how one
+    // user kept seeing a row another user had already deleted.
+    if (inFlightSaves > 0 || pendingSnapshot || isPolling) return false;
     isPolling = true;
     const generation = dataGeneration;
     try {
@@ -342,20 +495,23 @@ export async function pollChanges(tabId, canApply = () => true) {
         const data = await res.json();
         // A save may have started and finished while this request was pending.
         // Its older response must not replace the newer state or revision.
-        if (generation !== dataGeneration || inFlightSaves || pendingSnapshot || conflicts.length || !canApply()) return false;
+        if (generation !== dataGeneration || inFlightSaves || pendingSnapshot || !canApply()) return false;
         if (data.changed && data.jobs) {
-            jobs = data.jobs;
+            jobs = adoptPolledConflicts(data.jobs);
             ensureLocalIds(jobs);
-            syncedJobs = clone(jobs);
+            refreshBaseline(data.jobs);
             convertSaabunudDates(jobs);
             lastSavedTimestamp = data.modified || Date.now();
             lastServerRevision = data.revision || lastServerRevision;
             clearUndo();
             applySorting();
+            persistPendingChanges();
+            reportConflictState();
+            emitSync(conflicts.length ? 'conflict' : 'ok');
             return true;
         }
         pollFailures = 0;
-        if (!saveLoopRunning) emitSync('ok');
+        if (!saveLoopRunning) emitSync(conflicts.length ? 'conflict' : 'ok');
         return false;
     } catch (e) {
         pollFailures++;
@@ -374,6 +530,8 @@ export function getConflicts() {
 }
 
 export async function retrySave() {
+    cancelSaveRetry();
+    saveRetryDelay = SAVE_RETRY_MIN_MS;
     if (!isLoaded) {
         const result = await loadData();
         if (result.status === 'loaded') {
@@ -405,6 +563,8 @@ export function resolveConflict(jobId, field, choice, mergedValue = '') {
         job[field] = choice === 'merged' ? mergedValue : (choice === 'mine' ? conflict.userValue : conflict.currentValue);
     }
     conflicts.splice(index, 1);
+    reportClientProblem('conflict-resolved', undefined, new Error(choice), `field=${field} job=${jobId} left=${conflicts.length} `);
+    reportConflictState();
     if (choice === 'mine' || choice === 'merged') autoSave();
     else {
         if (pendingSnapshot) pendingSnapshot = clone(jobs);

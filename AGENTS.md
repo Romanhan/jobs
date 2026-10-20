@@ -72,7 +72,9 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - **Row colors** — Menu → "Color rows" toggles status row tinting
 - **Font size** — Menu → "Font size" slider
 - **Theme toggle** — Top-right moon/sun icon button
-- **Diagnostics log** — `error.log` next to the executable (1 MB rotation to `error.log.1`, `JOBS_LOG_FILE` overrides), with host/pid/version prefixes, tab and shutdown lifecycle, poll/data failures, lock-owner dumps, and browser reports via `POST /api/client-log`
+- **Automatic save retry** — A failed save retries with 5 s → 30 s backoff (paused while the tab is hidden, resumed on focus or reconnect); rejected requests are not retried
+- **Conflict marking** — Rows with an unresolved conflict get an amber tint and a `!` marker that opens the resolution popup
+- **Diagnostics log** — `error.log` next to the executable (1 MB rotation to `error.log.1`, `JOBS_LOG_FILE` overrides), with local timestamps carrying the UTC offset and host/pid/version prefixes, tab and shutdown lifecycle, poll/data failures, lock-owner dumps, and browser reports via `POST /api/client-log` (load failures, save failures, poll failures, conflict open/resolved)
 - **Keyboard shortcuts** — Menu → "Shortcuts" popup
 
 ## Collaboration (Shared Folder)
@@ -82,9 +84,10 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - Lock timings can be overridden for tests: `JOBS_LOCK_MAX_WAIT_MS`, `JOBS_LOCK_STALE_MS`, `JOBS_LOCK_HEARTBEAT_MS`, `JOBS_LOCK_PROGRESS_MS`
 - While the shared file cannot be read the page shows an "Andmed ei ole saadaval" panel with the file path instead of an empty table, and retries every 2 s
 - Same-field edits from stale copies create a visible conflict instead of silently overwriting either value
+- Polling keeps running while a conflict is open: the tab follows the shared file, keeps only the values in conflict, and marks the affected rows. A field conflict on a row deleted elsewhere becomes a deletion conflict
 - Comment conflicts offer an editable "Ühenda mõlemad" flow in addition to choosing the shared or local value
 - `jobs_data.json.version` is managed automatically beside the data file for reliable change polling
-- A validated backup is created in `backups/` when the newest backup is at least 48 hours old; the newest 36 are retained
+- A validated backup is written to `backups/<YYYY-MM>/` when the newest backup is at least 48 hours old; the newest 36 are retained across all months, old snapshots left in `backups/` are still counted, and empty month folders are removed
 - All users must upgrade together when the synchronization protocol changes; older executables still use whole-file saves
 
 ## All 20 Columns

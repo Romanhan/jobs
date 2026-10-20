@@ -77,18 +77,27 @@ function renderSyncPopup() {
         details.textContent = 'Palun oodake, kuni ühisketas vastab.';
     } else if (syncState.state === 'conflict') {
         const conflict = getConflicts()[0];
-        message.textContent = 'Muudatuste konflikt';
+        message.textContent = getConflicts().length > 1
+            ? `Muudatuste konflikt (${getConflicts().length} ootel)`
+            : 'Muudatuste konflikt';
         if (!conflict) return;
         const job = getJobs().find(item => item._id === conflict.jobId);
-        const jobNumber = job?.['Töö Nr'] || conflict.currentValue?.['Töö Nr'] || '';
+        const jobNumber = job?.['Töö Nr'] || conflict.currentValue?.['Töö Nr'] || conflict.userValue?.['Töö Nr'] || '';
         details.textContent = conflict.field === '_deleted'
-            ? `Töö ${jobNumber} muudeti või kustutati teise kasutaja poolt.`
+            ? `Töö ${jobNumber} muudeti või kustutati teise kasutaja poolt. Otsusta, kumb versioon jääb.`
             : `Töö: ${jobNumber}\nVäli: ${conflict.field}\n\nSalvestatud info:\n${String(conflict.currentValue ?? '')}\n\nTeie muudatus:\n${String(conflict.userValue ?? '')}`;
-        addSyncAction(actions, 'Kasuta salvestatud', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
-        if (MERGEABLE_CONFLICT_FIELDS.has(conflict.field) && typeof conflict.currentValue === 'string' && typeof conflict.userValue === 'string') {
-            addSyncAction(actions, 'Ühenda mõlemad', () => openConflictMerge(conflict));
+        if (conflict.field === '_deleted') {
+            // Name the outcome, not the side: "Kasuta minu väärtust" on a row
+            // deleted elsewhere actually re-creates it in the shared file.
+            addSyncAction(actions, conflict.currentValue ? 'Jäta salvestatud versioon' : 'Kustuta töö', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+            addSyncAction(actions, conflict.userValue ? 'Taasta minu versioon' : 'Jäta kustutatuks', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+        } else {
+            addSyncAction(actions, 'Kasuta salvestatud', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+            if (MERGEABLE_CONFLICT_FIELDS.has(conflict.field) && typeof conflict.currentValue === 'string' && typeof conflict.userValue === 'string') {
+                addSyncAction(actions, 'Ühenda mõlemad', () => openConflictMerge(conflict));
+            }
+            addSyncAction(actions, 'Kasuta minu väärtust', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
         }
-        addSyncAction(actions, 'Kasuta minu väärtust', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
     } else if (syncState.state === 'error') {
         message.textContent = 'Salvestamine ebaõnnestus';
         details.textContent = syncState.message || 'Server või K: ketas ei ole saadaval. Muudatused hoitakse selles arvutis.';
@@ -124,6 +133,15 @@ function renderDataUnavailable() {
     if (!path) return;
     path.textContent = failure?.dataFile ? failure.dataFile : '';
     path.style.display = failure?.dataFile ? '' : 'none';
+}
+
+function openSyncPopup() {
+    const indicator = document.getElementById('sync-indicator');
+    const popup = document.getElementById('sync-popup');
+    if (!popup) return;
+    popup.style.display = 'block';
+    indicator?.setAttribute('aria-expanded', 'true');
+    renderSyncPopup();
 }
 
 function setupSyncIndicator() {
@@ -303,6 +321,7 @@ window.toggleField = toggleField;
 window.setRowFontSize = setRowFontSize;
 window.openModal = openModal;
 window.closeModal = closeModal;
+window.openConflicts = openSyncPopup;
 window.renderTableBody = renderTableBody;
 window.updateStats = updateStats;
 window.showStatus = showStatus;

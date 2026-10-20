@@ -182,6 +182,51 @@ export async function headerSortingAndScale() {
     document.getElementById('btn-filter-tos').click(); equal(document.querySelectorAll('#table-body tr').length, 500);
 }
 
+// A row another user deleted must not stay frozen in a tab with an open
+// conflict: polling keeps running and the row is marked as contested.
+export async function conflictDoesNotFreezePolling() {
+    equal(testData.getConflicts().length, 1);
+    equal(testData.getConflicts()[0].currentValue, 'Remote edit');
+    // The other user deletes the row entirely while this tab has a conflict.
+    await remoteEdit([]);
+    // Polling must notice on its own, with no conflict resolution first.
+    await waitFor(() => testData.getConflicts()[0]?.field === '_deleted');
+    await waitFor(() => document.querySelector('#table-body tr.row-conflict'));
+    check(document.querySelector('#table-body .conflict-dot'), 'A conflicted row must carry a marker');
+    equal(document.querySelectorAll('#table-body tr').length, 1);
+    equal(testData.getJobs()[0]['Täitmise koht'], 'Local edit');
+    // Keeping the shared state accepts the deletion.
+    testData.resolveConflict('a', '_deleted', 'shared');
+    await waitFor(() => testData.getJobs().length === 0);
+    equal(document.getElementById('sync-indicator').classList.contains('is-conflict'), false);
+    equal(await saved(), []);
+    equal(document.querySelectorAll('#table-body tr.row-conflict').length, 0);
+}
+
+// The marker opens the resolution popup.
+export async function conflictMarkerOpensPopup() {
+    equal(testData.getConflicts().length, 1);
+    await waitFor(() => document.querySelector('#table-body .conflict-dot'));
+    check(document.querySelector('#table-body tr.row-conflict'), 'The row must be marked');
+    document.querySelector('#table-body .conflict-dot').click();
+    const labels = [...document.querySelectorAll('#sync-popup-actions button')].map(b => b.textContent);
+    check(labels.includes('Kasuta salvestatud'), `Unexpected actions: ${labels}`);
+    check(labels.includes('Kasuta minu väärtust'), `Unexpected actions: ${labels}`);
+}
+
+// A transient failure heals without anyone pressing "Proovi uuesti".
+export async function automaticSaveRetry() {
+    window.fetch = (...args) => args[0] === '/api/merge' ? Promise.reject(new Error('Simulated offline')) : realFetch(...args);
+    testData.getJobs()[0]['Täitmise koht'] = 'Retried edit';
+    testData.autoSave();
+    await waitFor(() => document.getElementById('sync-indicator').classList.contains('is-error'));
+    // The connection is back, but nobody clicks anything.
+    window.fetch = realFetch;
+    await waitFor(() => !testData.hasUnsavedChanges());
+    equal(localStorage.getItem('jobsPendingChanges'), null);
+    equal((await saved())[0]['Täitmise koht'], 'Retried edit');
+}
+
 export async function startupRetry() {
     check(document.getElementById('btn-add-job').disabled, 'Adding disabled after failed initial load');
     check(document.getElementById('data-unavailable').classList.contains('visible'), 'A failed load must explain the empty table');
