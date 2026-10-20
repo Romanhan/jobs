@@ -8,6 +8,10 @@
   elsewhere, "Jäta kustutatuks", and "Kasuta minu väärtust" after the other
   user changed the value again all needed a second click. The decision is now
   made against the shared value shown in the popup.
+- Name both sides of a row-level conflict (same ID, different content) as
+  "Kasuta salvestatud rida" / "Kasuta minu rida" instead of showing the raw
+  field name. "Kasuta minu rida" applies my values on top of the shared row, so
+  columns my row does not carry are kept instead of being blanked.
 
 The data format and the synchronization protocol are unchanged.
 

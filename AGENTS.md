@@ -85,6 +85,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - While the shared file cannot be read the page shows an "Andmed ei ole saadaval" panel with the file path instead of an empty table, and retries every 2 s
 - Same-field edits from stale copies create a visible conflict instead of silently overwriting either value
 - Polling keeps running while a conflict is open: the tab follows the shared file, keeps only the values in conflict, and marks the affected rows. A field conflict on a row deleted elsewhere becomes a deletion conflict
+- The merge baseline stays stale for a conflicted row, so nothing is re-created silently; it is rebased onto the shared value only when the user resolves the conflict, so every choice ("mina", "salvestatud", "ühenda") applies in one save
 - Comment conflicts offer an editable "Ühenda mõlemad" flow in addition to choosing the shared or local value
 - `jobs_data.json.version` is managed automatically beside the data file for reliable change polling
 - A validated backup is written to `backups/<YYYY-MM>/` when the newest backup is at least 48 hours old; the newest 36 are retained across all months, old snapshots left in `backups/` are still counted, and empty month folders are removed

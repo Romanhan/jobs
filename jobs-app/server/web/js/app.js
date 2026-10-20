@@ -85,12 +85,17 @@ function renderSyncPopup() {
         const jobNumber = job?.['Töö Nr'] || conflict.currentValue?.['Töö Nr'] || conflict.userValue?.['Töö Nr'] || '';
         details.textContent = conflict.field === '_deleted'
             ? `Töö ${jobNumber} muudeti või kustutati teise kasutaja poolt. Otsusta, kumb versioon jääb.`
-            : `Töö: ${jobNumber}\nVäli: ${conflict.field}\n\nSalvestatud info:\n${String(conflict.currentValue ?? '')}\n\nTeie muudatus:\n${String(conflict.userValue ?? '')}`;
+            : conflict.field === '_job'
+                ? `Töö ${jobNumber} on salvestatud failis juba olemas, aga erineva sisuga.\nMinu rida asendab salvestatud rea väärtused, kus need erinevad.`
+                : `Töö: ${jobNumber}\nVäli: ${conflict.field}\n\nSalvestatud info:\n${String(conflict.currentValue ?? '')}\n\nTeie muudatus:\n${String(conflict.userValue ?? '')}`;
         if (conflict.field === '_deleted') {
             // Name the outcome, not the side: "Kasuta minu väärtust" on a row
             // deleted elsewhere actually re-creates it in the shared file.
             addSyncAction(actions, conflict.currentValue ? 'Jäta salvestatud versioon' : 'Kustuta töö', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
             addSyncAction(actions, conflict.userValue ? 'Taasta minu versioon' : 'Jäta kustutatuks', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+        } else if (conflict.field === '_job') {
+            addSyncAction(actions, 'Kasuta salvestatud rida', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+            addSyncAction(actions, 'Kasuta minu rida', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
         } else {
             addSyncAction(actions, 'Kasuta salvestatud', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
             if (MERGEABLE_CONFLICT_FIELDS.has(conflict.field) && typeof conflict.currentValue === 'string' && typeof conflict.userValue === 'string') {
