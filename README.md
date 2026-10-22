@@ -4,9 +4,9 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-## Current version — 0.3.9
+## Current version — 0.3.11
 
-0.3.9 makes collaboration recover instead of freezing. A tab with an unresolved conflict keeps refreshing and follows the shared file, conflicting rows are marked in the table, and a failed save retries on its own instead of waiting for a click. Backup snapshots are now filed by month, and `error.log` timestamps use local time with an explicit UTC offset. 0.3.8 fixed the shared-drive lock that could block every user's saves: a lock directory the share refused to recreate is now inspected, a stale lock is reclaimed by renaming it aside, and the lock owner refreshes a heartbeat so a slow but live save is never broken into. See [release notes](CHANGELOG.md).
+0.3.11 keeps the shared lock folder (`jobs_data.json.lock`) permanently and claims a file inside it instead of creating the folder on every save. Some Windows shares allow files but refuse to create folders, which made saves wait 90 seconds and fail although no client held the lock. A missing lock folder is now reported in seconds, stale claims are still reclaimed after two minutes, and a failed reclaim never deletes a lock another client just took. 0.3.10 resolved conflicts with one click; 0.3.9 made collaboration recover instead of freezing. See [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -46,13 +46,16 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
    "K:\your-folder\jobs-app.exe" --data "K:\your-folder\jobs_data.json"
    ```
 
-3. **Build the executable:** from `jobs-app/server`, run `deno task build` with **Deno 2.9.6** — the fixed release toolchain for every version (2.9.7 builds are quarantined by WithSecure). Release builds and the Windows CI workflow both use it.
+   The app creates `jobs_data.json.lock` next to the data file on first start. If the share does not allow users to create folders, create that one folder yourself (while the app is closed) and grant users Modify inside it.
+
+3. **Build the executable:** from `jobs-app/server`, run `deno task build` with **Deno 2.9.8** — the fixed release toolchain for every version. 2.9.7 builds were quarantined by WithSecure as a false positive; 2.9.8 was scanned clean for both a hello-world and a real app build. Release builds and the Windows CI workflow both use it.
 
 ## Shared folder
 
 - Every user runs the same current version against the same `jobs_data.json`.
 - Changes are merged field by field under an exclusive lock, so two people can edit different rows or different fields of the same row at the same time.
-- The lock is a directory next to the data file. A lock stranded by a crash is reclaimed automatically after two minutes; a live save keeps refreshing its heartbeat.
+- The lock is a permanent `jobs_data.json.lock` folder next to the data file. The exclusive claim is a `holder` file inside it, created in one step; `owner.json` is the 5 s heartbeat. The folder is created once (the app tries at startup) and never removed, so a share that refuses folder creation can still be used. A claim stranded by a crash is reclaimed automatically after two minutes.
+- All PCs must run the same version: the lock protocol is version 2 as of 0.3.11. An older client that still holds the folder is detected and waited for, never taken over while its heartbeat is fresh.
 - Same-field edits from stale copies are shown as conflicts instead of silently overwriting either value.
 - While the shared file cannot be read, the page says so and retries every two seconds instead of showing an empty table.
 

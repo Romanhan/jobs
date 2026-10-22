@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.11
+
+- Keep the shared lock folder (`jobs_data.json.lock`) permanently and claim a
+  file inside it (`holder`, created exclusively) instead of creating the folder
+  on every save. Some Windows shares allow creating files but refuse to create
+  folders, which made every save wait 90 seconds and fail even though no client
+  held the lock. The folder is created once — the app tries at startup — and is
+  never removed; a stale claim is still renamed aside after two minutes.
+- Report a missing lock folder in seconds with a message that names it, instead
+  of retrying until the 90-second timeout. A heartbeat written without a holder
+  is recognised as a legacy lock, so a staged upgrade cannot produce two owners
+  and a partial release cannot block the next save.
+- A failed stale reclaim no longer falls back to deleting the path, which could
+  remove a claim another client had just acquired.
+- Move the build toolchain to Deno 2.9.8. 2.9.7 `deno compile` output was
+  quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the
+  compiled shell) and broke the resource merge that `set-version-info.ts`
+  relies on. With 2.9.8 both a hello-world build and a full 0.3.10 executable
+  were accepted by WithSecure, and the version stamp kept the embedded payload
+  byte for byte. 2.9.7 remains excluded; CI pins `v2.9.8`.
+
+The data format and the merge protocol are unchanged. The lock protocol is
+version 2: `jobs_data.json.lock` must exist once on the share (the app creates
+it when the share allows folder creation), and every PC must run 0.3.11 or
+newer.
+
 ## 0.3.10
 
 - Resolve a conflict with one click. After a poll updated an open conflict,

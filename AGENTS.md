@@ -38,9 +38,9 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 1. **Local:** Open `jobs-app/server/web/index.html` in Chrome/Edge
 2. **Shared folder:** Copy `jobs-app/index.html` + `jobs_data.json` to shared network folder
 3. **Build .exe:** `cd jobs-app/server && deno task build` (cross-compiles to a Windows PE and stamps the file version; `deno task build:quick` compiles without the version resource)
-   - **Always build with Deno 2.9.6 — for every future release.** This is the project's fixed release toolchain, not a one-off workaround for 0.3.6/0.3.7. Deno 2.9.7 `deno compile` output is quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build is flagged too), and it also breaks the resource merge that `set-version-info.ts` relies on. CI pins the exact tag `v2.9.6` (never `v2.x` or a newer release); `set-version-info.ts` warns when another version is used.
+   - **Always build with Deno 2.9.8 — for every future release.** This is the project's fixed release toolchain. Deno 2.9.7 `deno compile` output was quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build was flagged too) and broke the resource merge that `set-version-info.ts` relies on. On 2026-10-22 both a hello-world build and a full 0.3.10 executable were built with 2.9.8, accepted by WithSecure, and the embedded payload survived the version stamp, so the pin moved to 2.9.8. CI pins the exact tag `v2.9.8` (never `v2.x` or a newer release); `set-version-info.ts` warns when another version is used.
    - Do not bump the pin casually. Only change it after a fresh WithSecure scan of both a hello-world build and a real app build shows the new Deno is clean; then update the pin in `.github/workflows/build.yml`, `.github/workflows/test.yml`, this note, and the version check in `set-version-info.ts` together.
-   - Local builds: the `deno` on `PATH` may be newer, so run `PATH="$HOME/.cache/deno-2.9.6:$PATH" deno task build` (pinned binary at `~/.cache/deno-2.9.6/deno`).
+   - Local builds: the pinned binary is at `~/.cache/deno-2.9.8/deno`, so run `PATH="$HOME/.cache/deno-2.9.8:$PATH" deno task build` if the `deno` on `PATH` is a different version.
 
 ## Version Info
 - Version managed in `jobs-app/server/deno.json` (field `"version"`)
@@ -51,9 +51,9 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - App icon — `icon.ico` in `server/` (16×16, 32×32, 64×64 combined), baked via `--icon icon.ico`
 
 ## Release
-- **Toolchain is fixed for all releases: Deno 2.9.6** (see "How to Run"). Every release from 0.3.7 onward is built with it until the AV false positive is re-verified as gone.
+- **Toolchain is fixed for all releases: Deno 2.9.8** (see "How to Run"). Every release from the next version onward is built with it. 2.9.7 stays excluded; a newer Deno only replaces 2.9.8 after a fresh WithSecure scan of both a hello-world build and a real app build.
 - Flow: branch → PR → CI green (tests run on ubuntu and windows) → merge to `main` → annotated tag `vX.Y.Z` on `main` → push the tag.
-- CI (`build.yml`, `windows-latest`, Deno `v2.9.6`) builds, verifies `VersionInfo.FileVersion` matches `deno.json`, runs the full test suite against the compiled exe, and attaches `jobs-app.exe` to the GitHub release.
+- CI (`build.yml`, `windows-latest`, Deno `v2.9.8`) builds, verifies `VersionInfo.FileVersion` matches `deno.json`, runs the full test suite against the compiled exe, and attaches `jobs-app.exe` to the GitHub release.
 - Bump `jobs-app/server/deno.json` and add a `CHANGELOG.md` entry before tagging.
 - Never commit `jobs-app.exe` or archives — the release asset (or CI artifact) is the only binary.
 
@@ -80,7 +80,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 ## Collaboration (Shared Folder)
 - Each user runs the same current-version executable locally with `--data` pointing to the shared `jobs_data.json`
 - Field-level changes are merged under an exclusive shared-drive lock; different rows/fields can be edited concurrently
-- The lock is a directory (`jobs_data.json.lock`) with an `owner.json` inside it that doubles as a 5 s heartbeat. A create refused with `ACCESS_DENIED` is inspected, not just retried, because SMB reports a pending-deletion directory that way; stale locks (both directory and heartbeat older than 2 min) are reclaimed by renaming them to `jobs_data.json.lock.broken-*` and deleting that tombstone. Writes wait up to 90 s for a lock; reads never take it
+- The lock is a permanent `jobs_data.json.lock` folder with an exclusive `holder` file inside it (created with `CREATE_NEW`) and an `owner.json` heartbeat refreshed every 5 s. The folder is created once and never removed, because some shares allow files but refuse folder creation; a refusal to create it at startup is logged and fails fast instead of waiting 90 s. A stale claim (holder and heartbeat older than 2 min) is reclaimed by renaming `holder` to `holder.broken-*` and deleting that tombstone — never by deleting the path in place. A folder claimed by an older client (fresh `owner.json` without a holder) is waited for, not taken over.
 - Lock timings can be overridden for tests: `JOBS_LOCK_MAX_WAIT_MS`, `JOBS_LOCK_STALE_MS`, `JOBS_LOCK_HEARTBEAT_MS`, `JOBS_LOCK_PROGRESS_MS`
 - While the shared file cannot be read the page shows an "Andmed ei ole saadaval" panel with the file path instead of an empty table, and retries every 2 s
 - Same-field edits from stale copies create a visible conflict instead of silently overwriting either value
