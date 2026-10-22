@@ -36,7 +36,9 @@ Deno.test("server: a live lock is honoured by writes but never blocks a read", a
   const f = await fixture();
   try {
     const path = `${f.file}.lock`;
-    await Deno.mkdir(path);
+    await Deno.mkdir(path, { recursive: true });
+    await Deno.writeTextFile(`${path}/holder`, JSON.stringify({ token: "live", host: "test-owner" }));
+    await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({ token: "live", host: "test-owner" }));
     // Reads stay lock-free: refusing to read the shared file empties the table,
     // which is a worse failure than reading a file that is about to be replaced.
     const { jobs: base } = await f.data();
@@ -46,7 +48,8 @@ Deno.test("server: a live lock is honoured by writes but never blocks a read", a
       .then(response => { settled = true; return response; });
     await new Promise(resolve => setTimeout(resolve, 200));
     const waited = !settled;
-    await Deno.remove(path, { recursive: true });
+    await Deno.remove(`${path}/owner.json`);
+    await Deno.remove(`${path}/holder`);
     const response = await request; equal(response.status, 200);
     equal((await response.json()).status, 'saved');
     assert(waited, 'A write must wait for a live lock');
@@ -232,9 +235,11 @@ Deno.test("server: stale lock recovery", async () => {
   const f = await fixture();
   try {
     const path = `${f.file}.lock`;
-    await Deno.mkdir(path);
+    await Deno.mkdir(path, { recursive: true });
+    const holder = `${path}/holder`;
+    await Deno.writeTextFile(holder, JSON.stringify({ token: "stale", host: "crashed" }));
     const old = new Date(Date.now() - 180000);
-    await Deno.utime(path, old, old);
+    await Deno.utime(holder, old, old);
     const { jobs: base } = await f.data();
     const result = await f.merge(base, [{ ...base[0], "Täitmise koht": "after reclaim" }]);
     equal(result.status, "saved");
@@ -243,9 +248,12 @@ Deno.test("server: stale lock recovery", async () => {
     assert(log.includes("reclaimed as stale"), "The reclaim must be logged");
     assert(log.includes("method=renamed"), "The stale lock must be renamed, not deleted in place");
     // A successful merge schedules a backup, which takes the same lock again,
-    // so only tombstones must be absent — never the lock directory itself.
+    // so the folder must stay and only tombstones must be absent.
     const leftovers = (await Array.fromAsync(Deno.readDir(f.dir))).map(entry => entry.name);
     assert(!leftovers.some(name => name.includes(".lock.broken-")), `The reclaim must leave no tombstone: ${leftovers}`);
+    assert(leftovers.includes("jobs_data.json.lock"), `The lock folder must stay: ${leftovers}`);
+    const inside = (await Array.fromAsync(Deno.readDir(path))).map(entry => entry.name);
+    assert(!inside.some(name => name.includes("holder.broken-")), `The reclaim must leave no holder tombstone: ${inside}`);
   } finally { await f.close(); }
 });
 
@@ -335,20 +343,24 @@ Deno.test("server: blocked merge logs lock owner, future timestamp and filesyste
   const f = await fixture();
   try {
     const path = `${f.file}.lock`;
-    await Deno.mkdir(path);
-    await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({ host: "test-owner", operation: "backup" }));
+    await Deno.mkdir(path, { recursive: true });
+    const claim = { token: "blocked", host: "test-owner", operation: "backup" };
+    await Deno.writeTextFile(`${path}/holder`, JSON.stringify(claim));
+    await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify(claim));
     const future = new Date(Date.now() + 30 * 60 * 1000);
-    await Deno.utime(path, future, future);
+    await Deno.utime(`${path}/holder`, future, future);
+    await Deno.utime(`${path}/owner.json`, future, future);
     const { jobs: base } = await f.data();
     const response = await f.request('/api/merge', { base, proposed: [{ ...base[0], 'Täitmise koht': 'blocked' }] });
     equal(response.status, 503);
     await response.text();
     const log = await Deno.readTextFile(`${f.dir}/error.log`);
     for (const detail of ['host=', 'pid=', 'version=', 'Merge save failed', 'operation=merge',
-      'observedAgeMs=-', 'lastFailure=mkdir:', 'lockState=present', 'test-owner', 'backup', 'localHolders=[]']) {
+      'observedAgeMs=-', 'lastFailure=create holder:', 'lockState=present', 'test-owner', 'backup', 'localHolders=[]']) {
       assert(log.includes(detail), `Missing diagnostic: ${detail}`);
     }
-    await Deno.remove(path, { recursive: true });
+    await Deno.remove(`${path}/owner.json`);
+    await Deno.remove(`${path}/holder`);
     equal((await f.data()).jobs.length, 1);
   } finally { await f.close(); }
 });
@@ -359,7 +371,9 @@ Deno.test("server: startup reports a lock left behind and clears lock tombstones
     const path = `${f.file}.lock`;
     const tombstone = `${path}.broken-1000-abc`;
     await Deno.mkdir(tombstone);
-    await Deno.mkdir(path);
+    await Deno.mkdir(path, { recursive: true });
+    await Deno.writeTextFile(`${path}/holder`, JSON.stringify({ token: "startup", host: "other" }));
+    await Deno.writeTextFile(`${path}/owner.json`, JSON.stringify({ token: "startup", host: "other" }));
     await f.start();
     const log = await until(async () => {
       const text = await Deno.readTextFile(`${f.dir}/error.log`);
@@ -368,7 +382,8 @@ Deno.test("server: startup reports a lock left behind and clears lock tombstones
     assert(log.includes('Shared data lock present at startup'), 'A leftover lock must be reported at startup');
     assert(log.includes(tombstone.split('/').pop()!), 'The cleared tombstone must be named in the log');
     assert(!(await exists(tombstone)), 'Tombstones must be cleared at startup');
-    await Deno.remove(path, { recursive: true });
+    await Deno.remove(`${path}/owner.json`);
+    await Deno.remove(`${path}/holder`);
     equal((await f.data()).jobs.length, 1);
   } finally { await f.close(); }
 });

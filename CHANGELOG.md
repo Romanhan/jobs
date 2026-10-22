@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.3.11
+
+- Keep the shared lock folder (`jobs_data.json.lock`) permanently and claim a
+  file inside it (`holder`, created exclusively) instead of creating the folder
+  on every save. Some Windows shares allow creating files but refuse to create
+  folders, which made every save wait 90 seconds and fail even though no client
+  held the lock. The folder is created once — the app tries at startup — and is
+  never removed; a stale claim is still renamed aside after two minutes.
+- Report a missing lock folder in seconds with a message that names it, instead
+  of retrying until the 90-second timeout. A fresh heartbeat written without a
+  holder is recognised as a 0.3.10 lock and waited for, and a leftover
+  heartbeat from a partial release does not block the next save.
+- A failed stale reclaim no longer falls back to deleting the path, which could
+  remove a claim another client had just acquired.
+- Reclaim an empty claim after 30 seconds instead of two minutes. A client that
+  failed between creating `holder` and writing it no longer stalls every save.
+- Read the claim back after creating it and only act as the owner when it
+  carries this client's token, so a claim moved aside in the same instant
+  cannot produce two owners.
+- Move the build toolchain to Deno 2.9.8. 2.9.7 `deno compile` output was
+  quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the
+  compiled shell) and broke the resource merge that `set-version-info.ts`
+  relies on. With 2.9.8 both a hello-world build and a full 0.3.10 executable
+  were accepted by WithSecure, and the version stamp kept the embedded payload
+  byte for byte. 2.9.7 remains excluded; CI pins `v2.9.8`.
+
+The data format and the merge protocol are unchanged. The lock protocol is
+version 2: `jobs_data.json.lock` must exist once on the share (the app creates
+it when the share allows folder creation), and every PC must run 0.3.11 or
+newer. Upgrade all PCs together: do not mix 0.3.10 and 0.3.11 on one share.
+A 0.3.10 client treats the permanent folder as its own stale lock and renames
+it away after two idle minutes — on a share that refuses folder creation
+nobody can recreate it — and in a short window both versions can believe they
+hold the lock. Close the app everywhere, create the folder if needed, then
+start 0.3.11.
+
 ## 0.3.10
 
 - Resolve a conflict with one click. After a poll updated an open conflict,

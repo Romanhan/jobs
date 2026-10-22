@@ -399,13 +399,17 @@ function mergeVersionResource(buf: Uint8Array, versionBlob: Uint8Array): Uint8Ar
 const exePath = "jobs-app.exe";
 const { version } = JSON.parse(await Deno.readTextFile(new URL("./deno.json", import.meta.url)));
 
-// Deno 2.9.7 `deno compile` output is detected by WithSecure as
-// Trojan.TR/W64.Malware (a false positive on the compiled shell); 2.9.6 output
-// is not. Warn loudly so a 2.9.7 build is never shipped by accident.
-if (Deno.version.deno !== "2.9.6") {
+// Deno 2.9.7 `deno compile` output was detected by WithSecure as
+// Trojan.TR/W64.Malware (a false positive on the compiled shell) and broke the
+// resource merge below. 2.9.8 was scanned clean for both a hello-world and a
+// real app build, so that is the release toolchain. Warn loudly on anything
+// else so a stray toolchain is never shipped by accident.
+const RELEASE_DENO_VERSION = "2.9.8";
+if (Deno.version.deno !== RELEASE_DENO_VERSION) {
   console.warn(
-    `\nWARNING: built with Deno ${Deno.version.deno}; CI pins v2.9.6 because ` +
-      `2.9.7 executables are quarantined by WithSecure. Use Deno 2.9.6 for release builds.\n`,
+    `\nWARNING: built with Deno ${Deno.version.deno}; release builds use ` +
+      `${RELEASE_DENO_VERSION}. 2.9.7 executables are quarantined by WithSecure ` +
+      `and break the version-resource merge.\n`,
   );
 }
 

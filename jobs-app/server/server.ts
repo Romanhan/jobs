@@ -2,7 +2,10 @@ import { resolve } from "node:path";
 import { APP_VERSION } from "./web/js/version.js";
 import {
   acquireDataLock as acquireSharedLock,
+  HOLDER_TOMBSTONE_PREFIX,
   LOCK_DEFAULTS,
+  lockHolderPath,
+  lockOwnerPath,
   lockTombstonePrefix,
   releaseDataLock,
   type LockProbe,
@@ -277,31 +280,74 @@ async function probeDataDirectory(): Promise<LockProbe> {
   }
 }
 
-// Records what the shared lock looked like when this server started and clears
-// tombstones left behind by an interrupted reclaim. Never blocks startup.
+// Records what the shared lock looked like when this server started, creates
+// the permanent lock folder when the share allows it, and clears tombstones
+// left behind by an interrupted reclaim. Never blocks startup.
 async function inspectSharedLockAtStartup(): Promise<void> {
-  const path = lockPath();
+  const directory = lockPath();
   try {
-    const stat = await Deno.stat(path);
-    let owner = "unavailable";
-    try {
-      owner = (await Deno.readTextFile(`${path}/owner.json`)).slice(0, 2048);
-    } catch { /* owner metadata is optional */ }
-    logEvent(`Shared data lock present at startup: path="${path}" ageMs=${Date.now() - (stat.mtime?.getTime() || Date.now())} owner=${owner}`);
+    await Deno.stat(directory);
   } catch (error) {
     if (!(error instanceof Deno.errors.NotFound)) {
-      logError(`Shared data lock inspection at startup failed: path="${path}": ${error}`);
+      logError(`Shared data lock folder inspection at startup failed: path="${directory}": ${error}`);
+      return;
+    }
+    try {
+      await Deno.mkdir(directory);
+      logEvent(`Created shared data lock folder: "${directory}"`);
+    } catch (createError) {
+      logError(
+        `Shared data lock folder "${directory}" is unavailable: ${createError}. ` +
+        `Create this folder once on the file server, next to "${DATA_FILE}", and let users write inside it.`,
+      );
+      return;
     }
   }
-  const directory = dataDirectory();
-  const prefix = lockTombstonePrefix(DATA_FILE.split(/[\\/]/).pop() || DATA_FILE);
+
+  const holder = lockHolderPath(directory);
+  try {
+    const stat = await Deno.stat(holder);
+    let owner = "unavailable";
+    try {
+      owner = (await Deno.readTextFile(lockOwnerPath(directory))).slice(0, 2048);
+    } catch { /* owner metadata is optional */ }
+    logEvent(`Shared data lock present at startup: path="${holder}" ageMs=${Date.now() - (stat.mtime?.getTime() || Date.now())} owner=${owner}`);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) {
+      logError(`Shared data lock inspection at startup failed: path="${holder}": ${error}`);
+    }
+  }
+
+  // Reclaim tombstones inside the permanent folder and the old directory-lock
+  // tombstones next to the data file. A tombstone is already detached from the
+  // lock, so removing one that another client is also cleaning up is harmless.
   try {
     for await (const entry of Deno.readDir(directory)) {
-      if (!entry.name.startsWith(prefix)) continue;
+      if (!entry.name.startsWith(HOLDER_TOMBSTONE_PREFIX)) continue;
+      const path = joinPath(directory, entry.name);
       try {
-        await releaseDataLock(joinPath(directory, entry.name), { attempts: 2, log: logError });
+        await releaseDataLock(path, { attempts: 2, log: logError });
+        logEvent(`Removed stale lock tombstone: "${path}"`);
+      } catch (error) {
+        logError(`Stale lock tombstone cleanup failed for "${path}": ${error}`);
+      }
+    }
+  } catch (error) {
+    logError(`Shared data lock folder scan failed: path="${directory}": ${error}`);
+  }
+
+  const dataDir = dataDirectory();
+  const prefix = lockTombstonePrefix(DATA_FILE.split(/[\\/]/).pop() || DATA_FILE);
+  try {
+    for await (const entry of Deno.readDir(dataDir)) {
+      if (!entry.name.startsWith(prefix)) continue;
+      const path = joinPath(dataDir, entry.name);
+      try {
+        await releaseDataLock(path, { attempts: 2, log: logError });
         logEvent(`Removed stale lock tombstone: "${entry.name}"`);
-      } catch { /* it may already be gone */ }
+      } catch (error) {
+        logError(`Stale lock tombstone cleanup failed for "${path}": ${error}`);
+      }
     }
   } catch { /* the directory may not exist yet, or may not be readable */ }
 }
