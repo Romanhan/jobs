@@ -18,6 +18,8 @@ class FakeFs implements LockFs {
   denyRename = false;
   /** Refuse every filesystem call, like a share that lost write access. */
   denyEverything = false;
+  /** Runs right after a holder is created, to stage a race with another client. */
+  afterHolderCreate: (() => void) | null = null;
   createCalls = 0;
   removeCalls: string[] = [];
 
@@ -76,6 +78,11 @@ class FakeFs implements LockFs {
     }
     this.ensureParent(path);
     this.files.set(path, { content: data, mtime: Date.now() });
+    if (options?.createNew && path.endsWith("/holder") && this.afterHolderCreate) {
+      const hook = this.afterHolderCreate;
+      this.afterHolderCreate = null;
+      hook();
+    }
   }
 
   async rename(oldPath: string, newPath: string): Promise<void> {
@@ -329,6 +336,67 @@ Deno.test("lock: a missing folder is created once and kept", async () => {
   const again = await acquireDataLock(options(fs, log));
   await again();
   assert(fs.directories.has(LOCK_PATH), "The folder must stay after the second use");
+});
+
+Deno.test("lock: an empty claim left by a failed create is reclaimed without the full stale wait", async () => {
+  const fs = new FakeFs();
+  const log: string[] = [];
+  fs.directories.add(LOCK_PATH);
+  fs.files.set(HOLDER_PATH, { content: "", mtime: Date.now() - 60000 });
+
+  const started = Date.now();
+  const release = await acquireDataLock(options(fs, log, { staleMs: 120000, emptyClaimMs: 30000 }));
+
+  assert(Date.now() - started < 1000, "An abandoned claim must not wait for the stale period");
+  assert(log.some(line => line.includes("abandoned (empty claim)")), "The reclaim must be logged as abandoned");
+  assert(JSON.parse(await fs.readTextFile(HOLDER_PATH)).token, "The new claim must carry a token");
+  equal(fs.tombstones().length, 0);
+  await release();
+});
+
+Deno.test("lock: a fresh empty claim is still respected", async () => {
+  const fs = new FakeFs();
+  const log: string[] = [];
+  fs.directories.add(LOCK_PATH);
+  fs.files.set(HOLDER_PATH, { content: "", mtime: Date.now() });
+
+  let failure = "";
+  try {
+    await acquireDataLock(options(fs, log, { maxWaitMs: 200, emptyClaimMs: 30000 }));
+  } catch (error) {
+    failure = error instanceof Error ? error.message : String(error);
+  }
+
+  assert(failure.includes("Timed out"), `A claim being written must be waited for: ${failure}`);
+  equal(fs.files.get(HOLDER_PATH)?.content, "");
+  assert(!log.some(line => line.includes("reclaimed")), "A fresh empty claim must not be reclaimed");
+});
+
+Deno.test("lock: a claim taken over right after create is not used", async () => {
+  const fs = new FakeFs();
+  const log: string[] = [];
+  fs.directories.add(LOCK_PATH);
+  // Another client moves our claim aside and takes the lock in the same instant.
+  fs.afterHolderCreate = () => {
+    fs.files.set(HOLDER_PATH, { content: JSON.stringify({ token: "other", protocol: 2 }), mtime: Date.now() });
+    fs.files.set(OWNER_PATH, { content: JSON.stringify({ token: "other", protocol: 2 }), mtime: Date.now() });
+  };
+
+  let acquired = false;
+  const pending = acquireDataLock(options(fs, log)).then(release => {
+    acquired = true;
+    return release;
+  });
+  await sleep(30);
+  equal(acquired, false);
+  assert(log.some(line => line.includes("not confirmed after create")), "The lost claim must be logged");
+
+  // The other client releases.
+  fs.files.delete(OWNER_PATH);
+  fs.files.delete(HOLDER_PATH);
+  const release = await pending;
+  assert(JSON.parse(await fs.readTextFile(HOLDER_PATH)).token !== "other", "The claim must be ours after the release");
+  await release();
 });
 
 Deno.test("lock: a share that refuses folder creation fails fast with a setup message", async () => {

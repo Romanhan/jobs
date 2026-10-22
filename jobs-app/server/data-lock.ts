@@ -27,6 +27,10 @@ export const LOCK_DEFAULTS = {
   staleMs: 120_000,
   heartbeatMs: 5_000,
   progressMs: 15_000,
+  // A holder still empty this long after its creation, with no heartbeat, was
+  // left by a client that failed between creating the file and writing its
+  // claim. A live owner writes both within milliseconds.
+  emptyClaimMs: 30_000,
   releaseRetryMs: 50,
   releaseAttempts: 8,
 };
@@ -63,6 +67,7 @@ export interface AcquireLockOptions {
   logError?: LockLog;
   maxWaitMs?: number;
   staleMs?: number;
+  emptyClaimMs?: number;
   heartbeatMs?: number;
   progressMs?: number;
   retryBaseDelayMs?: number;
@@ -194,6 +199,8 @@ interface LockObservation {
   claimAgeMs: number;
   owner: string;
   token: string | null;
+  /** Token written in the holder itself; null while it is empty or unreadable. */
+  holderToken: string | null;
 }
 
 function readToken(text: string): string | null {
@@ -208,6 +215,7 @@ function readToken(text: string): string | null {
 async function observeLock(fs: LockFs, lockDir: string): Promise<LockObservation> {
   const holderPath = lockHolderPath(lockDir);
   const holderStat = await fs.stat(holderPath);
+  const holderToken = readToken(await fs.readTextFile(holderPath));
   const now = Date.now();
   const claimAgeMs = now - (holderStat.mtime?.getTime() ?? now);
   let ageMs = claimAgeMs;
@@ -229,7 +237,7 @@ async function observeLock(fs: LockFs, lockDir: string): Promise<LockObservation
   } catch (error) {
     if (!(error instanceof Deno.errors.NotFound)) throw error;
   }
-  return { ageMs, claimAgeMs, owner, token };
+  return { ageMs, claimAgeMs, owner, token, holderToken };
 }
 
 // A 0.3.10 client (or older) claims the folder itself and only writes
@@ -299,6 +307,7 @@ export async function acquireDataLock(options: AcquireLockOptions): Promise<() =
   const logError = options.logError ?? log;
   const maxWaitMs = options.maxWaitMs ?? LOCK_DEFAULTS.maxWaitMs;
   const staleMs = options.staleMs ?? LOCK_DEFAULTS.staleMs;
+  const emptyClaimMs = options.emptyClaimMs ?? LOCK_DEFAULTS.emptyClaimMs;
   const heartbeatMs = options.heartbeatMs ?? LOCK_DEFAULTS.heartbeatMs;
   const progressMs = options.progressMs ?? LOCK_DEFAULTS.progressMs;
   const retryBaseDelayMs = options.retryBaseDelayMs ?? 100;
@@ -431,6 +440,23 @@ export async function acquireDataLock(options: AcquireLockOptions): Promise<() =
     };
     try {
       await fs.writeTextFile(holderPath, JSON.stringify(claim), { createNew: true });
+      // Confirm the claim on the share carries this token before acting as the
+      // owner: if it was moved aside between the create and the write, another
+      // client may own the lock now. A failed read proves nothing either way,
+      // and abandoning our own claim would stall every save for the stale
+      // period, so only a different claim or a missing one backs off.
+      let confirmed = true;
+      try {
+        confirmed = readToken(await fs.readTextFile(holderPath)) === token;
+      } catch (readError) {
+        if (readError instanceof Deno.errors.NotFound) confirmed = false;
+      }
+      if (!confirmed) {
+        lastFailure = "claim not confirmed after create";
+        logError(`Shared data lock claim was not confirmed after create, retrying: path="${holderPath}" token=${token}`);
+        await sleep(backoff());
+        continue;
+      }
       return await engage(token, claim);
     } catch (error) {
       lastFailure = `create holder: ${error}`;
@@ -478,12 +504,18 @@ export async function acquireDataLock(options: AcquireLockOptions): Promise<() =
           logError(`Shared data lock timestamp is ${-observation.claimAgeMs}ms in the future: path="${holderPath}" owner=${observedOwner}`);
         }
       }
-      if (observation.ageMs > staleMs) {
-        const method = await breakStaleClaim(fs, lockDir, observation.token, logError);
+      // An empty holder without a heartbeat is a claim whose creator failed
+      // before writing it; waiting the full stale period would stall saves.
+      const abandoned = observation.holderToken === null && observation.owner === "missing" &&
+        observation.claimAgeMs > emptyClaimMs;
+      if (observation.ageMs > staleMs || abandoned) {
+        // An abandoned claim has no heartbeat of its own, so pass a token that
+        // never matches: a heartbeat appearing meanwhile belongs to a new owner.
+        const method = await breakStaleClaim(fs, lockDir, abandoned ? "" : observation.token, logError);
         if (method === "failed") {
           logError(`Shared data lock could not be reclaimed as stale: path="${holderPath}" owner=${observedOwner}`);
         } else {
-          log(`Shared data lock reclaimed as stale after ${observation.ageMs}ms: path="${holderPath}" owner=${observedOwner} method=${method}`);
+          log(`Shared data lock reclaimed as ${abandoned ? "abandoned (empty claim)" : "stale"} after ${observation.claimAgeMs}ms: path="${holderPath}" owner=${observedOwner} method=${method}`);
         }
         continue;
       }
