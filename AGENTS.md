@@ -36,7 +36,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 
 ## How to Run
 1. **Local:** Open `jobs-app/server/web/index.html` in Chrome/Edge
-2. **Shared folder:** Copy `jobs-app/index.html` + `jobs_data.json` to shared network folder
+2. **Shared folder:** Copy `jobs-app.exe` to the shared network folder and point every shortcut at the same data file: `jobs-app.exe --data K:\folder\jobs_data.json`
 3. **Build .exe:** `cd jobs-app/server && deno task build` (cross-compiles to a Windows PE and stamps the file version; `deno task build:quick` compiles without the version resource)
    - **Always build with Deno 2.9.8 — for every future release.** This is the project's fixed release toolchain. Deno 2.9.7 `deno compile` output was quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build was flagged too) and broke the resource merge that `set-version-info.ts` relies on. On 2026-10-22 both a hello-world build and a full 0.3.10 executable were built with 2.9.8, accepted by WithSecure, and the embedded payload survived the version stamp, so the pin moved to 2.9.8. CI pins the exact tag `v2.9.8` (never `v2.x` or a newer release); `set-version-info.ts` warns when another version is used.
    - Do not bump the pin casually. Only change it after a fresh WithSecure scan of both a hello-world build and a real app build shows the new Deno is clean; then update the pin in `.github/workflows/build.yml`, `.github/workflows/test.yml`, this note, and the version check in `set-version-info.ts` together.
@@ -80,8 +80,8 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 ## Collaboration (Shared Folder)
 - Each user runs the same current-version executable locally with `--data` pointing to the shared `jobs_data.json`
 - Field-level changes are merged under an exclusive shared-drive lock; different rows/fields can be edited concurrently
-- The lock is a permanent `jobs_data.json.lock` folder with an exclusive `holder` file inside it (created with `CREATE_NEW`) and an `owner.json` heartbeat refreshed every 5 s. The folder is created once and never removed, because some shares allow files but refuse folder creation; a refusal to create it at startup is logged and fails fast instead of waiting 90 s. A stale claim (holder and heartbeat older than 2 min) is reclaimed by renaming `holder` to `holder.broken-*` and deleting that tombstone — never by deleting the path in place. A folder claimed by an older client (fresh `owner.json` without a holder) is waited for, not taken over.
-- Lock timings can be overridden for tests: `JOBS_LOCK_MAX_WAIT_MS`, `JOBS_LOCK_STALE_MS`, `JOBS_LOCK_HEARTBEAT_MS`, `JOBS_LOCK_PROGRESS_MS`
+- The lock is a permanent `jobs_data.json.lock` folder with an exclusive `holder` file inside it (created with `CREATE_NEW`) and an `owner.json` heartbeat refreshed every 5 s. The folder is created once and never removed, because some shares allow files but refuse folder creation; a refusal to create it at startup is logged and fails fast instead of waiting 90 s. A stale claim (holder and heartbeat older than 2 min) is reclaimed by renaming `holder` to `holder.broken-*` and deleting that tombstone — never by deleting the path in place, so a failed reclaim cannot remove a claim another client just took. An empty `holder` with no heartbeat is reclaimed after 30 s, so a client that crashed between creating the claim and writing it does not stall every save. After creating the claim the client reads it back and acts as the owner only when it carries its own token, so a claim moved aside in the same instant cannot produce two owners. A folder claimed by an older client (fresh `owner.json` without a holder) is waited for, not taken over.
+- Lock timings can be overridden for tests: `JOBS_LOCK_MAX_WAIT_MS`, `JOBS_LOCK_STALE_MS`, `JOBS_LOCK_HEARTBEAT_MS`, `JOBS_LOCK_PROGRESS_MS` (the 30 s empty-claim threshold is fixed).
 - While the shared file cannot be read the page shows an "Andmed ei ole saadaval" panel with the file path instead of an empty table, and retries every 2 s
 - Same-field edits from stale copies create a visible conflict instead of silently overwriting either value
 - Polling keeps running while a conflict is open: the tab follows the shared file, keeps only the values in conflict, and marks the affected rows. A field conflict on a row deleted elsewhere becomes a deletion conflict
@@ -89,7 +89,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - Comment conflicts offer an editable "Ühenda mõlemad" flow in addition to choosing the shared or local value
 - `jobs_data.json.version` is managed automatically beside the data file for reliable change polling
 - A validated backup is written to `backups/<YYYY-MM>/` when the newest backup is at least 48 hours old; the newest 36 are retained across all months, old snapshots left in `backups/` are still counted, and empty month folders are removed
-- All users must upgrade together when the synchronization protocol changes; older executables still use whole-file saves
+- All users must upgrade together when the synchronization protocol changes — do not mix versions on one share. 0.3.10 and 0.3.11 are not compatible: a 0.3.10 client treats the permanent lock folder as its own stale lock and renames it away after two idle minutes, and on a share that refuses folder creation nobody can recreate it. Close the app everywhere before replacing the executable — the background server lingers after the last tab closes.
 
 ## All 20 Columns
 1. Töö Nr

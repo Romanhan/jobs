@@ -6,7 +6,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ## Current version — 0.3.11
 
-0.3.11 keeps the shared lock folder (`jobs_data.json.lock`) permanently and claims a file inside it instead of creating the folder on every save. Some Windows shares allow files but refuse to create folders, which made saves wait 90 seconds and fail although no client held the lock. A missing lock folder is now reported in seconds, stale claims are still reclaimed after two minutes, and a failed reclaim never deletes a lock another client just took. 0.3.10 resolved conflicts with one click; 0.3.9 made collaboration recover instead of freezing. See [release notes](CHANGELOG.md).
+0.3.11 keeps the shared lock folder (`jobs_data.json.lock`) permanently and claims a file inside it instead of creating the folder on every save. Some Windows shares allow files but refuse to create folders, which made saves wait 90 seconds and fail although no client held the lock. A missing lock folder is now reported in seconds, stale claims are reclaimed after two minutes, and an empty claim left by a crash is reclaimed after 30 seconds. A failed reclaim never deletes a lock another client just took. 0.3.10 resolved conflicts with one click; 0.3.9 made collaboration recover instead of freezing. See [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -46,27 +46,9 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
    "K:\your-folder\jobs-app.exe" --data "K:\your-folder\jobs_data.json"
    ```
 
-   The app creates `jobs_data.json.lock` next to the data file on first start. If the share does not allow users to create folders, create that one folder yourself (while the app is closed) and grant users Modify inside it.
-
+   The app creates `jobs_data.json.lock` next to the data file on first start and keeps it. If the share does not allow users to create folders, create that one folder yourself (while the app is closed) and grant users Modify inside it.
 3. **Build the executable:** from `jobs-app/server`, run `deno task build` with **Deno 2.9.8** — the fixed release toolchain for every version. 2.9.7 builds were quarantined by WithSecure as a false positive; 2.9.8 was scanned clean for both a hello-world and a real app build. Release builds and the Windows CI workflow both use it.
 
-## Shared folder
+### Upgrading
 
-- Every user runs the same current version against the same `jobs_data.json`.
-- Changes are merged field by field under an exclusive lock, so two people can edit different rows or different fields of the same row at the same time.
-- The lock is a permanent `jobs_data.json.lock` folder next to the data file. The exclusive claim is a `holder` file inside it, created in one step; `owner.json` is the 5 s heartbeat. The folder is created once (the app tries at startup) and never removed, so a share that refuses folder creation can still be used. A claim stranded by a crash is reclaimed automatically after two minutes.
-- All PCs must run the same version: the lock protocol is version 2 as of 0.3.11. An older client that still holds the folder is detected and waited for, never taken over while its heartbeat is fresh.
-- Same-field edits from stale copies are shown as conflicts instead of silently overwriting either value.
-- While the shared file cannot be read, the page says so and retries every two seconds instead of showing an empty table.
-
-## Backups
-
-A validated snapshot is written to `backups/<YYYY-MM>/` when the newest valid backup is at least 48 hours old. The newest 36 snapshots are kept across all months; older ones are pruned. To restore, copy one snapshot over `jobs_data.json` while nobody has the app open.
-
-## Diagnostics
-
-`error.log` is written next to the executable (1 MB rotation to `error.log.1`) and records startup/shutdown, tab lifecycle, shared-lock waits and reclaims, merge/load failures, and browser-reported connection and conflict events. `JOBS_LOG_FILE` overrides the path. Timestamps are local time with the UTC offset, and the startup line records the offset and host name.
-
-## Tests
-
-From `jobs-app/server`: `deno task test` (needs Deno 2 and Chromium or Google Chrome). See `tests/README.md` for details.
+Close the app on every PC before replacing `jobs-app.exe` — a background server keeps running for a while after the last tab closes. Upgrade all PCs together: do not mix 0.3.10 and 0.3.11 on one share. A 0.3.10 client treats the permanent lock folder as its own stale lock and renames it away after two idle minutes, and on a share that refuses folder creation nobody can recreate it.
