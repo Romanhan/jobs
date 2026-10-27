@@ -180,30 +180,30 @@
     transform: translateY(1px);
 }
 
-.status-box span {
+.status-box .status-count {
     font-size: 14px;
     font-weight: 700;
     line-height: 1;
     color: inherit;
 }
 
-.status-box.active span {
+.status-box.active .status-count {
     color: var(--text-muted);
 }
 
-.status-box.in-progress span {
+.status-box.in-progress .status-count {
     color: var(--color-in-progress);
 }
 
-.status-box.allhanke span {
+.status-box.allhanke .status-count {
     color: var(--color-allhanke);
 }
 
-.status-box.overdue span {
+.status-box.overdue .status-count {
     color: var(--color-overdue);
 }
 
-.status-box.completed span {
+.status-box.completed .status-count {
     color: var(--color-completed);
 }
 

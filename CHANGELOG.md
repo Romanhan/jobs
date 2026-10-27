@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.12
+
+- Add EST / ENG / RUS language buttons at the top of the menu. The whole
+  interface — header, toolbar, menu, column headers and tooltips, add form,
+  calendar, popups, conflict resolution and notifications — is available in
+  Estonian (default), English and Russian, and the choice is remembered per
+  browser. Data, column keys and CSV files are unchanged.
+
 ## 0.3.11
 
 - Keep the shared lock folder (`jobs_data.json.lock`) permanently and claim a

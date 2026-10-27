@@ -1,4 +1,5 @@
 import { formatDate } from './utils.js';
+import { t } from './i18n.js';
 
 let calendarPopup = null;
 let calendarCallback = null;
@@ -104,7 +105,7 @@ export function renderCalendar() {
     const popup = document.getElementById('calendar-popup');
     if (!popup) return;
     
-    const monthNames = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
+    const monthNames = t('calendar.months').split(',');
     
     let html = '<div class="calendar-header">';
     html += '<button class="calendar-header-btn" data-action="prev-month">◀</button>';
@@ -113,7 +114,7 @@ export function renderCalendar() {
     html += '</div>';
     
     html += '<div class="calendar-weekdays">';
-    const weekdays = ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
+    const weekdays = t('calendar.weekdays').split(',');
     weekdays.forEach(day => {
         html += '<span class="calendar-weekday">' + day + '</span>';
     });
@@ -157,7 +158,7 @@ export function renderCalendar() {
     }
     
     html += '</div>';
-    html += '<button class="calendar-today-btn" data-action="today">Täna</button>';
+    html += '<button class="calendar-today-btn" data-action="today">' + t('calendar.today') + '</button>';
     
     popup.innerHTML = html;
 

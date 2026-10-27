@@ -9,24 +9,7 @@ export const COLUMNS = [
     'Tegevuse sisestaja nimi'
 ];
 
-export const COLUMN_LABELS = {
-    'Kommentaar(tooriku/detaili seis, muu oluline info)': 'Kommentaar',
-    'Detaili/koostu nimetus või joonise Nr': 'Detail/koostu',
-    'EE vajaduse kuupäev (koostamiseks valmis kujul)': 'EE vajadus',
-    'Meeldetuletus X päeva ennem': 'Meeldetuletus',
-    'Tegevuse sisestaja nimi': 'Sisestaja',
-    'Otsuse/Tegevuse vastutaja': 'Vastutaja',
-    'Tooriku saabumise kuupäev EE': 'Saabunud',
-    'Valmis kpv': 'Valmis',
-    'Alustamise kpv': 'Alustamine',
-    'Töötluse algus': 'Töötlus algus',
-    'EE töötluse lõpp': 'EE lõpp',
-    'Info sisestamise kuupäev': 'Sisestatud',
-    'EE kuupäev tarne': 'EE tarne',
-    'TE kuupäev tarne': 'TE tarne',
-    'Töötlus Lõpetatud': 'Lõpetatud',
-    'Töötlus allhankes': 'Allhankes'
-};
+// Short header labels and full-name tooltips live in i18n.js (columnLabel/columnTitle).
 
 // export const COLUMN_WIDTHS = {
 //     'Töö Nr': 80, 'Valmis': 45, 'Valmis kpv': 85, 'Tegevuse sisestaja nimi': 70,
@@ -50,13 +33,13 @@ export const COLUMN_WRAP = [];
 export const STICKY_COLS = ['Töö Nr', 'Valmis', 'Detaili/koostu nimetus või joonise Nr'];
 
 export const FORM_FIELDS = [
-    { col: 'Töö Nr', required: true, label: 'Töö Nr', width: 120, line: 1 },
-    { col: 'Detaili/koostu nimetus või joonise Nr', label: 'Detail/koostu', width: 120, line: 1 },
-    { col: 'Kommentaar(tooriku/detaili seis, muu oluline info)', label: 'Kommentaar', width: 146, line: 1 },
-    { col: 'Tooriku saabumise kuupäev EE', label: 'Saabumine', isDate: true, width: 120, line: 2 },
-    { col: 'EE vajaduse kuupäev (koostamiseks valmis kujul)', label: 'Vajadus', isDate: true, width: 120, line: 2 },
-    { col: 'Täitmise koht', label: 'Koht', width: 120, line: 3 },
-    { col: 'Tegevuse sisestaja nimi', label: 'Sisestaja', width: 120, line: 3 }
+    { col: 'Töö Nr', required: true, labelKey: 'form.jobNr', width: 120, line: 1 },
+    { col: 'Detaili/koostu nimetus või joonise Nr', labelKey: 'form.detail', width: 120, line: 1 },
+    { col: 'Kommentaar(tooriku/detaili seis, muu oluline info)', labelKey: 'form.comment', width: 146, line: 1 },
+    { col: 'Tooriku saabumise kuupäev EE', labelKey: 'form.arrival', isDate: true, width: 120, line: 2 },
+    { col: 'EE vajaduse kuupäev (koostamiseks valmis kujul)', labelKey: 'form.need', isDate: true, width: 120, line: 2 },
+    { col: 'Täitmise koht', labelKey: 'form.location', width: 120, line: 3 },
+    { col: 'Tegevuse sisestaja nimi', labelKey: 'form.enteredBy', width: 120, line: 3 }
 ];
 
 export const DEADLINE_WARNING_DAYS = 7;

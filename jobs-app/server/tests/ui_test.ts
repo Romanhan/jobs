@@ -68,3 +68,31 @@ Deno.test('UI: editor follows scrolling and saves to its original row when scrol
     equal(await b.evaluate(`!!document.querySelector('.floating-editor')`),false);
   } finally { await b.close(); await f.close(); }
 });
+
+Deno.test('UI: language switch translates the interface, keeps data keys, and persists', async () => {
+  const f = await fixture([job('1')]); const b = await browser();
+  try {
+    await b.open(f.url);
+    await until(async () => await b.evaluate(`document.querySelectorAll('#table-body tr').length`) === 1);
+    equal(await b.evaluate(`document.documentElement.lang`), 'et');
+    equal(await b.evaluate(`document.getElementById('btn-add-job').textContent`), 'Lisa uus');
+    await b.click('#btn-menu'); await b.click('[data-language="en"]');
+    equal(await b.evaluate(`document.documentElement.lang`), 'en');
+    equal(await b.evaluate(`document.getElementById('btn-add-job').textContent`), 'Add new');
+    equal(await b.evaluate(`document.querySelector('[data-language="en"]').getAttribute('aria-pressed')`), 'true');
+    equal(await b.evaluate(`document.getElementById('menu-dropdown').style.display`), 'flex');
+    equal(await b.evaluate(`document.querySelector('th[data-col="Töö Nr"] .header-label').textContent`), 'Job No');
+    equal(await b.evaluate(`document.querySelector('#add-form input[name="Täitmise koht"]').placeholder`), 'Location');
+    equal(await b.evaluate(`document.getElementById('sync-indicator').getAttribute('aria-label')`), 'All changes saved');
+    await b.click('[data-language="ru"]');
+    equal(await b.evaluate(`document.documentElement.lang`), 'ru');
+    equal(await b.evaluate(`document.getElementById('btn-add-job').textContent`), 'Добавить');
+    equal(await b.evaluate(`document.querySelector('th[data-col="TE kuupäev tarne"] .header-label').textContent`), 'Факт. поставка');
+    await b.click('[data-language="en"]');
+    await b.open(f.url);
+    await until(async () => await b.evaluate(`document.documentElement.lang`) === 'en');
+    await b.click('#btn-menu'); await b.click('[data-language="et"]');
+    equal(await b.evaluate(`document.getElementById('btn-add-job').textContent`), 'Lisa uus');
+    equal(await f.read(), [job('1')]);
+  } finally { await b.close(); await f.close(); }
+});

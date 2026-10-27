@@ -1,7 +1,8 @@
-import { COLUMNS, COLUMN_LABELS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
+import { COLUMNS, DATE_COLS, CHECKBOX_COLS, HIDDEN_COLS, COLUMN_WRAP, FORM_FIELDS, STICKY_COLS } from './config.js';
 import { formatDate, renderMarkdown, escapeHTML } from './utils.js';
 import { getJobs, getColumnWidths, setColumnWidth, saveColumnWidths, getHiddenColumns, autoSave as doAutoSave, reorderJobs, setSortingState, getSortingState, pushUndo, getConflicts } from './data.js';
 import { openDateCalendar } from './calendar.js';
+import { t, columnLabel, columnTitle } from './i18n.js';
 
 let statusFilter = null;
 
@@ -77,7 +78,7 @@ export function renderTable(skipBody) {
     COLUMNS.forEach(col => {
         const isHidden = HIDDEN_COLS.includes(col) && !showHidden;
         if (isHidden) return;
-        const label = (COLUMN_LABELS[col] || col) + (sortColumn === col ? (sortDirection === 'asc' ? ' ▴' : ' ▾') : '');
+        const label = escapeHTML(columnLabel(col)) + (sortColumn === col ? (sortDirection === 'asc' ? ' ▴' : ' ▾') : '');
         const hiddenClass = hiddenColumns[col] ? 'hidden-col' : '';
         const wrapClass = COLUMN_WRAP.includes(col) ? 'wrap-header' : '';
         const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
@@ -89,7 +90,7 @@ export function renderTable(skipBody) {
         colEl.style.width = width + 'px';
         colgroup.appendChild(colEl);
         
-        ths.push({ html: '<th class="' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + col + '"><span class="header-label">' + label + '</span><div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
+        ths.push({ html: '<th class="' + hiddenClass + ' ' + wrapClass + ' ' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-col="' + col + '" data-tooltip="' + escapeHTML(columnTitle(col)) + '"><span class="header-label">' + label + '</span><div class="resize-handle" onmousedown="startResize(event, this.parentElement)"></div></th>', hidden: !!hiddenColumns[col] });
     });
     
     const delCol = document.createElement('col');
@@ -160,7 +161,7 @@ export function renderTableBody() {
         // A conflicted row must be visible as conflicted: the header dot alone
         // let a user stare at a row another user had already changed or deleted.
         const indicator = conflicted
-            ? '<span class="conflict-dot" role="button" tabindex="0" onclick="openConflicts()" data-tooltip="Muudatuste konflikt – klõpsa lahendamiseks">!</span>'
+            ? '<span class="conflict-dot" role="button" tabindex="0" onclick="openConflicts()" data-tooltip="' + escapeHTML(t('conflict.rowMarker')) + '">!</span>'
             : (status ? '<span class="status-dot status-dot--' + status + '"></span>' : '');
         html += '<td class="row-indicator"><span class="cell-inner">' + indicator + '</span></td>';
         
@@ -183,7 +184,7 @@ export function renderTableBody() {
                 html += '<td tabindex="0" class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-index="' + index + '" data-col="' + colEscaped + '" data-tooltip="' + tooltipValue + '"><span class="cell-inner">' + displayValue + '</span></td>';
             }
         });
-        html += '<td class="cell-delete"><button type="button" class="btn-delete" data-index="' + index + '" data-tooltip="Kustuta" aria-label="Kustuta">×</button></td>';
+        html += '<td class="cell-delete"><button type="button" class="btn-delete" data-index="' + index + '" data-tooltip="' + escapeHTML(t('delete.tooltip')) + '" aria-label="' + escapeHTML(t('delete.tooltip')) + '">×</button></td>';
         html += '</tr>';
     });
     
@@ -241,7 +242,7 @@ export function renderForm() {
         html += '<div class="form-line">';
         lines[lineNum].forEach(f => {
             const col = f.col;
-            const label = f.label || COLUMN_LABELS[col] || col;
+            const label = escapeHTML(t(f.labelKey));
             const isRequired = f.required ? ' required' : '';
             
             html += '<div class="form-group" style="max-width: ' + f.width + 'px; width: ' + f.width + 'px;">';
@@ -305,6 +306,13 @@ export function updateStats() {
     document.getElementById('count-allhanke').textContent = allhanke;
     document.getElementById('count-overdue').textContent = overdue;
     document.getElementById('count-completed').textContent = completed;
+}
+
+export function renderRowColorsMenuItem() {
+    const item = document.getElementById('menu-row-colors');
+    if (!item) return;
+    const label = escapeHTML(t('menu.rowColors'));
+    item.innerHTML = localStorage.getItem('showRowColors') !== 'false' ? label + ' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--color-primary);vertical-align:middle;margin-left:6px"></span>' : label;
 }
 
 export function showStatus(message, type) {
