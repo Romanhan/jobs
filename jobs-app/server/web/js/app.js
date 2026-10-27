@@ -1,8 +1,9 @@
 import { DEFAULT_SORT_COLUMN, loadData, saveCSV, autoSave as doAutoSave, loadColumnWidths, saveColumnWidths, loadHiddenColumns, getJobs, getColumnWidths, pushUndo, pollChanges, autoCalculateColumnWidths, reorderJobs, setSortingState, getSortingState, getConflicts, retrySave, resolveConflict, hasUnsavedChanges, isDataLoaded, getLoadFailure } from './data.js';
 import { COLUMNS } from './config.js';
-import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions } from './ui.js';
+import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filterTable, sortBy, startResize, setStatusFilter, getStatusFilter, updateStickyPositions, renderRowColorsMenuItem } from './ui.js';
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
+import { t, columnTitle, getLocale, applyTranslations } from './i18n.js';
 
 function setTheme(theme) {
     if (theme === 'dark') {
@@ -50,7 +51,7 @@ function openConflictMerge(conflict) {
     const jobLabel = document.getElementById('conflict-merge-job');
     if (!popup || !textarea || !jobLabel) return;
     const job = getJobs().find(item => item._id === conflict.jobId);
-    jobLabel.textContent = 'Töö: ' + (job?.['Töö Nr'] || '');
+    jobLabel.textContent = t('merge.job', { job: job?.['Töö Nr'] || '' });
     const shared = String(conflict.currentValue ?? '');
     const mine = String(conflict.userValue ?? '');
     textarea.value = shared === mine ? shared : [shared, mine].filter(Boolean).join('\n\n');
@@ -70,57 +71,65 @@ function renderSyncPopup() {
     actions.replaceChildren();
     details.textContent = '';
     if (syncState.state === 'ok') {
-        message.textContent = 'Kõik muudatused on salvestatud';
-        details.textContent = syncState.savedAt ? 'Viimane salvestus: ' + new Date(syncState.savedAt).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' }) : 'Server ja andmefail on saadaval';
+        message.textContent = t('sync.okMessage');
+        details.textContent = syncState.savedAt ? t('sync.lastSaved', { time: new Date(syncState.savedAt).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' }) }) : t('sync.available');
     } else if (syncState.state === 'saving') {
-        message.textContent = 'Salvestan muudatusi…';
-        details.textContent = 'Palun oodake, kuni ühisketas vastab.';
+        message.textContent = t('sync.savingMessage');
+        details.textContent = t('sync.savingDetails');
     } else if (syncState.state === 'conflict') {
         const conflict = getConflicts()[0];
         message.textContent = getConflicts().length > 1
-            ? `Muudatuste konflikt (${getConflicts().length} ootel)`
-            : 'Muudatuste konflikt';
+            ? t('sync.conflictCount', { count: getConflicts().length })
+            : t('sync.conflict');
         if (!conflict) return;
         const job = getJobs().find(item => item._id === conflict.jobId);
         const jobNumber = job?.['Töö Nr'] || conflict.currentValue?.['Töö Nr'] || conflict.userValue?.['Töö Nr'] || '';
         details.textContent = conflict.field === '_deleted'
-            ? `Töö ${jobNumber} muudeti või kustutati teise kasutaja poolt. Otsusta, kumb versioon jääb.`
+            ? t('conflict.deleted', { job: jobNumber })
             : conflict.field === '_job'
-                ? `Töö ${jobNumber} on salvestatud failis juba olemas, aga erineva sisuga.\nMinu rida asendab salvestatud rea väärtused, kus need erinevad.`
-                : `Töö: ${jobNumber}\nVäli: ${conflict.field}\n\nSalvestatud info:\n${String(conflict.currentValue ?? '')}\n\nTeie muudatus:\n${String(conflict.userValue ?? '')}`;
+                ? t('conflict.job', { job: jobNumber })
+                : t('conflict.field', { job: jobNumber, field: columnTitle(conflict.field), shared: String(conflict.currentValue ?? ''), mine: String(conflict.userValue ?? '') });
         if (conflict.field === '_deleted') {
             // Name the outcome, not the side: "Kasuta minu väärtust" on a row
             // deleted elsewhere actually re-creates it in the shared file.
-            addSyncAction(actions, conflict.currentValue ? 'Jäta salvestatud versioon' : 'Kustuta töö', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
-            addSyncAction(actions, conflict.userValue ? 'Taasta minu versioon' : 'Jäta kustutatuks', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+            addSyncAction(actions, conflict.currentValue ? t('conflict.keepShared') : t('conflict.deleteJob'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+            addSyncAction(actions, conflict.userValue ? t('conflict.restoreMine') : t('conflict.keepDeleted'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
         } else if (conflict.field === '_job') {
-            addSyncAction(actions, 'Kasuta salvestatud rida', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
-            addSyncAction(actions, 'Kasuta minu rida', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+            addSyncAction(actions, t('conflict.useSharedRow'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+            addSyncAction(actions, t('conflict.useMyRow'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
         } else {
-            addSyncAction(actions, 'Kasuta salvestatud', () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+            addSyncAction(actions, t('conflict.useShared'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
             if (MERGEABLE_CONFLICT_FIELDS.has(conflict.field) && typeof conflict.currentValue === 'string' && typeof conflict.userValue === 'string') {
-                addSyncAction(actions, 'Ühenda mõlemad', () => openConflictMerge(conflict));
+                addSyncAction(actions, t('conflict.merge'), () => openConflictMerge(conflict));
             }
-            addSyncAction(actions, 'Kasuta minu väärtust', () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+            addSyncAction(actions, t('conflict.useMine'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
         }
     } else if (syncState.state === 'error') {
-        message.textContent = 'Salvestamine ebaõnnestus';
-        details.textContent = syncState.message || 'Server või K: ketas ei ole saadaval. Muudatused hoitakse selles arvutis.';
-        addSyncAction(actions, 'Proovi uuesti', retrySave, true);
+        message.textContent = t('sync.error');
+        details.textContent = syncState.messageKey ? t(syncState.messageKey, syncState.messageParams) : t('sync.errorDefault');
+        addSyncAction(actions, t('common.retry'), retrySave, true);
     } else {
-        message.textContent = 'Kontrollin ühendust…';
+        message.textContent = t('sync.checkingLong');
     }
 }
 
-function setSyncState(detail) {
-    syncState = { ...syncState, ...detail };
+function renderSyncIndicator() {
     const indicator = document.getElementById('sync-indicator');
     if (!indicator) return;
     indicator.className = 'sync-indicator is-' + syncState.state;
-    const labels = { ok: 'Kõik muudatused salvestatud', saving: 'Salvestan muudatusi', error: 'Salvestamine ebaõnnestus', conflict: 'Muudatuste konflikt', checking: 'Kontrollin ühendust' };
-    indicator.setAttribute('aria-label', labels[syncState.state] || labels.checking);
-    indicator.setAttribute('data-tooltip', labels[syncState.state] || labels.checking);
+    const labels = { ok: 'sync.ok', saving: 'sync.saving', error: 'sync.error', conflict: 'sync.conflict', checking: 'sync.checking' };
+    const label = t(labels[syncState.state] || labels.checking);
+    indicator.setAttribute('aria-label', label);
+    indicator.setAttribute('data-tooltip', label);
     indicator.removeAttribute('title');
+}
+
+function setSyncState(detail) {
+    // Error messages arrive as dictionary keys (messageKey/messageParams) so a
+    // language switch re-renders them.
+    syncState = { ...syncState, ...detail };
+    if (!document.getElementById('sync-indicator')) return;
+    renderSyncIndicator();
     renderSyncPopup();
     renderDataUnavailable();
 }
@@ -218,6 +227,7 @@ function attachSortListener() {
 }
 
 async function init() {
+    applyTranslations();
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
         setTheme('dark');
@@ -234,8 +244,7 @@ async function init() {
     if (localStorage.getItem('showRowColors') === null) {
         localStorage.setItem('showRowColors', 'true');
     }
-    const showRowColors = localStorage.getItem('showRowColors') !== 'false';
-    document.getElementById('menu-row-colors').innerHTML = showRowColors ? 'Color rows <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--color-primary);vertical-align:middle;margin-left:6px"></span>' : 'Color rows';
+    renderRowColorsMenuItem();
 
     const savedFontSize = localStorage.getItem('fontSize') || '12';
     setRowFontSize(savedFontSize);
@@ -261,7 +270,7 @@ async function init() {
     renderForm();
     renderTable(true);
 
-    showStatus('Andmete laadimine…', 'info');
+    showStatus(t('toast.loading'), 'info');
     let readyNotified = false;
     const notifyReady = () => {
         if (readyNotified) return;
@@ -277,10 +286,11 @@ async function init() {
     if (dataResult && dataResult.status === 'loaded') {
         if (btnAddJob) btnAddJob.disabled = false;
         setSyncState({ state: getConflicts().length ? 'conflict' : (hasUnsavedChanges() ? 'saving' : 'ok') });
-        showStatus('Andmed laetud! (' + dataResult.count + ' tööd)', 'success');
+        showStatus(t('toast.loaded', { count: dataResult.count }), 'success');
     } else {
-        setSyncState({ state: 'error', message: getLoadFailure()?.message || 'Serveriga puudub ühendus' });
-        showStatus('Andmete laadimine ebaõnnestus', 'error');
+        const failure = getLoadFailure();
+        setSyncState({ state: 'error', messageKey: failure?.messageKey || 'sync.noConnection', messageParams: failure?.messageParams });
+        showStatus(t('toast.loadFailed'), 'error');
     }
 
     document.getElementById('jobs-table').style.setProperty('table-layout', 'fixed', 'important');
@@ -339,6 +349,14 @@ function setUpButtons() {
     document.getElementById('btn-cancel').addEventListener('click', closeModal);
     document.getElementById('btn-data-retry')?.addEventListener('click', () => {
         void retrySave();
+    });
+
+    window.addEventListener('jobs-language-changed', () => {
+        renderRowColorsMenuItem();
+        renderSyncIndicator();
+        renderSyncPopup();
+        renderForm();
+        renderTable();
     });
 
     document.getElementById('btn-theme').addEventListener('click', function() {

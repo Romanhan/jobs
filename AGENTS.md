@@ -72,6 +72,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - **Row colors** — Menu → "Color rows" toggles status row tinting
 - **Font size** — Menu → "Font size" slider
 - **Theme toggle** — Top-right moon/sun icon button
+- **Language switch** — EST / ENG / RUS buttons at the top of the menu switch the interface between Estonian (default), English and Russian; stored in localStorage (`language`). All UI text lives in `web/js/i18n.js` (`t()`, `columnLabel()`, `columnTitle()`); static markup uses `data-i18n`, `data-i18n-html`, `data-i18n-placeholder`, `data-i18n-tooltip`, `data-i18n-aria-label`. Column names stay Estonian in the data, CSV and merge protocol — only their displayed labels are translated. New UI strings must be added to all three dictionaries.
 - **Automatic save retry** — A failed save retries with 5 s → 30 s backoff (paused while the tab is hidden, resumed on focus or reconnect); rejected requests are not retried
 - **Conflict marking** — Rows with an unresolved conflict get an amber tint and a `!` marker that opens the resolution popup
 - **Diagnostics log** — `error.log` next to the executable (1 MB rotation to `error.log.1`, `JOBS_LOG_FILE` overrides), with local timestamps carrying the UTC offset and host/pid/version prefixes, tab and shutdown lifecycle, poll/data failures, lock-owner dumps, and browser reports via `POST /api/client-log` (load failures, save failures, poll failures, conflict open/resolved)

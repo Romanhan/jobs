@@ -2,7 +2,8 @@ import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
 import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, duplicateJob as doDuplicateJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
-import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable } from './ui.js';
+import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable, renderRowColorsMenuItem } from './ui.js';
+import { t, setLanguage } from './i18n.js';
 import { openDateCalendarDirect, closeCalendarPopup, positionCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
 
 let editingCell = null;
@@ -217,7 +218,7 @@ export function saveEdited(input, index, col) {
         }
         const parsed = parseDate(value);
         if (parsed && !isValidDate(parsed)) {
-            showStatus('Vigane kuupäeva vorming (Kasuta: PP.KK.AAAA)', 'error');
+            showStatus(t('toast.invalidDateFormat'), 'error');
             finishEditing();
             return;
         }
@@ -249,7 +250,7 @@ export function finishEditing() {
 export function deleteRow(index) {
     const jobToDelete = getJobs()[index];
     if (!jobToDelete) {
-        showStatus('Viga: Tööd ei leitud', 'error');
+        showStatus(t('toast.jobNotFound'), 'error');
         return;
     }
     hideTooltip();
@@ -317,9 +318,9 @@ export function deleteRow(index) {
             doDeleteJob(targetIndex);
             renderTableBody();
             updateStats();
-            showStatus('Töö kustutatud', 'success');
+            showStatus(t('toast.jobDeleted'), 'success');
         } else {
-            showStatus('Viga: Tööd ei leitud', 'error');
+            showStatus(t('toast.jobNotFound'), 'error');
         }
     };
     cancelBtn.onclick = close;
@@ -385,7 +386,7 @@ export function addJob(e) {
                 }
                 val = parseDate(val);
                 if (val && !isValidDate(val)) {
-                    showStatus('Vigane kuupäev: ' + f.label, 'error');
+                    showStatus(t('toast.invalidDate', { field: t(f.labelKey) }), 'error');
                     hasError = true;
                     return;
                 }
@@ -403,7 +404,7 @@ export function addJob(e) {
     closeModal();
     renderTableBody();
     updateStats();
-    showStatus('Töö lisatud!', 'success');
+    showStatus(t('toast.jobAdded'), 'success');
 }
 
 export function handleKeydown(e) {
@@ -466,7 +467,7 @@ export function handleKeydown(e) {
             if (editingCell) finishEditing();
             renderTable();
             updateStats();
-            showStatus('Tagasi võetud', 'success');
+            showStatus(t('toast.undone'), 'success');
         }
         return;
     }
@@ -484,13 +485,13 @@ export function handleKeydown(e) {
         }
         if (index == null && hoveredRowIndex != null) index = hoveredRowIndex;
         if (index == null || isNaN(index)) {
-            showStatus('Vali rida, mida kopeerida', 'error');
+            showStatus(t('toast.selectRow'), 'error');
             return;
         }
         if (doDuplicateJob(index)) {
             renderTable();
             updateStats();
-            showStatus('Rida kopeeritud', 'success');
+            showStatus(t('toast.rowCopied'), 'success');
         }
         return;
     }
@@ -612,6 +613,12 @@ export function attachEventListeners() {
     
     menuDropdown.addEventListener('click', function(e) {
         e.stopPropagation();
+        // Language buttons keep the menu open so the switch is visible at once.
+        const languageButton = e.target.closest('[data-language]');
+        if (languageButton) {
+            setLanguage(languageButton.dataset.language);
+            return;
+        }
         const item = e.target.closest('.menu-item');
         if (!item) return;
         const action = item.getAttribute('data-action');
@@ -626,23 +633,22 @@ export function attachEventListeners() {
             input.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
-                showStatus('Laen...', 'success');
+                showStatus(t('toast.csvLoading'), 'success');
                 doLoadFromFile(file).then(result => {
                     renderTable();
                     renderForm();
                     updateStats();
                     const skipped = result.count - result.added;
-                    let msg = 'CSV laetud! ';
+                    let msg = t('toast.csvLoaded');
                     if (result.added > 0) {
-                        const uutStr = result.added === 1 ? 'uus' : 'uut';
-                        msg += result.added + ' ' + uutStr;
-                        if (skipped > 0) msg += ', ' + skipped + ' dubleeritud';
+                        msg += t(result.added === 1 ? 'toast.csvAddedOne' : 'toast.csvAddedMany', { count: result.added });
+                        if (skipped > 0) msg += t('toast.csvDuplicates', { count: skipped });
                     } else {
-                        msg += 'uusi töid ei lisatud (' + skipped + ' dubleeritud)';
+                        msg += t('toast.csvNone', { count: skipped });
                     }
                     showStatus(msg, 'success');
                 }).catch(err => {
-                    showStatus('Viga: ' + err.message, 'error');
+                    showStatus(t('toast.error', { message: err.message }), 'error');
                 });
             });
             input.click();
@@ -651,9 +657,9 @@ export function attachEventListeners() {
         } else if (action === 'info') {
             const grid = document.getElementById('info-grid');
             if (grid && infoPopup) {
-                grid.innerHTML = '<div class="info-label">Application</div><div class="info-value">' + APP_NAME + '</div>'
-                    + '<div class="info-label">Version</div><div class="info-value">' + APP_VERSION + '</div>'
-                    + '<div class="info-label">Author</div><div class="info-value">' + APP_AUTHOR + '</div>';
+                grid.innerHTML = '<div class="info-label">' + t('info.application') + '</div><div class="info-value">' + APP_NAME + '</div>'
+                    + '<div class="info-label">' + t('info.version') + '</div><div class="info-value">' + APP_VERSION + '</div>'
+                    + '<div class="info-label">' + t('info.author') + '</div><div class="info-value">' + APP_AUTHOR + '</div>';
                 infoPopup.style.display = infoPopup.style.display === 'none' ? 'block' : 'none';
             }
         } else if (action === 'font-size') {
@@ -665,7 +671,7 @@ export function attachEventListeners() {
         } else if (action === 'row-colors') {
             const showRowColors = localStorage.getItem('showRowColors') !== 'false';
             localStorage.setItem('showRowColors', showRowColors ? 'false' : 'true');
-            document.getElementById('menu-row-colors').innerHTML = localStorage.getItem('showRowColors') !== 'false' ? 'Color rows <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--color-primary);vertical-align:middle;margin-left:6px"></span>' : 'Color rows';
+            renderRowColorsMenuItem();
             renderTableBody();
         }
     });

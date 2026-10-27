@@ -18,21 +18,21 @@
     <div class="app-container">
         <div class="header-bar">
             <div class="header-left">
-                <h1>Tööde Haldus</h1>
+                <h1 data-i18n="app.title">Tööde Haldus</h1>
                 
                 <div class="status-boxes">
-                    <div class="status-box active" data-filter="all"><span id="count-active">0</span>Aktiivsed</div>
-                    <div class="status-box in-progress" data-filter="in-progress"><span id="count-in-progress">0</span>Töös</div>
-                    <div class="status-box allhanke" data-filter="allhanke"><span id="count-allhanke">0</span>Allhanke</div>
-                    <div class="status-box overdue" data-filter="overdue"><span id="count-overdue">0</span>Hilinenud</div>
-                    <div class="status-box completed" data-filter="completed"><span id="count-completed">0</span>Valmis</div>
+                    <div class="status-box active" data-filter="all"><span class="status-count" id="count-active">0</span><span data-i18n="status.active">Aktiivsed</span></div>
+                    <div class="status-box in-progress" data-filter="in-progress"><span class="status-count" id="count-in-progress">0</span><span data-i18n="status.inProgress">Töös</span></div>
+                    <div class="status-box allhanke" data-filter="allhanke"><span class="status-count" id="count-allhanke">0</span><span data-i18n="status.allhanke">Allhanke</span></div>
+                    <div class="status-box overdue" data-filter="overdue"><span class="status-count" id="count-overdue">0</span><span data-i18n="status.overdue">Hilinenud</span></div>
+                    <div class="status-box completed" data-filter="completed"><span class="status-count" id="count-completed">0</span><span data-i18n="status.completed">Valmis</span></div>
                 </div>
                 
                 <div class="legend">
-                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-in-progress)"></div>Töös</span>
-                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-allhanke)"></div>Allhanke</span>
-                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-overdue)"></div>Hilinenud</span>
-                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-completed)"></div>Valmis</span>
+                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-in-progress)"></div><span data-i18n="status.inProgress">Töös</span></span>
+                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-allhanke)"></div><span data-i18n="status.allhanke">Allhanke</span></span>
+                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-overdue)"></div><span data-i18n="status.overdue">Hilinenud</span></span>
+                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-completed)"></div><span data-i18n="status.completed">Valmis</span></span>
                 </div>
             </div>
             
@@ -41,52 +41,58 @@
                     <span class="sync-dot" aria-hidden="true"></span>
                 </button>
                 <div id="sync-popup" class="sync-popup" style="display:none">
-                    <div class="sync-popup-title">Ühenduse olek</div>
+                    <div class="sync-popup-title" data-i18n="sync.popupTitle">Ühenduse olek</div>
                     <div id="sync-popup-message">Kontrollin ühendust…</div>
                     <div id="sync-popup-details" class="sync-popup-details"></div>
                     <div id="sync-popup-actions" class="sync-popup-actions"></div>
                 </div>
-                <button id="btn-theme" class="btn-icon" data-tooltip="Vaheta teemat"><span class="icon-moon">&#9790;</span></button>
-                <button id="btn-menu" class="btn-menu" data-tooltip="Menüü">&#8801;</button>
+                <button id="btn-theme" class="btn-icon" data-i18n-tooltip="header.theme" data-tooltip="Vaheta teemat"><span class="icon-moon">&#9790;</span></button>
+                <button id="btn-menu" class="btn-menu" data-i18n-tooltip="header.menu" data-tooltip="Menüü">&#8801;</button>
                 <div id="menu-dropdown" class="menu-dropdown" style="display:none">
-                    <button class="menu-item" data-action="save-csv">Save CSV</button>
-                    <button class="menu-item" data-action="load-csv">Load CSV</button>
+                    <div class="menu-language" role="group" aria-label="Keel / Language">
+                        <button type="button" class="btn-filter-location" data-language="et" aria-label="Eesti keel" aria-pressed="true">EST</button>
+                        <button type="button" class="btn-filter-location" data-language="en" aria-label="English" aria-pressed="false">ENG</button>
+                        <button type="button" class="btn-filter-location" data-language="ru" aria-label="Русский" aria-pressed="false">RUS</button>
+                    </div>
+                    <hr class="menu-divider">
+                    <button class="menu-item" data-action="save-csv" data-i18n="menu.saveCsv">Save CSV</button>
+                    <button class="menu-item" data-action="load-csv" data-i18n="menu.loadCsv">Load CSV</button>
                     <hr class="menu-divider">
                     <button class="menu-item" data-action="row-colors" id="menu-row-colors">Color rows</button>
-                    <button class="menu-item" data-action="font-size">Font size</button>
+                    <button class="menu-item" data-action="font-size" data-i18n="menu.fontSize">Font size</button>
                     <hr class="menu-divider">
-                    <button class="menu-item" data-action="shortcuts">Shortcuts</button>
-                    <button class="menu-item" data-action="info">Info</button>
+                    <button class="menu-item" data-action="shortcuts" data-i18n="menu.shortcuts">Shortcuts</button>
+                    <button class="menu-item" data-action="info" data-i18n="menu.info">Info</button>
                 </div>
             </div>
         </div>
         
         <div class="toolbar">
             <div class="filters">
-                <input type="text" id="filter-nr" placeholder="Töö Nr...">
-                <input type="text" id="filter-koht" placeholder="Koht...">
+                <input type="text" id="filter-nr" placeholder="Töö Nr..." data-i18n-placeholder="filter.nr">
+                <input type="text" id="filter-koht" placeholder="Koht..." data-i18n-placeholder="filter.koht">
                 <button type="button" class="btn-filter-location" id="btn-filter-tos" aria-pressed="false">TOS</button>
                 <button type="button" class="btn-filter-location" id="btn-filter-karusel" aria-pressed="false">Karusel</button>
-                <label class="filter-blank-label"><input type="checkbox" id="show-blank-koht"> Tühi</label>
+                <label class="filter-blank-label"><input type="checkbox" id="show-blank-koht"> <span data-i18n="filter.blank">Tühi</span></label>
             </div>
             
             <div class="toolbar-right">
-                <label><input type="checkbox" id="show-hidden-dates"> Kuupäevad</label>
-                <label><input type="checkbox" id="show-completed"> Lõppenud</label>
-                <label><input type="checkbox" id="show-allhankes"> Allhange</label>
+                <label><input type="checkbox" id="show-hidden-dates"> <span data-i18n="toolbar.dates">Kuupäevad</span></label>
+                <label><input type="checkbox" id="show-completed"> <span data-i18n="toolbar.completed">Lõppenud</span></label>
+                <label><input type="checkbox" id="show-allhankes"> <span data-i18n="toolbar.allhanke">Allhange</span></label>
             </div>
             
-            <button id="btn-add-job" class="btn-primary">Lisa uus</button>
+            <button id="btn-add-job" class="btn-primary" data-i18n="toolbar.add">Lisa uus</button>
         </div>
         
         <div class="table-wrap">
         <div class="data-unavailable" id="data-unavailable" role="alert">
             <div class="data-unavailable-icon" aria-hidden="true">&#9888;</div>
-            <div class="data-unavailable-title">Andmed ei ole saadaval</div>
-            <p class="data-unavailable-text">Server ei saa jagatud andmefaili lugeda, seega tabel on tühi. Kontrolli, et võrguketas (K:) on ühendatud.</p>
+            <div class="data-unavailable-title" data-i18n="unavailable.title">Andmed ei ole saadaval</div>
+            <p class="data-unavailable-text" data-i18n="unavailable.text">Server ei saa jagatud andmefaili lugeda, seega tabel on tühi. Kontrolli, et võrguketas (K:) on ühendatud.</p>
             <p class="data-unavailable-path" id="data-unavailable-path"></p>
-            <p class="data-unavailable-hint">Ühenduse taastudes laaditakse andmed automaatselt.</p>
-            <button type="button" class="btn-primary" id="btn-data-retry">Proovi uuesti</button>
+            <p class="data-unavailable-hint" data-i18n="unavailable.hint">Ühenduse taastudes laaditakse andmed automaatselt.</p>
+            <button type="button" class="btn-primary" id="btn-data-retry" data-i18n="common.retry">Proovi uuesti</button>
         </div>
         <table id="jobs-table" style="table-layout: fixed">
             <thead id="table-head"></thead>
@@ -99,24 +105,24 @@
     
     <div id="shortcuts-popup" class="shortcuts-popup" style="display:none">
         <div class="shortcuts-grid">
-            <span class="key">Space</span><span>Märgi / eemalda linnuke</span>
-            <span class="key">Enter</span><span>Salvesta redigeerimine</span>
-            <span class="key">Esc</span><span>Tühista / Sulge</span>
+            <span class="key">Space</span><span data-i18n="shortcuts.toggle">Märgi / eemalda linnuke</span>
+            <span class="key">Enter</span><span data-i18n="shortcuts.save">Salvesta redigeerimine</span>
+            <span class="key">Esc</span><span data-i18n="shortcuts.cancel">Tühista / Sulge</span>
             <div class="shortcut-gap"></div>
-            <span class="key">Ctrl+;</span><span>Sisesta tänane kuupäev</span>
-            <span class="key">DD.MM+Enter</span><span>Auto-täienda aastaga (20.05 → 20.05.2026)</span>
+            <span class="key">Ctrl+;</span><span data-i18n="shortcuts.today">Sisesta tänane kuupäev</span>
+            <span class="key">DD.MM+Enter</span><span data-i18n="shortcuts.autoYear">Auto-täienda aastaga (20.05 → 20.05.2026)</span>
             <div class="shortcut-gap"></div>
-            <span class="key">Ctrl+B</span><span>Rasvane kiri (<strong>bold</strong>)</span>
-            <span class="key">Ctrl+I</span><span>Märgi oluliseks (<span class="text-important">punane</span>)</span>
-            <span class="key">Ctrl+Shift+S</span><span>Läbi kriipsutatud (<s>strike</s>)</span>
+            <span class="key">Ctrl+B</span><span data-i18n-html="shortcuts.bold">Rasvane kiri (<strong>bold</strong>)</span>
+            <span class="key">Ctrl+I</span><span data-i18n-html="shortcuts.important">Märgi oluliseks (<span class="text-important">punane</span>)</span>
+            <span class="key">Ctrl+Shift+S</span><span data-i18n-html="shortcuts.strike">Läbi kriipsutatud (<s>strike</s>)</span>
             <div class="shortcut-gap"></div>
-            <span class="key">Ctrl+Z</span><span>Võta tagasi (Undo)</span>
-            <span class="key">Ctrl+D</span><span>Kopeeri valitud rida</span>
+            <span class="key">Ctrl+Z</span><span data-i18n="shortcuts.undo">Võta tagasi (Undo)</span>
+            <span class="key">Ctrl+D</span><span data-i18n="shortcuts.duplicate">Kopeeri valitud rida</span>
         </div>
     </div>
 
     <div id="font-size-popup" class="font-size-popup" style="display:none">
-        <div class="font-size-popup-header">Font size</div>
+        <div class="font-size-popup-header" data-i18n="fontSize.title">Font size</div>
         <div class="font-size-popup-body">
             <input type="range" id="font-size-slider" min="9" max="18" value="12" step="1">
             <span id="font-size-display">12 px</span>
@@ -129,10 +135,10 @@
 
     <div id="confirm-popup" class="confirm-popup" style="display:none" role="alertdialog" aria-modal="true" aria-labelledby="confirm-msg">
         <div class="confirm-content">
-            <p id="confirm-msg">Kas kustutada see töö?</p>
+            <p id="confirm-msg" data-i18n="delete.confirm">Kas kustutada see töö?</p>
             <div class="confirm-buttons">
-                <button type="button" class="btn-secondary" id="confirm-cancel">Katkesta</button>
-                <button type="button" class="btn-primary" id="confirm-ok">Kustuta</button>
+                <button type="button" class="btn-secondary" id="confirm-cancel" data-i18n="common.cancel">Katkesta</button>
+                <button type="button" class="btn-primary" id="confirm-ok" data-i18n="delete.ok">Kustuta</button>
             </div>
         </div>
     </div>
@@ -140,14 +146,14 @@
     <div id="conflict-merge-popup" class="conflict-merge-popup" style="display:none" role="dialog" aria-modal="true" aria-labelledby="conflict-merge-title">
         <div class="conflict-merge-content">
             <div class="modal-header">
-                <h2 id="conflict-merge-title">Ühenda mõlemad muudatused</h2>
+                <h2 id="conflict-merge-title" data-i18n="merge.title">Ühenda mõlemad muudatused</h2>
             </div>
             <div id="conflict-merge-job" class="conflict-merge-job"></div>
-            <label for="conflict-merge-value">Kontrollige ja muutke ühendatud teksti enne salvestamist.</label>
+            <label for="conflict-merge-value" data-i18n="merge.hint">Kontrollige ja muutke ühendatud teksti enne salvestamist.</label>
             <textarea id="conflict-merge-value" rows="7"></textarea>
             <div class="conflict-merge-buttons">
-                <button type="button" class="btn-secondary" id="conflict-merge-cancel">Katkesta</button>
-                <button type="button" class="btn-primary" id="conflict-merge-save">Salvesta ühendatud tekst</button>
+                <button type="button" class="btn-secondary" id="conflict-merge-cancel" data-i18n="common.cancel">Katkesta</button>
+                <button type="button" class="btn-primary" id="conflict-merge-save" data-i18n="merge.save">Salvesta ühendatud tekst</button>
             </div>
         </div>
     </div>
@@ -155,13 +161,13 @@
     <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="add-job-title">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="add-job-title">Lisa uus töö</h2>
+                <h2 id="add-job-title" data-i18n="modal.title">Lisa uus töö</h2>
             </div>
             <form id="add-form">
                 <div class="form-grid" id="form-grid"></div>
                 <div class="modal-buttons">
-                    <button type="button" class="btn-secondary" id="btn-cancel">Katkesta</button>
-                    <button type="submit" class="btn-primary">Lisa</button>
+                    <button type="button" class="btn-secondary" id="btn-cancel" data-i18n="common.cancel">Katkesta</button>
+                    <button type="submit" class="btn-primary" data-i18n="modal.add">Lisa</button>
                 </div>
             </form>
         </div>

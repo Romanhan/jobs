@@ -1,4 +1,5 @@
-import { COLUMNS, COLUMN_LABELS, DATE_COLS } from './config.js';
+import { COLUMNS, DATE_COLS } from './config.js';
+import { t } from './i18n.js';
 import { convertSaabunudDates, parseCSVLine, parseCSVLines, fixColumnKeys } from './utils.js';
 
 export let jobs = [];
@@ -56,7 +57,7 @@ function persistPendingChanges() {
         // Browser storage failure must not prevent saving to the shared file.
         console.error('Kohalik varukoopia ebaõnnestus', error);
         if (pendingSnapshot || inFlightSaves || conflicts.length) {
-            emitSync('error', { message: 'Kohalik varukoopia ei ole saadaval. Ärge sulgege lehte enne muudatuste salvestamist.' });
+            emitSync('error', { messageKey: 'sync.localBackupFailed' });
         }
     }
 }
@@ -167,9 +168,8 @@ export async function loadData() {
                 status: res.status,
                 dataFile,
                 detail: String(message),
-                message: dataFile
-                    ? `Jagatud andmefaili ei ole saadaval: ${dataFile}`
-                    : 'Server või võrguketas (K:) ei ole saadaval',
+                messageKey: dataFile ? 'sync.fileUnavailable' : 'sync.networkUnavailable',
+                messageParams: { file: dataFile },
             };
             reportClientProblem('load-failed', undefined, new Error(String(message)), `status=${res.status} file=${dataFile} `);
             return { status: 'error', count: jobs.length, jobs };
@@ -208,7 +208,7 @@ export async function loadData() {
             status: 0,
             dataFile: '',
             detail: String(e),
-            message: 'Serveriga puudub ühendus',
+            messageKey: 'sync.noConnection',
         };
         // Keep existing jobs on error — don't silently clear data
         return { status: 'error', count: jobs.length, jobs };
@@ -309,9 +309,8 @@ async function processSaveQueue() {
             }
             pendingSnapshot = clone(jobs);
             emitSync('error', {
-                message: retryableSaveError(error)
-                    ? `${error.message || 'Salvestamine ebaõnnestus'} Proovin automaatselt uuesti.`
-                    : (error.message || 'Salvestamine ebaõnnestus'),
+                messageKey: retryableSaveError(error) ? 'sync.retrying' : 'sync.reason',
+                messageParams: { reason: error.message || t('sync.error') },
                 pending: true,
             });
             if (retryableSaveError(error)) scheduleSaveRetry();
@@ -518,7 +517,7 @@ export async function pollChanges(tabId, canApply = () => true) {
         if (pollFailures === 3 || pollFailures % 10 === 0) {
             reportClientProblem('poll-failed', tabId, e, `failures=${pollFailures} `);
         }
-        if (pollFailures >= 3) emitSync('error', { message: 'Serveriga puudub ühendus' });
+        if (pollFailures >= 3) emitSync('error', { messageKey: 'sync.noConnection' });
         return false;
     } finally {
         isPolling = false;
@@ -539,7 +538,7 @@ export async function retrySave() {
             emitSync('ok');
             window.dispatchEvent(new CustomEvent('jobs-data-updated'));
         } else {
-            emitSync('error', { message: loadFailure?.message || 'Server või K: ketas ei ole saadaval' });
+            emitSync('error', loadFailure ? { messageKey: loadFailure.messageKey, messageParams: loadFailure.messageParams } : { messageKey: 'sync.driveUnavailable' });
         }
         return;
     }
@@ -811,7 +810,7 @@ export function loadFromFile(file) {
                     }
                 }
                 const lines = parseCSVLines(raw);
-                if (lines.length < 1) throw new Error('Tühi fail');
+                if (lines.length < 1) throw new Error(t('file.empty'));
 
                 const headerLine = lines[0];
                 const headers = parseCSVLine(headerLine);
@@ -896,7 +895,7 @@ export function loadFromFile(file) {
             }
         };
         reader.onerror = function() {
-            reject(new Error('Faili lugemine ebaõnnestus'));
+            reject(new Error(t('file.readFailed')));
         };
         reader.readAsArrayBuffer(file);
     });

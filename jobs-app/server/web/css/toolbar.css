@@ -440,6 +440,13 @@
     margin: 0;
 }
 
+.menu-language {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 2px 0;
+}
+
 .menu-item {
     display: flex;
     align-items: center;
