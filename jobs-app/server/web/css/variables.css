@@ -36,8 +36,9 @@
   --color-primary: #6abf9e;
   --color-primary-hover: #7cc9ab;
   --color-primary-active: #5aae8a;
-  --color-in-progress: #5aae8a;
+  --color-in-progress: #7cc9ab;
   --color-allhanke: #a78ad4;
+  --color-machined: #3d8a6a;
   --color-overdue: #d47a7a;
   --color-completed: #6a7a8e;
   --color-warning: #c98a3c;
@@ -106,8 +107,9 @@
 
   --bg-row-hover: #dee2e8;
 
-  --row-tint-in-progress: rgba(106, 191, 158, 0.12);
+  --row-tint-in-progress: rgba(124, 201, 171, 0.10);
   --row-tint-allhanke: rgba(167, 138, 212, 0.12);
+  --row-tint-machined: rgba(61, 138, 106, 0.22);
   --row-tint-overdue: rgba(212, 122, 122, 0.12);
   --row-tint-completed: rgba(106, 122, 142, 0.12);
   --row-tint-conflict: rgba(201, 138, 60, 0.18);
@@ -154,8 +156,9 @@
   --color-primary: #4a8e7a;
   --color-primary-hover: #569e88;
   --color-primary-active: #3d7d6a;
-  --color-in-progress: #4a8e7a;
+  --color-in-progress: #8fd4bd;
   --color-allhanke: #b8a9e8;
+  --color-machined: #3a9a70;
   --color-overdue: #e8a9a9;
   --color-completed: #7a8290;
   --color-warning: #dda75f;
@@ -201,8 +204,9 @@
 
   --bg-row-hover: #2a2e36;
 
-  --row-tint-in-progress: rgba(126, 200, 179, 0.15);
+  --row-tint-in-progress: rgba(143, 212, 189, 0.13);
   --row-tint-allhanke: rgba(184, 169, 232, 0.15);
+  --row-tint-machined: rgba(16, 96, 60, 0.45);
   --row-tint-overdue: rgba(232, 169, 169, 0.15);
   --row-tint-completed: rgba(122, 130, 144, 0.15);
   --row-tint-conflict: rgba(221, 167, 95, 0.20);

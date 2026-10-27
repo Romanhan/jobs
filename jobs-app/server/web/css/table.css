@@ -318,6 +318,12 @@ body.modal-open .row-indicator {
     opacity: 0.5;
 }
 
+/* Fully machined rows only wait for delivery: fade the content, but keep the
+   status dot and tint at full strength so the row is still easy to find. */
+.machined-row td:not(.row-indicator) .cell-inner {
+    opacity: 0.6;
+}
+
 .hidden-row {
     display: none;
 }
@@ -327,6 +333,9 @@ body.modal-open .row-indicator {
 }
 #table-body tr.row-allhanke td:not(.row-indicator) {
     background: linear-gradient(0deg, var(--row-tint-allhanke), var(--row-tint-allhanke)), var(--bg-table);
+}
+#table-body tr.row-machined td:not(.row-indicator) {
+    background: linear-gradient(0deg, var(--row-tint-machined), var(--row-tint-machined)), var(--bg-table);
 }
 #table-body tr.row-overdue td:not(.row-indicator) {
     background: linear-gradient(0deg, var(--row-tint-overdue), var(--row-tint-overdue)), var(--bg-table);
@@ -363,6 +372,7 @@ body.modal-open .row-indicator {
 
 #table-body tr.row-in-progress:hover td:not(.row-indicator),
 #table-body tr.row-allhanke:hover td:not(.row-indicator),
+#table-body tr.row-machined:hover td:not(.row-indicator),
 #table-body tr.row-overdue:hover td:not(.row-indicator),
 #table-body tr.row-completed:hover td:not(.row-indicator) {
     background: var(--bg-row-hover);
@@ -466,6 +476,9 @@ body.modal-open .row-indicator {
 }
 .status-dot--allhanke {
     background: var(--color-allhanke);
+}
+.status-dot--machined {
+    background: var(--color-machined);
 }
 .status-dot--overdue {
     background: var(--color-overdue);

@@ -406,6 +406,12 @@ function setUpButtons() {
 
     setupLocationFilter(btnTos, btnKarusell, 'TOS');
     setupLocationFilter(btnKarusell, btnTos, 'Karusel');
+    // Independent of the location buttons: combines with TOS / Karusel.
+    document.getElementById('btn-filter-no-date')?.addEventListener('click', function() {
+        const active = this.classList.toggle('active');
+        this.setAttribute('aria-pressed', active ? 'true' : 'false');
+        filterTable();
+    });
     document.getElementById('show-hidden-dates').addEventListener('change', function() {
         localStorage.setItem('showHiddenDates', this.checked);
         renderTable();

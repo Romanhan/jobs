@@ -4,15 +4,15 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-**Current version: 0.3.12** — see the [release notes](CHANGELOG.md).
+**Current version: 0.4.0** — see the [release notes](CHANGELOG.md).
 
 ## Features
 
 - **20 columns** for tracking jobs from start to finish
 - **Inline editing** — click any cell to edit
 - **Auto-date** — marking a job started or done fills the matching date
-- **Status indicators & row tinting** — in progress / subcontract / overdue / done
-- **Filters** — by job number and location, show completed or subcontract work
+- **Status indicators & row tinting** — in progress / fully machined / subcontract / overdue / done
+- **Filters** — by job number and machine, rows without a need date, show completed or subcontract work
 - **CSV import/export** and **automatic backups** (validated snapshot every 48 hours, newest 36 kept, filed by month)
 - **Text formatting** — bold (`**`), important (`!!`), strikethrough (`~~`)
 - **Undo, duplicate row, sorting, column resize and font size**

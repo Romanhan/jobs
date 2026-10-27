@@ -199,6 +199,10 @@
     color: var(--color-allhanke);
 }
 
+.status-box.machined .status-count {
+    color: var(--color-machined);
+}
+
 .status-box.overdue .status-count {
     color: var(--color-overdue);
 }

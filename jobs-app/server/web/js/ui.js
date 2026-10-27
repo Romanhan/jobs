@@ -35,12 +35,18 @@ function parseDeadline(str) {
     return null;
 }
 
+// Machining is finished and the part only waits for delivery, so it is no longer
+// counted as in progress or subcontracted.
+function isMachined(job) {
+    return job['Töötlus Lõpetatud'] && !job['Valmis'];
+}
+
 function isInProgress(job) {
-    return job['Alustatud'] && !job['Töötlus allhankes'] && !job['Valmis'];
+    return job['Alustatud'] && !job['Töötlus allhankes'] && !job['Valmis'] && !isMachined(job);
 }
 
 function isAllhanke(job) {
-    return job['Töötlus allhankes'] && !job['Valmis'];
+    return job['Töötlus allhankes'] && !job['Valmis'] && !isMachined(job);
 }
 
 function isOverdue(job, today) {
@@ -53,6 +59,7 @@ export function getStatus(job) {
     if (job['Valmis']) return 'completed';
     const today = new Date(); today.setHours(0, 0, 0, 0);
     if (isOverdue(job, today)) return 'overdue';
+    if (isMachined(job)) return 'machined';
     if (isAllhanke(job)) return 'allhanke';
     if (isInProgress(job)) return 'in-progress';
     return null;
@@ -124,6 +131,7 @@ export function renderTableBody() {
     const showBlankKoht = document.getElementById('show-blank-koht').checked;
     const showCompleted = document.getElementById('show-completed').checked;
     const showAllhankes = document.getElementById('show-allhankes').checked;
+    const onlyNoDate = document.getElementById('btn-filter-no-date')?.classList.contains('active');
     const showHidden = document.getElementById('show-hidden-dates')?.checked;
     const hiddenColumns = getHiddenColumns();
     
@@ -136,12 +144,14 @@ export function renderTableBody() {
                 if (statusFilter === 'completed' && !job['Valmis']) return false;
                 if (statusFilter === 'in-progress' && !isInProgress(job)) return false;
                 if (statusFilter === 'allhanke' && !isAllhanke(job)) return false;
+                if (statusFilter === 'machined' && !isMachined(job)) return false;
                 if (statusFilter === 'overdue' && !isOverdue(job, today)) return false;
             } else {
                 if (job['Valmis'] && !showCompleted) return false;
                 const allhankes = job['Töötlus allhankes'];
                 if (allhankes && !showAllhankes) return false;
             }
+            if (onlyNoDate && String(job['EE vajaduse kuupäev (koostamiseks valmis kujul)'] || '').trim() !== '') return false;
             const nrMatch = !filterNr || (job['Töö Nr'] || '').toLowerCase().includes(filterNr);
             const kohtBlank = showBlankKoht && (!job['Täitmise koht'] || job['Täitmise koht'].trim() === '');
             const kohtMatch = kohtBlank || !filterKoht || (job['Täitmise koht'] || '').toLowerCase().includes(filterKoht);
@@ -157,7 +167,7 @@ export function renderTableBody() {
         const conflicted = conflictedIds.has(job._id);
         const showRowColors = localStorage.getItem('showRowColors') !== 'false';
         const statusClass = status && showRowColors ? 'row-' + status : '';
-        html += '<tr class="' + (valmis ? 'done-row ' : '') + statusClass + (conflicted ? ' row-conflict' : '') + '" data-index="' + index + '">';
+        html += '<tr class="' + (valmis ? 'done-row ' : '') + (status === 'machined' ? 'machined-row ' : '') + statusClass + (conflicted ? ' row-conflict' : '') + '" data-index="' + index + '">';
         // A conflicted row must be visible as conflicted: the header dot alone
         // let a user stare at a row another user had already changed or deleted.
         const indicator = conflicted
@@ -288,7 +298,7 @@ export function renderForm() {
 export function updateStats() {
     const jobsArr = getJobs();
     const total = jobsArr.length;
-    let completed = 0, inProgress = 0, allhanke = 0, overdue = 0;
+    let completed = 0, inProgress = 0, allhanke = 0, machined = 0, overdue = 0;
     const today = new Date(); today.setHours(0, 0, 0, 0);
     jobsArr.forEach(job => {
         if (job['Valmis']) {
@@ -296,6 +306,7 @@ export function updateStats() {
         } else {
             if (isInProgress(job)) inProgress++;
             if (isAllhanke(job)) allhanke++;
+            if (isMachined(job)) machined++;
             if (isOverdue(job, today)) overdue++;
         }
     });
@@ -304,6 +315,7 @@ export function updateStats() {
     document.getElementById('count-active').textContent = active;
     document.getElementById('count-in-progress').textContent = inProgress;
     document.getElementById('count-allhanke').textContent = allhanke;
+    document.getElementById('count-machined').textContent = machined;
     document.getElementById('count-overdue').textContent = overdue;
     document.getElementById('count-completed').textContent = completed;
 }

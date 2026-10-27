@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.0
+
+- Add a "Fully Machined" status ("Töödeldud" / "Обработано") for rows where
+  "Töötlus Lõpetatud" is ticked but "Valmis" is not — machining is done and the
+  part only waits for delivery. These rows get a deep green tint and dimmed
+  text, a legend dot, and a counter pill right after "In progress" that filters
+  to them. They no longer count as "In progress" or "Subcontract". An overdue
+  need date still wins and keeps the row red.
+- Lighten the "In progress" green so it reads as the step before
+  "Fully Machined" in both themes.
+- Add a "No date" button ("Kpv puudub" / "Без даты") after TOS and Karusel that
+  shows only rows without an "EE vajaduse kuupäev". It combines with the
+  location buttons and is cleared by the "Active" pill.
+- Rename the "Täitmise koht" labels to "Machine" in English and "Станок" in
+  Russian (column header, tooltip, filter box and add form), and widen the
+  filter box so the placeholder fits. Estonian labels and the data column name
+  are unchanged.
+
+The data format, the merge protocol and the lock protocol are unchanged, and
+the new status only reads the existing "Töötlus Lõpetatud" field. 0.4.0 can
+share a data file with 0.3.11 and 0.3.12; older clients simply show
+fully machined rows with their previous colour.
+
 ## 0.3.12
 
 - Add EST / ENG / RUS language buttons at the top of the menu. The whole

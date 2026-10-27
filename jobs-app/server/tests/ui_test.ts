@@ -82,7 +82,7 @@ Deno.test('UI: language switch translates the interface, keeps data keys, and pe
     equal(await b.evaluate(`document.querySelector('[data-language="en"]').getAttribute('aria-pressed')`), 'true');
     equal(await b.evaluate(`document.getElementById('menu-dropdown').style.display`), 'flex');
     equal(await b.evaluate(`document.querySelector('th[data-col="Töö Nr"] .header-label').textContent`), 'Job No');
-    equal(await b.evaluate(`document.querySelector('#add-form input[name="Täitmise koht"]').placeholder`), 'Location');
+    equal(await b.evaluate(`document.querySelector('#add-form input[name="Täitmise koht"]').placeholder`), 'Machine');
     equal(await b.evaluate(`document.getElementById('sync-indicator').getAttribute('aria-label')`), 'All changes saved');
     await b.click('[data-language="ru"]');
     equal(await b.evaluate(`document.documentElement.lang`), 'ru');
