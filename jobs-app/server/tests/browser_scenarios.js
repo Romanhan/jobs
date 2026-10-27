@@ -80,6 +80,9 @@ export async function datesAndFilters() {
     equal(testUI.getStatus({ [deadline]: '2000-01-01', Valmis: true }), 'completed');
     equal(testUI.getStatus({ [deadline]: '31.02.2026' }), null);
     equal(testUI.getStatus({ Alustatud: true, 'Töötlus allhankes': true }), 'allhanke');
+    equal(testUI.getStatus({ Alustatud: true, 'Töötlus allhankes': true, 'Töötlus Lõpetatud': true }), 'machined');
+    equal(testUI.getStatus({ [deadline]: '2000-01-01', 'Töötlus Lõpetatud': true }), 'overdue');
+    equal(testUI.getStatus({ 'Töötlus Lõpetatud': true, Valmis: true }), 'completed');
 }
 
 export async function invalidDate() {

@@ -23,6 +23,7 @@
                 <div class="status-boxes">
                     <div class="status-box active" data-filter="all"><span class="status-count" id="count-active">0</span><span data-i18n="status.active">Aktiivsed</span></div>
                     <div class="status-box in-progress" data-filter="in-progress"><span class="status-count" id="count-in-progress">0</span><span data-i18n="status.inProgress">Töös</span></div>
+                    <div class="status-box machined" data-filter="machined"><span class="status-count" id="count-machined">0</span><span data-i18n="status.machined">Töödeldud</span></div>
                     <div class="status-box allhanke" data-filter="allhanke"><span class="status-count" id="count-allhanke">0</span><span data-i18n="status.allhanke">Allhanke</span></div>
                     <div class="status-box overdue" data-filter="overdue"><span class="status-count" id="count-overdue">0</span><span data-i18n="status.overdue">Hilinenud</span></div>
                     <div class="status-box completed" data-filter="completed"><span class="status-count" id="count-completed">0</span><span data-i18n="status.completed">Valmis</span></div>
@@ -30,6 +31,7 @@
                 
                 <div class="legend">
                     <span class="legend-item"><div class="legend-dot" style="background:var(--color-in-progress)"></div><span data-i18n="status.inProgress">Töös</span></span>
+                    <span class="legend-item"><div class="legend-dot" style="background:var(--color-machined)"></div><span data-i18n="status.machined">Töödeldud</span></span>
                     <span class="legend-item"><div class="legend-dot" style="background:var(--color-allhanke)"></div><span data-i18n="status.allhanke">Allhanke</span></span>
                     <span class="legend-item"><div class="legend-dot" style="background:var(--color-overdue)"></div><span data-i18n="status.overdue">Hilinenud</span></span>
                     <span class="legend-item"><div class="legend-dot" style="background:var(--color-completed)"></div><span data-i18n="status.completed">Valmis</span></span>
@@ -73,6 +75,7 @@
                 <input type="text" id="filter-koht" placeholder="Koht..." data-i18n-placeholder="filter.koht">
                 <button type="button" class="btn-filter-location" id="btn-filter-tos" aria-pressed="false">TOS</button>
                 <button type="button" class="btn-filter-location" id="btn-filter-karusel" aria-pressed="false">Karusel</button>
+                <button type="button" class="btn-filter-location" id="btn-filter-no-date" aria-pressed="false" data-i18n="filter.noDate" data-i18n-tooltip="filter.noDateTooltip" data-tooltip="Read, millel puudub EE vajaduse kuupäev">Kpv puudub</button>
                 <label class="filter-blank-label"><input type="checkbox" id="show-blank-koht"> <span data-i18n="filter.blank">Tühi</span></label>
             </div>
             
