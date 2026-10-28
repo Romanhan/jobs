@@ -4,6 +4,7 @@ import { renderTable, renderTableBody, renderForm, updateStats, showStatus, filt
 import { openModal, closeModal, addJob, editCell, finishEditing, toggleField, handleKeydown, attachEventListeners } from './events.js';
 import { closeCalendarPopup, setSelectDateCallback } from './calendar.js';
 import { t, columnTitle, getLocale, applyTranslations } from './i18n.js';
+import { initVim } from './vim.js';
 
 function setTheme(theme) {
     if (theme === 'dark') {
@@ -30,11 +31,13 @@ const MERGEABLE_CONFLICT_FIELDS = new Set([
     'Kommentaar(tooriku/detaili seis, muu oluline info)'
 ]);
 
-function addSyncAction(container, label, handler, primary = false) {
+// `key` is the vim-mode letter for the button (s shared, m mine, b both, r retry).
+function addSyncAction(container, label, handler, primary = false, key = '') {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = primary ? 'btn-primary' : 'btn-secondary';
     button.textContent = label;
+    if (key) button.dataset.key = key;
     button.addEventListener('click', handler);
     container.appendChild(button);
 }
@@ -92,22 +95,22 @@ function renderSyncPopup() {
         if (conflict.field === '_deleted') {
             // Name the outcome, not the side: "Kasuta minu väärtust" on a row
             // deleted elsewhere actually re-creates it in the shared file.
-            addSyncAction(actions, conflict.currentValue ? t('conflict.keepShared') : t('conflict.deleteJob'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
-            addSyncAction(actions, conflict.userValue ? t('conflict.restoreMine') : t('conflict.keepDeleted'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+            addSyncAction(actions, conflict.currentValue ? t('conflict.keepShared') : t('conflict.deleteJob'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'), false, 's');
+            addSyncAction(actions, conflict.userValue ? t('conflict.restoreMine') : t('conflict.keepDeleted'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true, 'm');
         } else if (conflict.field === '_job') {
-            addSyncAction(actions, t('conflict.useSharedRow'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
-            addSyncAction(actions, t('conflict.useMyRow'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+            addSyncAction(actions, t('conflict.useSharedRow'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'), false, 's');
+            addSyncAction(actions, t('conflict.useMyRow'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true, 'm');
         } else {
-            addSyncAction(actions, t('conflict.useShared'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'));
+            addSyncAction(actions, t('conflict.useShared'), () => resolveConflict(conflict.jobId, conflict.field, 'shared'), false, 's');
             if (MERGEABLE_CONFLICT_FIELDS.has(conflict.field) && typeof conflict.currentValue === 'string' && typeof conflict.userValue === 'string') {
-                addSyncAction(actions, t('conflict.merge'), () => openConflictMerge(conflict));
+                addSyncAction(actions, t('conflict.merge'), () => openConflictMerge(conflict), false, 'b');
             }
-            addSyncAction(actions, t('conflict.useMine'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true);
+            addSyncAction(actions, t('conflict.useMine'), () => resolveConflict(conflict.jobId, conflict.field, 'mine'), true, 'm');
         }
     } else if (syncState.state === 'error') {
         message.textContent = t('sync.error');
         details.textContent = syncState.messageKey ? t(syncState.messageKey, syncState.messageParams) : t('sync.errorDefault');
-        addSyncAction(actions, t('common.retry'), retrySave, true);
+        addSyncAction(actions, t('common.retry'), retrySave, true, 'r');
     } else {
         message.textContent = t('sync.checkingLong');
     }
@@ -329,6 +332,7 @@ async function init() {
 
 attachSortListener();
 attachEventListeners();
+initVim();
 setupSyncIndicator();
 setUpButtons();
 

@@ -151,3 +151,27 @@ export function autoGrowTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
+
+// Letter or symbol for a Ctrl shortcut, independent of the keyboard layout:
+// with the Russian layout Ctrl+D reports key 'в', so fall back to the physical
+// key only when the typed character is not plain ASCII.
+export function shortcutKey(e) {
+    if (e.key && e.key.length === 1 && e.key.charCodeAt(0) < 128) return e.key.toLowerCase();
+    if (/^Key[A-Z]$/.test(e.code || '')) return e.code.slice(3).toLowerCase();
+    if (e.code === 'Semicolon') return ';';
+    return e.key || '';
+}
+
+const US_PLAIN = { Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backquote: '`' };
+const US_SHIFTED = { Digit1: '!', Digit2: '@', Digit3: '#', Digit4: '$', Digit5: '%', Digit6: '^', Digit7: '&', Digit8: '*', Digit9: '(', Digit0: ')', Minus: '_', Equal: '+', BracketLeft: '{', BracketRight: '}', Backslash: '|', Semicolon: ':', Quote: '"', Comma: '<', Period: '>', Slash: '?', Backquote: '~' };
+
+// True when a printable key typed the character the US English layout puts on
+// that physical key. Keys without a layout-dependent character (arrows, Enter,
+// Space, numpad) and events without a code always match.
+export function matchesUSLayout(e) {
+    if (!e.key || e.key.length !== 1 || !e.code) return true;
+    if (/^Key[A-Z]$/.test(e.code)) return e.key.toLowerCase() === e.code.slice(3).toLowerCase();
+    if (/^Digit\d$/.test(e.code)) return e.key === (e.shiftKey ? US_SHIFTED[e.code] : e.code.slice(5));
+    const expected = (e.shiftKey ? US_SHIFTED : US_PLAIN)[e.code];
+    return expected === undefined || e.key === expected;
+}

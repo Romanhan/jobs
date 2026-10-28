@@ -186,7 +186,7 @@ export function renderTableBody() {
             
             const stickyClass = STICKY_COLS.includes(col) ? 'sticky-col' : '';
             if (isCheckbox) {
-                html += '<td class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px"><span class="cell-inner"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></span></td>';
+                html += '<td tabindex="-1" class="' + stickyClass + '" style="width: ' + width + 'px; min-width: ' + width + 'px; max-width: ' + width + 'px" data-index="' + index + '" data-checkbox="' + colEscaped + '"><span class="cell-inner"><input type="checkbox" class="checkbox" ' + (value ? 'checked' : '') + ' onchange="toggleField(' + index + ', \'' + colEscaped + '\', this.checked)"></span></td>';
             } else {
                 const rawValue = isDate ? formatDate(value) : (value || '');
                 const displayValue = isDate ? escapeHTML(rawValue) : renderMarkdown(rawValue);
@@ -200,6 +200,7 @@ export function renderTableBody() {
     
     tbody.innerHTML = html;
     updateStickyPositions();
+    window.dispatchEvent(new CustomEvent('jobs-table-rendered'));
 }
 
 export function updateStickyPositions() {

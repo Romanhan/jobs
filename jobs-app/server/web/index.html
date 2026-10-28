@@ -63,6 +63,7 @@
                     <button class="menu-item" data-action="row-colors" id="menu-row-colors">Color rows</button>
                     <button class="menu-item" data-action="font-size" data-i18n="menu.fontSize">Font size</button>
                     <hr class="menu-divider">
+                    <button class="menu-item" data-action="vim-mode" id="menu-vim-mode" aria-pressed="false">Vim keys</button>
                     <button class="menu-item" data-action="shortcuts" data-i18n="menu.shortcuts">Shortcuts</button>
                     <button class="menu-item" data-action="info" data-i18n="menu.info">Info</button>
                 </div>
@@ -102,26 +103,37 @@
             <tbody id="table-body"></tbody>
         </table>
         </div>
-        
+
+        <div id="vim-whichkey" class="vim-whichkey" hidden></div>
+        <div id="vim-indicator" class="vim-statusline" hidden>
+            <span class="vim-mode"></span>
+            <span class="vim-showcmd"></span>
+            <span class="vim-ruler"></span>
+        </div>
+
         <div class="status-bar" id="status-bar" style="display:none"></div>
     </div>
     
-    <div id="shortcuts-popup" class="shortcuts-popup" style="display:none">
-        <div class="shortcuts-grid">
-            <span class="key">Space</span><span data-i18n="shortcuts.toggle">Märgi / eemalda linnuke</span>
-            <span class="key">Enter</span><span data-i18n="shortcuts.save">Salvesta redigeerimine</span>
-            <span class="key">Esc</span><span data-i18n="shortcuts.cancel">Tühista / Sulge</span>
-            <div class="shortcut-gap"></div>
-            <span class="key">Ctrl+;</span><span data-i18n="shortcuts.today">Sisesta tänane kuupäev</span>
-            <span class="key">DD.MM+Enter</span><span data-i18n="shortcuts.autoYear">Auto-täienda aastaga (20.05 → 20.05.2026)</span>
-            <div class="shortcut-gap"></div>
-            <span class="key">Ctrl+B</span><span data-i18n-html="shortcuts.bold">Rasvane kiri (<strong>bold</strong>)</span>
-            <span class="key">Ctrl+I</span><span data-i18n-html="shortcuts.important">Märgi oluliseks (<span class="text-important">punane</span>)</span>
-            <span class="key">Ctrl+Shift+S</span><span data-i18n-html="shortcuts.strike">Läbi kriipsutatud (<s>strike</s>)</span>
-            <div class="shortcut-gap"></div>
-            <span class="key">Ctrl+Z</span><span data-i18n="shortcuts.undo">Võta tagasi (Undo)</span>
-            <span class="key">Ctrl+D</span><span data-i18n="shortcuts.duplicate">Kopeeri valitud rida</span>
+    <div id="shortcuts-popup" class="shortcuts-popup" style="display:none" data-view="default">
+        <div id="shortcuts-default">
+            <div class="shortcuts-grid">
+                <span class="key">Space</span><span data-i18n="shortcuts.toggle">Märgi / eemalda linnuke</span>
+                <span class="key">Enter</span><span data-i18n="shortcuts.save">Salvesta redigeerimine</span>
+                <span class="key">Esc</span><span data-i18n="shortcuts.cancel">Tühista / Sulge</span>
+                <div class="shortcut-gap"></div>
+                <span class="key">Ctrl+;</span><span data-i18n="shortcuts.today">Sisesta tänane kuupäev</span>
+                <span class="key">DD.MM+Enter</span><span data-i18n="shortcuts.autoYear">Auto-täienda aastaga (20.05 → 20.05.2026)</span>
+                <div class="shortcut-gap"></div>
+                <span class="key">Ctrl+B</span><span data-i18n-html="shortcuts.bold">Rasvane kiri (<strong>bold</strong>)</span>
+                <span class="key">Ctrl+I</span><span data-i18n-html="shortcuts.important">Märgi oluliseks (<span class="text-important">punane</span>)</span>
+                <span class="key">Ctrl+Shift+S</span><span data-i18n-html="shortcuts.strike">Läbi kriipsutatud (<s>strike</s>)</span>
+                <div class="shortcut-gap"></div>
+                <span class="key">Ctrl+Z</span><span data-i18n="shortcuts.undo">Võta tagasi (Undo)</span>
+                <span class="key">Ctrl+D</span><span data-i18n="shortcuts.duplicate">Kopeeri valitud rida</span>
+            </div>
+            <div id="shortcuts-vim-hint" class="shortcuts-hint" hidden data-i18n="vim.hint">Vim klahvid: vajuta ?</div>
         </div>
+        <div id="shortcuts-vim" class="shortcuts-vim"></div>
     </div>
 
     <div id="font-size-popup" class="font-size-popup" style="display:none">

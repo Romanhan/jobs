@@ -25,6 +25,7 @@ export const DEFAULT_SORT_COLUMN = 'EE vajaduse kuupäev (koostamiseks valmis ku
 let sortColumn = DEFAULT_SORT_COLUMN;
 let sortDirection = 'asc';
 let undoStack = [];
+let redoStack = [];
 const MAX_UNDO = 50;
 
 try {
@@ -129,28 +130,50 @@ export function getLoadFailure() {
     return loadFailure;
 }
 
+function snapshotState() {
+    return { jobs: JSON.parse(JSON.stringify(jobs)), sortColumn, sortDirection };
+}
+
+function restoreState(state) {
+    jobs = state.jobs;
+    setSortingState(state.sortColumn || DEFAULT_SORT_COLUMN, state.sortColumn ? state.sortDirection : 'asc');
+    autoSave();
+}
+
 export function pushUndo() {
     try {
-        undoStack.push({
-            jobs: JSON.parse(JSON.stringify(jobs)),
-            sortColumn,
-            sortDirection
-        });
+        undoStack.push(snapshotState());
         if (undoStack.length > MAX_UNDO) undoStack.shift();
+        // A new change starts a new history branch.
+        redoStack = [];
     } catch (e) {}
 }
 
 export function undo() {
     if (undoStack.length === 0) return false;
     const state = undoStack.pop();
-    jobs = state.jobs;
-    setSortingState(state.sortColumn || DEFAULT_SORT_COLUMN, state.sortColumn ? state.sortDirection : 'asc');
-    autoSave();
+    try {
+        redoStack.push(snapshotState());
+        if (redoStack.length > MAX_UNDO) redoStack.shift();
+    } catch (e) {}
+    restoreState(state);
+    return true;
+}
+
+export function redo() {
+    if (redoStack.length === 0) return false;
+    const state = redoStack.pop();
+    try {
+        undoStack.push(snapshotState());
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+    } catch (e) {}
+    restoreState(state);
     return true;
 }
 
 export function clearUndo() {
     undoStack = [];
+    redoStack = [];
 }
 
 export async function loadData() {

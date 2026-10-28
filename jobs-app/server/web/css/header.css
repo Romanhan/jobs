@@ -238,3 +238,45 @@
     border-radius: 50%;
     flex-shrink: 0;
 }
+
+/* Vim statusline under the table (Menu → Vim keys), like nvim's */
+.vim-statusline {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    padding: 5px 10px;
+    font-family: monospace;
+    font-size: 11px;
+    line-height: 1;
+    color: var(--text-muted);
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-inset);
+    white-space: nowrap;
+}
+
+.vim-statusline[hidden] {
+    display: none;
+}
+
+.vim-mode {
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+.vim-statusline.is-insert .vim-mode {
+    color: var(--color-warning);
+}
+
+.vim-statusline.is-blocked .vim-mode {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.vim-showcmd {
+    margin-left: auto;
+    color: var(--text-secondary);
+}
