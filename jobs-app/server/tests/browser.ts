@@ -66,6 +66,9 @@ export async function browser() {
     };
     await send("Page.enable");
     await send("Runtime.enable");
+    // Keep the page focused even when a busy headless runner moves window
+    // focus; otherwise the editor's blur handler saves and closes it mid-test.
+    await send("Emulation.setFocusEmulationEnabled", { enabled: true });
     return {
       close, evaluate,
       viewport: (width: number, height: number) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false }),

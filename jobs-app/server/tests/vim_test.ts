@@ -149,9 +149,13 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     await until(async () => (await rowsOf(f)).some(row => row[DETAIL] === 'x'));
     equal(await mode(b), 'NORMAL');
     equal((await at(b)).col, DETAIL);
+    // The file is written before the save response arrives; let that finish
+    // so the slow "jk" check below does not race the save.
+    await until(async () => !await b.evaluate(`(async () => (await import('/js/data.js')).hasUnsavedChanges())()`));
     await press(b, 'i');
+    assert(await b.evaluate(`document.activeElement === document.querySelector('.floating-editor textarea')`), 'i focuses the editor');
     await press(b, 'j'); await new Promise(resolve => setTimeout(resolve, 400)); await press(b, 'k');
-    equal(await b.evaluate(`document.querySelector('.floating-editor textarea').value`), 'xjk');
+    equal(await b.evaluate(`document.querySelector('.floating-editor textarea')?.value ?? 'editor closed, focus on ' + document.activeElement.tagName`), 'xjk');
     await press(b, 'Escape');
     equal(await b.evaluate(`document.querySelector('.floating-editor')`), null);
     assert((await rowsOf(f)).some(row => row[DETAIL] === 'x'), 'Esc cancels without saving');
