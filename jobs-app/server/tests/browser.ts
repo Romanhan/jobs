@@ -69,9 +69,14 @@ export async function browser() {
     return {
       close, evaluate,
       viewport: (width: number, height: number) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false }),
-      async key(key: string, code: number, modifiers = 0) {
-        await send('Input.dispatchKeyEvent', { type: 'keyDown', key, windowsVirtualKeyCode: code, modifiers });
-        await send('Input.dispatchKeyEvent', { type: 'keyUp', key, windowsVirtualKeyCode: code, modifiers });
+      // `physical` is the DOM `code` (e.g. 'KeyD'); it lets a test type the
+      // character another keyboard layout puts on that key.
+      async key(key: string, code: number, modifiers = 0, physical = '') {
+        // Printable keys also type their character, as a real keyboard does.
+        // Enter needs its text too, or a focused button is never activated.
+        const text = key === 'Enter' ? '\r' : key.length === 1 && !(modifiers & 2) ? key : undefined;
+        await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code: physical, text, windowsVirtualKeyCode: code, modifiers });
+        await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code: physical, windowsVirtualKeyCode: code, modifiers });
       },
       async click(selector: string) {
         const position = await evaluate(`(async () => {

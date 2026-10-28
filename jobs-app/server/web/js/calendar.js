@@ -6,6 +6,8 @@ let calendarCallback = null;
 let calendarCurrentYear = null;
 let calendarCurrentMonth = null;
 let calendarSelectedDate = null;
+// Day the keyboard (vim mode) is on, DD.MM.YYYY; Enter picks it.
+let calendarFocusedDate = null;
 
 let calendarCellTd = null;
 let calendarRowIndex = null;
@@ -50,6 +52,7 @@ export function openDateCalendar(inputEl, currentValue, callback, anchorEl) {
     calendarCurrentYear = year;
     calendarCurrentMonth = month;
     calendarSelectedDate = formattedValue;
+    calendarFocusedDate = initialFocus(formattedValue, year, month);
     
     const popup = document.createElement('div');
     popup.className = 'calendar-popup active';
@@ -137,14 +140,16 @@ export function renderCalendar() {
         const dayStr = String(day).padStart(2, '0') + '.' + String(prevDate.getMonth() + 1).padStart(2, '0') + '.' + prevDate.getFullYear();
         const isSelected = dayStr === calendarSelectedDate;
         const isToday = dayStr === todayStr;
-        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
+        const isFocused = dayStr === calendarFocusedDate;
+        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + (isFocused ? ' focused' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
     }
     
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayStr = String(day).padStart(2, '0') + '.' + String(calendarCurrentMonth + 1).padStart(2, '0') + '.' + calendarCurrentYear;
         const isSelected = dayStr === calendarSelectedDate;
         const isToday = dayStr === todayStr;
-        html += '<span class="calendar-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
+        const isFocused = dayStr === calendarFocusedDate;
+        html += '<span class="calendar-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + (isFocused ? ' focused' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
     }
     
     const totalCells = startDay + lastDay.getDate();
@@ -154,7 +159,8 @@ export function renderCalendar() {
         const dayStr = String(day).padStart(2, '0') + '.' + String(nextDate.getMonth() + 1).padStart(2, '0') + '.' + nextDate.getFullYear();
         const isSelected = dayStr === calendarSelectedDate;
         const isToday = dayStr === todayStr;
-        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
+        const isFocused = dayStr === calendarFocusedDate;
+        html += '<span class="calendar-day other-month' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '') + (isFocused ? ' focused' : '') + '" data-date="' + dayStr + '">' + day + '</span>';
     }
     
     html += '</div>';
@@ -180,6 +186,57 @@ export function renderCalendar() {
             selectDateCalendar(el.dataset.date);
         });
     });
+}
+
+function formatDay(date) {
+    return String(date.getDate()).padStart(2, '0') + '.' + String(date.getMonth() + 1).padStart(2, '0') + '.' + date.getFullYear();
+}
+
+function parseDay(str) {
+    const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(str || '');
+    return match ? new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1])) : null;
+}
+
+// The selected date, else today when the calendar shows this month, else the 1st.
+function initialFocus(selected, year, month) {
+    if (parseDay(selected)) return selected;
+    const today = new Date();
+    const showsToday = today.getFullYear() === year && today.getMonth() === month;
+    return formatDay(new Date(year, month, showsToday ? today.getDate() : 1));
+}
+
+function setCalendarFocus(date) {
+    calendarFocusedDate = formatDay(date);
+    calendarCurrentYear = date.getFullYear();
+    calendarCurrentMonth = date.getMonth();
+    renderCalendar();
+}
+
+export function isCalendarOpen() {
+    return !!document.getElementById('calendar-popup');
+}
+
+export function moveCalendarFocus(days) {
+    const date = parseDay(calendarFocusedDate) || new Date();
+    date.setDate(date.getDate() + days);
+    setCalendarFocus(date);
+}
+
+// Same day in the next / previous month, clamped to its last day.
+export function moveCalendarFocusMonths(delta) {
+    const date = parseDay(calendarFocusedDate) || new Date();
+    const target = new Date(date.getFullYear(), date.getMonth() + delta, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(date.getDate(), lastDay));
+    setCalendarFocus(target);
+}
+
+export function focusCalendarToday() {
+    setCalendarFocus(new Date());
+}
+
+export function selectFocusedCalendarDate() {
+    if (calendarFocusedDate) selectDateCalendar(calendarFocusedDate);
 }
 
 export function changeMonth(delta) {
@@ -241,6 +298,7 @@ export function openDateCalendarDirect(td, index, col, currentValue, anchorEl) {
     calendarCurrentYear = year;
     calendarCurrentMonth = month;
     calendarSelectedDate = formattedValue;
+    calendarFocusedDate = initialFocus(formattedValue, year, month);
     
     const popup = document.createElement('div');
     popup.className = 'calendar-popup active';

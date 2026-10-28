@@ -1,10 +1,11 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
-import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection } from './utils.js';
+import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection, shortcutKey } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, duplicateJob as doDuplicateJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable, renderRowColorsMenuItem } from './ui.js';
 import { t, setLanguage } from './i18n.js';
 import { openDateCalendarDirect, closeCalendarPopup, positionCalendarPopup, selectDateCalendarDirect, setOnDateSelectedInEdit, setEditingCellState } from './calendar.js';
+import { handleVimKeydown, isVimEnabled, setVimEnabled, isLeaveInsertChord, handleConfirmKey } from './vim.js';
 
 let editingCell = null;
 let tooltipEl = null;
@@ -171,21 +172,26 @@ export function editCell(td, index, col) {
     });
     
     input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        const key = shortcutKey(e);
+        // Vim mode: "jk" leaves insert mode and keeps the text, like nvim.
+        if (isLeaveInsertChord(e, input)) {
+            e.preventDefault();
+            saveEdited(input, index, col);
+        } else if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             saveEdited(input, index, col);
         } else if (e.key === 'Escape') {
             e.preventDefault();
             finishEditing();
-        } else if (e.ctrlKey && e.key === 'b') {
+        } else if (e.ctrlKey && !e.shiftKey && key === 'b') {
             e.preventDefault();
             wrapSelection(input, '**');
             positionEditor();
-        } else if (e.ctrlKey && e.key === 'i') {
+        } else if (e.ctrlKey && !e.shiftKey && key === 'i') {
             e.preventDefault();
             wrapSelection(input, '!!');
             positionEditor();
-        } else if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        } else if (e.ctrlKey && e.shiftKey && key === 's') {
             e.preventDefault();
             wrapSelection(input, '~~');
             positionEditor();
@@ -239,12 +245,17 @@ export function finishEditing() {
     closeCalendarPopup();
     const floatingEditor = document.querySelector('.floating-editor');
     if (floatingEditor) floatingEditor.remove();
-    if (editingCell.td) {
-        editingCell.td.style.visibility = '';
-        editingCell.td.classList.remove('editing');
+    const td = editingCell.td;
+    if (td) {
+        td.style.visibility = '';
+        td.classList.remove('editing');
     }
     editingCell = null;
     setEditingCellState(null, null);
+    // Vim mode returns to the cell, unless focus already moved somewhere else.
+    if (isVimEnabled() && td?.isConnected && document.activeElement === document.body) {
+        td.focus({ preventScroll: true });
+    }
 }
 
 export function deleteRow(index) {
@@ -258,6 +269,7 @@ export function deleteRow(index) {
     const popup = document.getElementById('confirm-popup');
     const cancelBtn = document.getElementById('confirm-cancel');
     const okBtn = document.getElementById('confirm-ok');
+    const returnFocus = document.activeElement;
 
     popup.style.display = 'flex';
     cancelBtn.focus();
@@ -276,9 +288,13 @@ export function deleteRow(index) {
         document.addEventListener('keydown', handleKeydown);
         okBtn.onclick = null;
         cancelBtn.onclick = null;
+        if (isVimEnabled() && returnFocus?.isConnected && returnFocus !== document.body) {
+            returnFocus.focus({ preventScroll: true });
+        }
     }
 
     function onKey(e) {
+        if (handleConfirmKey(e, okBtn, cancelBtn)) return;
         if (e.key === 'Escape') {
             e.preventDefault();
             e.stopPropagation();
@@ -422,6 +438,8 @@ export function handleKeydown(e) {
         }
         return;
     }
+    if (handleVimKeydown(e)) return;
+    const key = shortcutKey(e);
     const shortcutsPopup = document.getElementById('shortcuts-popup');
     const menuDropdown = document.getElementById('menu-dropdown');
     const fontPopup = document.getElementById('font-size-popup');
@@ -459,7 +477,7 @@ export function handleKeydown(e) {
         e.preventDefault();
         return;
     }
-    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && !document.getElementById('modal').classList.contains('active')) {
+    if (e.ctrlKey && key === 'z' && !document.getElementById('modal').classList.contains('active')) {
         const active = document.activeElement;
         if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
         e.preventDefault();
@@ -471,7 +489,7 @@ export function handleKeydown(e) {
         }
         return;
     }
-    if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) {
+    if (e.ctrlKey && key === 'd') {
         if (document.getElementById('modal').classList.contains('active')) return;
         e.preventDefault();
         let index;
@@ -495,7 +513,7 @@ export function handleKeydown(e) {
         }
         return;
     }
-    if (e.ctrlKey && e.key === ';') {
+    if (e.ctrlKey && key === ';') {
         e.preventDefault();
         const today = new Date();
         const dd = String(today.getDate()).padStart(2, '0');
@@ -653,6 +671,7 @@ export function attachEventListeners() {
             });
             input.click();
         } else if (action === 'shortcuts') {
+            shortcutsPopup.dataset.view = 'default';
             shortcutsPopup.style.display = shortcutsPopup.style.display === 'none' ? 'block' : 'none';
         } else if (action === 'info') {
             const grid = document.getElementById('info-grid');
@@ -668,6 +687,9 @@ export function attachEventListeners() {
             document.getElementById('font-size-slider').value = currentSize;
             document.getElementById('font-size-display').textContent = currentSize + ' px';
             popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+        } else if (action === 'vim-mode') {
+            setVimEnabled(!isVimEnabled());
+            showStatus(t(isVimEnabled() ? 'vim.toastOn' : 'vim.toastOff'), 'success');
         } else if (action === 'row-colors') {
             const showRowColors = localStorage.getItem('showRowColors') !== 'false';
             localStorage.setItem('showRowColors', showRowColors ? 'false' : 'true');

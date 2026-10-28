@@ -1,5 +1,5 @@
 import { equal, assert } from "./helpers.ts";
-import { formatDate, parseDate, isValidDate, parseCSVLine, parseCSVLines, renderMarkdown, fixColumnKeys } from "../web/js/utils.js";
+import { formatDate, parseDate, isValidDate, parseCSVLine, parseCSVLines, renderMarkdown, fixColumnKeys, shortcutKey, matchesUSLayout } from "../web/js/utils.js";
 
 Deno.test("utils: date display and storage formats", () => {
   equal(formatDate("2024-02-29"), "29.02.2024");
@@ -30,4 +30,20 @@ Deno.test("utils: markdown escapes HTML and preserves supported formatting", () 
 
 Deno.test("utils: legacy column names are trimmed", () => {
   equal(fixColumnKeys([{ " Töö Nr ": "A", "Täitmise koht": "TOS" }]), [{ "Töö Nr": "A", "Täitmise koht": "TOS" }]);
+});
+
+Deno.test("utils: shortcut keys and US layout detection across keyboard layouts", () => {
+  equal(shortcutKey({ key: "D", code: "KeyD" }), "d");
+  equal(shortcutKey({ key: "в", code: "KeyD" }), "d");
+  equal(shortcutKey({ key: "ж", code: "Semicolon" }), ";");
+  equal(shortcutKey({ key: ";", code: "Comma" }), ";");
+  assert(matchesUSLayout({ key: "j", code: "KeyJ" }));
+  assert(matchesUSLayout({ key: "G", code: "KeyG", shiftKey: true }));
+  assert(matchesUSLayout({ key: "$", code: "Digit4", shiftKey: true }));
+  assert(matchesUSLayout({ key: "/", code: "Slash" }));
+  assert(matchesUSLayout({ key: "ArrowDown", code: "ArrowDown" }));
+  assert(matchesUSLayout({ key: "j" }));
+  assert(!matchesUSLayout({ key: "о", code: "KeyJ" }));
+  assert(!matchesUSLayout({ key: "-", code: "Slash" }));
+  assert(!matchesUSLayout({ key: "¤", code: "Digit4", shiftKey: true }));
 });

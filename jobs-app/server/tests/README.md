@@ -62,8 +62,19 @@ The suite covers browser/UI workflows, server synchronization, startup lifecycle
   and background-edit prevention; editor visibility at desktop and narrow window
   sizes during typing/resizing; following scroll and saving the original row when
   it leaves view. These scenarios exercise light and dark themes.
+- Vim keys (`vim_test.ts`, real keyboard events, stubbed Keyboard API): off by
+  default, the menu toggle persisting across reload, movement, editing, status
+  toggles, `yy`/`p`, `dd`, undo/redo (Ctrl+R without reloading), the `jk`
+  chord, the statusline, separate vim and default help, counts, `w`/`b`, `zz`,
+  `t`, `f`, `g1`–`g6`, Esc Esc, `]c`/`[c`, `!`, paging with Ctrl+D/Ctrl+U
+  instead of duplicating, search, the leader menu and which-key popup (TOS,
+  Karusel, no date, blank location, menu, views, sorting), menu / sync popup /
+  delete-confirm keys, calendar keys, the help generated from the keymap, and
+  keys being ignored with a Russian layout
+  (re-checked on focus and modifier key-up) while Ctrl+D still duplicates.
 - Utilities: date conversion and calendar validity, CSV quoting and multiline
-  fields, HTML escaping, markdown, and legacy column normalization.
+  fields, HTML escaping, markdown, legacy column normalization, and
+  layout-independent shortcut keys.
 
 Browser scenarios exercise real page controls where practical and call app
 modules directly to set up precise concurrency and recovery conditions. They

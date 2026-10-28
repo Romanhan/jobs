@@ -1,5 +1,56 @@
 # Changelog
 
+## 0.5.0
+
+- Add an optional vim-style keyboard mode: Menu → "Vim keys". It is off by
+  default and remembered per browser, so nothing changes for anyone who does
+  not turn it on. While it is on, an nvim-style statusline under the table
+  shows the mode (`NORMAL` / `INSERT`), pending keys and the cursor's column
+  and row, and the table has a cell cursor that survives saves, polls and
+  sorting:
+  - `h j k l` / arrows move, with counts (`5j`, `3k`); `w` / `b` jump to the
+    next / previous text cell across rows; `gg` / `G` first / last row and
+    `10G` / `2gg` a given row; `0` / `$` first / last column; `Ctrl+D` /
+    `Ctrl+U` and PageDown / PageUp page down / up; `zz` centers the cursor row;
+    `]c` / `[c` jump to the next / previous conflicted row.
+  - `i` / `Enter` edit the cell (`Esc` returns to it), `Space` ticks the
+    checkbox under the cursor, `x` / `s` / `m` toggle "Valmis" / "Alustatud" /
+    "Töötlus Lõpetatud" on the cursor row, `t` puts today's date into a date
+    cell, `o` adds a job, `dd` deletes the row after the usual confirmation.
+  - `yy` then `p` duplicates a row (this replaces `Ctrl+D` while vim mode is
+    on), `u` / `Ctrl+R` undo / redo (`Ctrl+R` no longer reloads the page;
+    `Ctrl+Y` also redoes).
+  - `/` jumps to the "Töö Nr" filter and `f` to the machine filter (`Enter`,
+    `Esc` or `jk` return to the table), `g1` … `g6` press the status pills
+    ("Aktiivsed" … "Valmis"), `Esc Esc` clears all filters, `!` opens the
+    conflict popup.
+  - `jk` typed quickly (within 300 ms) in the cell editor saves and returns to
+    normal mode, like the common nvim mapping. `Esc` in the editor still
+    cancels the edit.
+  - `gd` opens the calendar of a date cell. In any open calendar `h` / `l`
+    move a day, `j` / `k` a week, `H` / `L` a month, `t` jumps to today and
+    `Enter` picks the date.
+  - `,` (leader) opens a which-key popup above the statusline: `t` TOS, `k`
+    Karusel, `n` no date, `b` blank location, `m` menu,
+    `v…` views (`d` dates, `c` completed, `a` subcontract) and `s…`
+    sort by part (`d`), need date (`e`) or machining start (`m`).
+  - In the menu and the sync / conflict popup `j` / `k` move between buttons
+    and `Enter` picks; conflict buttons also answer to `s` (shared), `m`
+    (mine), `b` (combine both) and `r` (retry). The delete confirmation takes
+    `y` / `n`.
+  - `?` shows only the vim keys, grouped by moving, editing, search, popups
+    and leader, and is generated from the same key table that handles the
+    keys, so the help cannot drift. Menu → "Shortcuts" keeps showing the
+    default keys.
+- Vim keys respond only with the English keyboard layout. With the Estonian
+  or Russian layout every key works as before and the statusline shows
+  `VIM: EN`.
+- `Ctrl+D`, `Ctrl+Z`, `Ctrl+;` and the editor's `Ctrl+B` / `Ctrl+I` /
+  `Ctrl+Shift+S` now also work with the Russian keyboard layout.
+
+The data format, the merge protocol and the lock protocol are unchanged.
+0.5.0 can share a data file with 0.3.11 – 0.4.0.
+
 ## 0.4.0
 
 - Add a "Fully Machined" status ("Töödeldud" / "Обработано") for rows where
