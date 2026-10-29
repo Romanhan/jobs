@@ -64,7 +64,7 @@ const cursorline = (b: Browser) => b.evaluate(`(() => {
 const gutter = (b: Browser) => b.evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve({
   width: document.querySelector('#jobs-table colgroup col').style.width,
   stickyLeft: document.querySelector('#table-body td.sticky-col')?.style.left,
-  numbers: [...document.querySelectorAll('#table-body td.row-indicator')].map(td => getComputedStyle(td, '::before').content.replace(/"/g, '')),
+  numbers: [...document.querySelectorAll('#table-body td.row-indicator')].map(td => getComputedStyle(td.querySelector('.cell-inner'), '::before').content.replace(/"/g, '')),
   current: [...document.querySelectorAll('#table-body tr')].findIndex(row => row.cells[0].classList.contains('is-cursor-row')),
 }))))`);
 const ruler = (b: Browser) => b.evaluate(`document.querySelector('#vim-indicator .vim-ruler').textContent`);
@@ -114,7 +114,7 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'true');
     equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Vim klahvid sisse lülitatud');
     // The gutter widens for row numbers at once, without a reload.
-    equal(await gutter(b), { width: '44px', stickyLeft: '44px', numbers: ['1', '2', '3'], current: -1 });
+    equal(await gutter(b), { width: '36px', stickyLeft: '36px', numbers: ['1', '2', '3'], current: -1 });
     await b.open(f.url);
     await until(async () => await mode(b) === 'NORMAL');
     const rows = await order(b);

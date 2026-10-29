@@ -816,7 +816,8 @@ function renderRowNumbers(current) {
         const gutter = row.cells[0];
         if (!gutter?.classList.contains('row-indicator')) return;
         const text = String(at < 0 || i === at ? i + 1 : Math.abs(i - at));
-        if (gutter.dataset.rel !== text) gutter.dataset.rel = text;
+        const inner = gutter.querySelector('.cell-inner');
+        if (inner && inner.dataset.rel !== text) inner.dataset.rel = text;
         gutter.classList.toggle('is-cursor-row', i === at);
     });
 }
