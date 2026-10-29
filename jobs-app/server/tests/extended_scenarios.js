@@ -48,6 +48,40 @@ export async function calendarControls() {
     equal(document.getElementById('calendar-popup'), null);
 }
 
+export async function relativeDates() {
+    const shift = days => { const d = new Date(); d.setDate(d.getDate() + days); return d; };
+    const day = days => { const d = shift(days); return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`; };
+    const iso = days => { const d = shift(days); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+    const need = 'EE vajaduse kuupäev (koostamiseks valmis kujul)';
+    const arrival = 'Tooriku saabumise kuupäev EE';
+    const edit = async (col, text) => {
+        document.querySelector(`td[data-col="${col}"]`).click();
+        const input = document.querySelector('.floating-editor textarea');
+        input.value = text;
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        return (await saved())[0][col];
+    };
+    equal(await edit(need, 't+5'), iso(5));
+    equal(await edit(need, 't-5'), iso(-5));
+    equal(await edit(need, 't12'), iso(12));
+    equal(await edit(arrival, 't'), day(0));
+    // Text cells keep what was typed.
+    equal(await edit('Täitmise koht', 't5'), 't5');
+
+    // The add form shows the date on Enter and saves it.
+    document.getElementById('btn-add-job').click();
+    const form = document.getElementById('add-form');
+    form.elements['Töö Nr'].value = 'REL';
+    const input = form.elements[need]; input.value = 't3';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    equal(input.value, day(3));
+    form.elements[arrival].value = 't-1';
+    form.querySelector('[type=submit]').click();
+    const added = (await saved()).find(job => job['Töö Nr'] === 'REL');
+    equal(added[need], iso(3));
+    equal(added[arrival], day(-1));
+}
+
 export async function keyboardAndCancel() {
     const field = 'Täitmise koht';
     const cell = document.querySelector(`td[data-col="${field}"]`);
@@ -64,8 +98,9 @@ export async function keyboardAndCancel() {
     document.querySelector('.btn-delete').click(); document.getElementById('confirm-cancel').click(); equal((await saved()).length, 1);
     document.getElementById('btn-add-job').click();
     const number = document.getElementById('add-form').elements['Töö Nr']; number.focus();
+    // Ctrl+; no longer inserts a date; "t" in a date field replaced it.
     number.dispatchEvent(new KeyboardEvent('keydown', { key: ';', ctrlKey: true, bubbles: true }));
-    check(/^\d{2}\.\d{2}\.\d{4}$/.test(number.value), 'Date shortcut inserts today');
+    equal(number.value, '');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     check(!document.getElementById('modal').classList.contains('active'), 'Escape closes modal');
 }

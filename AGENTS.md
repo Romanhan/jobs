@@ -61,6 +61,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - **Load data** — Reads from `jobs_data.json` or localStorage on page load
 - **Add new work** — Click "+ Lisa uus" button (modal form)
 - **Edit inline** — Click any cell to edit; floating editor for text/date cells
+- **Relative dates** — In a date cell or a date field of the add form, `t` + Enter is today, `t5` / `t+5` five days later, `t-5` five days earlier (`expandRelativeDate()` in `utils.js`; the Russian-layout `е` on the T key works too). In vim mode `t` writes today at once and digits / `-` / `+` typed within 1 s move it live (`t5`, `t-12`, also `5t`), as one undo step
 - **Mark started** — Check "Alustatud" → auto-fills start date
 - **Mark done** — Check "Valmis" → auto-fills completion date, dims row
 - **Show completed** — Toggle "Lõppenud" checkbox

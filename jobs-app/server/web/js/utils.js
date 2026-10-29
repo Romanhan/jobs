@@ -16,6 +16,24 @@ export function parseDate(dateStr) {
     return parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
 }
 
+// dd.mm.yyyy for today moved by a number of days (negative goes back).
+export function dayFromToday(days = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+}
+
+// "t" is today, "t5" / "t+5" five days later and "t-5" five days earlier. The
+// Russian layout types "е" on the T key, so that counts as well.
+const RELATIVE_DATE = /^\s*[tTеЕ]\s*([+-]?)\s*(\d{1,4})?\s*$/;
+
+export function expandRelativeDate(value) {
+    const match = RELATIVE_DATE.exec(value || '');
+    if (!match) return value;
+    const days = parseInt(match[2] || '0', 10);
+    return dayFromToday(match[1] === '-' ? -days : days);
+}
+
 export function isValidDate(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const [year, month, day] = value.split('-').map(Number);

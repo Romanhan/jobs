@@ -26,6 +26,7 @@ const cases = [
   ["combined filters and exact status counters", extended.filtersAndCounters],
   ["calendar navigation, leap day, today and cancel", extended.calendarControls],
   ["keyboard editing, formatting, multiline text and cancel", extended.keyboardAndCancel],
+  ["t, t+5 and t-5 date shortcuts in cells and the add form", extended.relativeDates],
   ["menus, preferences and column resize", extended.menusAndPreferences],
   ["retry after server saved but response was lost", extended.lostResponse],
   ["resolve multiple conflicts independently", extended.multipleConflicts],

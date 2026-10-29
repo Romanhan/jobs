@@ -4,7 +4,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-**Current version: 0.5.2** — see the [release notes](CHANGELOG.md).
+**Current version: 0.5.3** — see the [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -29,7 +29,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 | `Space` | Toggle the focused checkbox |
 | `Enter` | Save the edit |
 | `Esc` | Cancel / close |
-| `Ctrl+;` | Insert today's date |
+| `t`, `t+5`, `t-5` then `Enter` | In a date field: today, 5 days later, 5 days earlier |
 | `DD.MM` then `Enter` | Auto-complete the year (e.g. `20.05` → `20.05.2026`) |
 | `Ctrl+B` | Bold |
 | `Ctrl+I` | Mark as important (red) |

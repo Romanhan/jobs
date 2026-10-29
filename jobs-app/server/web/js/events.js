@@ -1,6 +1,6 @@
 import { COLUMNS, DATE_COLS, CHECKBOX_COLS, FORM_FIELDS } from './config.js';
 import { APP_VERSION, APP_NAME, APP_AUTHOR } from './version.js';
-import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection, shortcutKey } from './utils.js';
+import { formatDate, parseDate, isValidDate, autoGrowTextarea, wrapSelection, shortcutKey, expandRelativeDate } from './utils.js';
 import { getJobs, autoSave as doAutoSave, addJob as doAddJob, deleteJob as doDeleteJob, duplicateJob as doDuplicateJob, getColumnWidths, saveColumnWidths, loadFromFile as doLoadFromFile, saveCSV as doSaveCSV, pushUndo, undo } from './data.js';
 import { renderTableBody, updateStats, showStatus, filterTable, renderForm, renderTable, renderRowColorsMenuItem } from './ui.js';
 import { t, setLanguage } from './i18n.js';
@@ -216,7 +216,7 @@ export function editCell(td, index, col) {
 export function saveEdited(input, index, col) {
     if (!editingCell || editingCell.index !== index || editingCell.col !== col) return;
     pushUndo();
-    let value = input.value;
+    let value = editingCell.isDate ? expandRelativeDate(input.value) : input.value;
     if (DATE_COLS.includes(col) && value) {
         if (/^\d{1,2}\.\d{1,2}$/.test(value)) {
             const [d, m] = value.split('.');
@@ -394,7 +394,7 @@ export function addJob(e) {
         const col = f.col;
         const input = form.elements[col];
         if (input && input.value) {
-            let val = input.value;
+            let val = f.isDate ? expandRelativeDate(input.value) : input.value;
             if (DATE_COLS.includes(col)) {
                 if (/^\d{1,2}\.\d{1,2}$/.test(val)) {
                     const [d, m] = val.split('.');
@@ -513,28 +513,6 @@ export function handleKeydown(e) {
         }
         return;
     }
-    if (e.ctrlKey && key === ';') {
-        e.preventDefault();
-        const today = new Date();
-        const dd = String(today.getDate()).padStart(2, '0');
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const yyyy = today.getFullYear();
-        const dateStr = dd + '.' + mm + '.' + yyyy;
-        if (editingCell) {
-            const input = document.querySelector('.floating-editor textarea');
-            if (input) {
-                input.value = dateStr;
-                input.dispatchEvent(new Event('input'));
-            }
-        } else if (document.getElementById('modal').classList.contains('active')) {
-            const active = document.activeElement;
-            if (active && active.tagName === 'INPUT' && active.closest('#add-form')) {
-                active.value = dateStr;
-                active.dispatchEvent(new Event('input'));
-            }
-        }
-        return;
-    }
     if (editingCell) {
         if (e.key === 'Escape') {
             closeCalendarPopup();
@@ -607,7 +585,12 @@ export function attachEventListeners() {
         if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
             const input = e.target;
             const col = input.getAttribute('name');
-            if (DATE_COLS.includes(col) && /^\d{1,2}\.\d{1,2}$/.test(input.value)) {
+            // "t", "t5", "t-5" become the date first, so it can be checked before saving.
+            const expanded = input.classList.contains('date-input') ? expandRelativeDate(input.value) : input.value;
+            if (expanded !== input.value) {
+                e.preventDefault();
+                input.value = expanded;
+            } else if (DATE_COLS.includes(col) && /^\d{1,2}\.\d{1,2}$/.test(input.value)) {
                 e.preventDefault();
                 const [d, m] = input.value.split('.');
                 input.value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
