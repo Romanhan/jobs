@@ -65,9 +65,11 @@ const KEYMAP = [
         gg: n => moveRow(n ? n - 1 : 0, true), G: n => moveRow(n ? n - 1 : tableRows().length - 1, true)
     } },
     { group: 'move', keys: '0 / $', label: 'vim.cols', bindings: { 0: () => moveCol(0, true), $: () => moveCol(Number.MAX_SAFE_INTEGER, true) } },
-    { group: 'move', keys: 'Ctrl+D / Ctrl+U', label: 'vim.page', bindings: {
-        'C-d': () => moveRow(pageRows()), 'C-u': () => moveRow(-pageRows()),
-        PageDown: () => moveRow(pageRows()), PageUp: () => moveRow(-pageRows())
+    { group: 'move', keys: 'Ctrl+D / Ctrl+U', label: 'vim.halfPage', bindings: {
+        'C-d': () => scrollRows(halfPage()), 'C-u': () => scrollRows(-halfPage())
+    } },
+    { group: 'move', keys: 'PageDown / PageUp', label: 'vim.page', bindings: {
+        PageDown: () => scrollRows(pageRows()), PageUp: () => scrollRows(-pageRows())
     } },
     { group: 'move', keys: 'zz', label: 'vim.center', bindings: { zz: centerRow } },
     { group: 'move', keys: ']c / [c', label: 'vim.conflictJump', bindings: { ']c': () => jumpConflict(1), '[c': () => jumpConflict(-1) } },
@@ -296,6 +298,24 @@ function pageRows() {
     if (!wrap || !row) return 1;
     const header = wrap.querySelector('thead')?.offsetHeight || 0;
     return Math.max(1, Math.floor((wrap.clientHeight - header) / Math.max(1, row.offsetHeight)) - 1);
+}
+
+// nvim's Ctrl+D / Ctrl+U move half a screen; PageDown / PageUp a whole one.
+function halfPage() {
+    return Math.max(1, Math.floor((pageRows() + 1) / 2));
+}
+
+// Like nvim, the view scrolls by the same rows as the cursor, so the cursor
+// keeps its place on screen (until the top or bottom of the table).
+function scrollRows(delta) {
+    const before = focusedCell()?.getBoundingClientRect().top;
+    moveRow(delta);
+    const td = focusedCell();
+    const wrap = td?.closest('.table-wrap');
+    if (before === undefined || !wrap) return;
+    // Scroll by the distance the cursor actually moved on screen (row
+    // heights vary); the browser clamps at the top and bottom of the table.
+    wrap.scrollTop += td.getBoundingClientRect().top - before;
 }
 
 function centerRow() {

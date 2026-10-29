@@ -66,8 +66,19 @@ export function getStatus(job) {
 }
 
 // The left gutter holds the status dot; vim mode widens it for row numbers.
+// The numbers scale with the row font, so their box is measured: the gutter
+// grows by exactly that much and the dot keeps its gap to the first column.
 export function rowGutterWidth() {
-    return document.body.classList.contains('vim-on') ? 32 : 16;
+    if (!document.body.classList.contains('vim-on')) return 16;
+    const probe = document.createElement('span');
+    probe.className = 'row-number-probe';
+    probe.textContent = '00';
+    document.body.appendChild(probe);
+    const numberWidth = probe.getBoundingClientRect().width;
+    probe.remove();
+    // The 16 px dot area loses 3 px of padding and gains the number box
+    // plus its 2 px margin (see td.row-indicator in table.css).
+    return Math.ceil(16 - 3 + numberWidth + 2);
 }
 
 export function renderTable(skipBody) {
@@ -80,10 +91,11 @@ export function renderTable(skipBody) {
     
     const colgroup = document.createElement('colgroup');
     const indicatorCol = document.createElement('col');
-    indicatorCol.style.width = rowGutterWidth() + 'px';
+    const gutterWidth = rowGutterWidth();
+    indicatorCol.style.width = gutterWidth + 'px';
     colgroup.appendChild(indicatorCol);
     
-    let totalWidth = rowGutterWidth();
+    let totalWidth = gutterWidth;
     const ths = [];
     const widths = getColumnWidths();
     const { sortColumn, sortDirection } = getSortingState();
@@ -116,7 +128,8 @@ export function renderTable(skipBody) {
         }
     }
     
-    let html = '<tr><th class="row-indicator"></th>';
+    const gutter = gutterWidth + 'px';
+    let html = '<tr><th class="row-indicator" style="width: ' + gutter + '; min-width: ' + gutter + '; max-width: ' + gutter + '"></th>';
     ths.forEach(th => { html += th.html; });
     html += '<th class="cell-delete-header"></th></tr>';
     thead.innerHTML = html;

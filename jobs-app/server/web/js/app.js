@@ -22,7 +22,9 @@ function setRowFontSize(size) {
     localStorage.setItem('fontSize', size);
     document.getElementById('font-size-display').textContent = size + ' px';
     document.getElementById('font-size-slider').value = size;
-    updateStickyPositions();
+    // Vim row numbers scale with the font, so their gutter is re-measured.
+    if (document.body.classList.contains('vim-on') && document.querySelector('#jobs-table colgroup')) renderTable(true);
+    else updateStickyPositions();
 }
 
 let syncState = { state: 'checking' };
