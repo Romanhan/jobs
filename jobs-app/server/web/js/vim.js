@@ -10,7 +10,7 @@ import { renderTable, rowGutterWidth, renderTableBody, updateStats, showStatus, 
 import { editCell, toggleField, deleteRow, openModal, getEditingCell } from './events.js';
 import { DATE_COLS } from './config.js';
 import { t, columnLabel } from './i18n.js';
-import { escapeHTML, matchesUSLayout, parseDate } from './utils.js';
+import { escapeHTML, matchesUSLayout, parseDate, dayFromToday } from './utils.js';
 import { isCalendarOpen, moveCalendarFocus, moveCalendarFocusMonths, focusCalendarToday, selectFocusedCalendarDate } from './calendar.js';
 
 const STORAGE_KEY = 'vimMode';
@@ -46,6 +46,8 @@ let yankedId = null;
 let lastJAt = 0;
 // Keys typed after the leader, e.g. [] right after "," and ['v'] after ",v".
 let leaderPath = null;
+// The date "t" has just written, while digits can still move it (see setToday).
+let dateEntry = null;
 
 // ---- Key tables -------------------------------------------------------------
 
@@ -81,7 +83,7 @@ const KEYMAP = [
     { group: 'edit', keys: 'x / s / m', label: 'vim.status', bindings: {
         x: () => toggleStatus(STATUS_KEYS.x), s: () => toggleStatus(STATUS_KEYS.s), m: () => toggleStatus(STATUS_KEYS.m)
     } },
-    { group: 'edit', keys: 't', label: 'vim.today', bindings: { t: setToday } },
+    { group: 'edit', keys: 't / t5 / t-5', label: 'vim.today', bindings: { t: setToday } },
     { group: 'edit', keys: 'gd', label: 'vim.calendar', bindings: { gd: openCalendar } },
     { group: 'edit', keys: 'o', label: 'vim.newJob', bindings: { o: () => openModal() } },
     { group: 'edit', keys: 'dd', label: 'vim.delete', bindings: { dd: deleteCursorRow } },
@@ -152,6 +154,7 @@ export function setVimEnabled(next) {
     } catch {}
     clearPending();
     closeLeader();
+    endDateEntry();
     if (enabled) refreshLayout();
     renderVimMenuItem();
     renderVimIndicator();
@@ -399,17 +402,54 @@ function dateCellUnderCursor() {
     return null;
 }
 
-function setToday() {
+// "t" writes today's date at once; digits, "-" and "+" typed right after it
+// move the date ("t5" five days later, "t-5" five days earlier), and so does a
+// count ("5t"). The whole entry is one undo step.
+function setToday(n) {
     const td = dateCellUnderCursor();
     if (!td) return;
-    const col = cellCol(td);
-    const now = new Date();
-    const display = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + now.getFullYear();
     pushUndo();
-    getJobs()[rowIndex(td)][col] = DATE_COLS.includes(col) ? parseDate(display) : display;
+    dateEntry = { jobId: getJobs()[rowIndex(td)]?._id, col: cellCol(td), base: n, typed: '', timer: null };
+    writeDateEntry();
+}
+
+function writeDateEntry() {
+    const job = getJobs().find(item => item._id === dateEntry.jobId);
+    if (!job) return endDateEntry();
+    const display = dayFromToday(dateEntry.typed ? parseInt(dateEntry.typed, 10) || 0 : dateEntry.base);
+    job[dateEntry.col] = DATE_COLS.includes(dateEntry.col) ? parseDate(display) : display;
     autoSave();
     renderTableBody();
     updateStats();
+    clearTimeout(dateEntry.timer);
+    dateEntry.timer = setTimeout(endDateEntry, SEQUENCE_TIMEOUT_MS);
+    renderVimIndicator();
+}
+
+function endDateEntry() {
+    if (!dateEntry) return;
+    clearTimeout(dateEntry.timer);
+    dateEntry = null;
+    renderVimIndicator();
+}
+
+// Any other key ends the entry and then does what it always does; Esc only ends it.
+function handleDateEntryKey(e) {
+    const typed = dateEntry.typed;
+    let next = null;
+    if (/^[0-9]$/.test(e.key)) next = typed.replace(/\D/g, '').length < 4 ? typed + e.key : typed;
+    else if ((e.key === '-' || e.key === '+') && !typed) next = e.key;
+    else if (e.key === 'Backspace') next = typed.slice(0, -1);
+    if (next === null) {
+        endDateEntry();
+        if (e.key !== 'Escape') return false;
+        e.preventDefault();
+        return true;
+    }
+    e.preventDefault();
+    dateEntry.typed = next;
+    writeDateEntry();
+    return true;
 }
 
 // Opens the cell editor with its calendar; the calendar keys then pick a date.
@@ -739,6 +779,7 @@ export function handleVimKeydown(e) {
         return true;
     }
     if (isTextEntry(active)) return false;
+    if (dateEntry && handleDateEntryKey(e)) return true;
     if (e.key === 'Escape') {
         if (pending || count) {
             clearPending();
@@ -832,7 +873,7 @@ function renderVimIndicator() {
     el.classList.toggle('is-blocked', blocked);
     el.classList.toggle('is-insert', insert);
     el.querySelector('.vim-mode').textContent = blocked ? t('vim.layoutBadge') : (insert ? 'INSERT' : 'NORMAL');
-    const typed = leaderPath !== null ? LEADER_KEY + leaderPath.join('') : count + pending;
+    const typed = leaderPath !== null ? LEADER_KEY + leaderPath.join('') : dateEntry ? 't' + dateEntry.typed : count + pending;
     el.querySelector('.vim-showcmd').textContent = blocked ? t('vim.layoutTooltip') : typed;
     // The editor holds focus in INSERT mode, so fall back to the edited cell.
     const td = focusedCell() || getEditingCell()?.td;

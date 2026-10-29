@@ -443,6 +443,27 @@ Deno.test('vim: counts, w/b, zz, today, filters, status pills and conflict jumps
     await until(async () => !(await byId(f, needId))[NEED]);
     equal((await byId(f, firstId))['Töö Nr'], rows[0]);
 
+    // Digits right after t move the date ("t5", "t-5"), and so does a count ("5t").
+    const isoIn = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    await press(b, 't'); await press(b, '5');
+    await until(async () => (await byId(f, needId))[NEED] === isoIn(5));
+    await press(b, '0'); equal(await showcmd(b), 't50');
+    await until(async () => (await byId(f, needId))[NEED] === isoIn(50));
+    await press(b, 'Escape'); equal(await showcmd(b), '');
+    await press(b, 't'); await press(b, '-'); await press(b, '1'); await press(b, '2');
+    equal(await showcmd(b), 't-12');
+    await until(async () => (await byId(f, needId))[NEED] === isoIn(-12));
+    await press(b, 'Escape');
+    await press(b, '3'); await press(b, 't');
+    await until(async () => (await byId(f, needId))[NEED] === isoIn(3));
+    // Each entry is one undo step, and u ends the entry before undoing.
+    await press(b, 'u');
+    await until(async () => (await byId(f, needId))[NEED] === isoIn(-12));
+    await press(b, 'u');
+    await until(async () => (await byId(f, needId))[NEED] === isoIn(50));
+    await press(b, 'u');
+    await until(async () => !(await byId(f, needId))[NEED]);
+
     // f focuses the machine filter; Esc returns to the table.
     await press(b, 'f');
     equal(await b.evaluate(`document.activeElement.id`), 'filter-koht');

@@ -1,5 +1,5 @@
 import { equal, assert } from "./helpers.ts";
-import { formatDate, parseDate, isValidDate, parseCSVLine, parseCSVLines, renderMarkdown, fixColumnKeys, shortcutKey, matchesUSLayout } from "../web/js/utils.js";
+import { formatDate, parseDate, isValidDate, parseCSVLine, parseCSVLines, renderMarkdown, fixColumnKeys, shortcutKey, matchesUSLayout, dayFromToday, expandRelativeDate } from "../web/js/utils.js";
 
 Deno.test("utils: date display and storage formats", () => {
   equal(formatDate("2024-02-29"), "29.02.2024");
@@ -7,6 +7,18 @@ Deno.test("utils: date display and storage formats", () => {
   equal(parseDate("2024-02-29"), "2024-02-29");
   equal(formatDate(""), "");
   equal(parseDate(""), "");
+});
+
+Deno.test("utils: t, t5, t+5 and t-5 expand to dates relative to today", () => {
+  const day = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`; };
+  equal(dayFromToday(), day(0));
+  equal(expandRelativeDate("t"), day(0));
+  equal(expandRelativeDate("T5"), day(5));
+  equal(expandRelativeDate(" t + 5 "), day(5));
+  equal(expandRelativeDate("t-5"), day(-5));
+  equal(expandRelativeDate("t-400"), day(-400));
+  equal(expandRelativeDate("е-2"), day(-2));
+  for (const other of ["", "20.05", "today", "t5d", "t--5", "5t", "tt"]) equal(expandRelativeDate(other), other);
 });
 
 Deno.test("utils: real calendar dates including leap-year boundaries", () => {
