@@ -6,7 +6,7 @@
 // Every key lives in KEYMAP (normal mode) or LEADER (after ","). Key handling,
 // the "?" help and the which-key popup are all built from these two tables.
 import { getJobs, undo, redo, duplicateJob, pushUndo, autoSave } from './data.js';
-import { renderTable, renderTableBody, updateStats, showStatus, sortBy } from './ui.js';
+import { renderTable, rowGutterWidth, renderTableBody, updateStats, showStatus, sortBy } from './ui.js';
 import { editCell, toggleField, deleteRow, openModal, getEditingCell } from './events.js';
 import { DATE_COLS } from './config.js';
 import { t, columnLabel } from './i18n.js';
@@ -789,6 +789,7 @@ export function renderVimMenuItem() {
 // position (ruler), like nvim's.
 function renderVimIndicator() {
     document.body.classList.toggle('vim-on', enabled);
+    syncGutter();
     const el = document.getElementById('vim-indicator');
     if (!el) return;
     el.hidden = !enabled;
@@ -803,6 +804,27 @@ function renderVimIndicator() {
     // The editor holds focus in INSERT mode, so fall back to the edited cell.
     const td = focusedCell() || getEditingCell()?.td;
     el.querySelector('.vim-ruler').textContent = td?.isConnected && !blocked ? rulerText(td) : '';
+    renderRowNumbers(td?.isConnected ? td.parentElement : null);
+}
+
+// nvim's number + relativenumber in the left gutter: the cursor row shows its
+// own number, every other row its distance from it (absolute without a cursor).
+function renderRowNumbers(current) {
+    const rows = tableRows();
+    const at = rows.indexOf(current);
+    rows.forEach((row, i) => {
+        const gutter = row.cells[0];
+        if (!gutter?.classList.contains('row-indicator')) return;
+        const text = String(at < 0 || i === at ? i + 1 : Math.abs(i - at));
+        if (gutter.dataset.rel !== text) gutter.dataset.rel = text;
+        gutter.classList.toggle('is-cursor-row', i === at);
+    });
+}
+
+// The gutter width depends on vim mode, so the header and columns re-render.
+function syncGutter() {
+    const col = document.querySelector('#jobs-table colgroup col');
+    if (col && col.style.width !== rowGutterWidth() + 'px') renderTable(true);
 }
 
 // "Column  row,col  pos", like nvim's ruler: pos is All, Top, Bot or the

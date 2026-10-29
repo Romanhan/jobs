@@ -59,6 +59,14 @@ const cursorline = (b: Browser) => b.evaluate(`(() => {
   const lit = row => [...row.cells].every(td => getComputedStyle(td).backgroundColor === hover);
   return [...document.querySelectorAll('#table-body tr')].every(row => lit(row) === (row === current));
 })()`);
+// The left gutter as drawn: its width, where the first sticky column starts,
+// and each row's number (CSS content, so "none" when vim mode is off).
+const gutter = (b: Browser) => b.evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve({
+  width: document.querySelector('#jobs-table colgroup col').style.width,
+  stickyLeft: document.querySelector('#table-body td.sticky-col')?.style.left,
+  numbers: [...document.querySelectorAll('#table-body td.row-indicator')].map(td => getComputedStyle(td, '::before').content.replace(/"/g, '')),
+  current: [...document.querySelectorAll('#table-body tr')].findIndex(row => row.cells[0].classList.contains('is-cursor-row')),
+}))))`);
 const ruler = (b: Browser) => b.evaluate(`document.querySelector('#vim-indicator .vim-ruler').textContent`);
 const visible = (b: Browser, selector: string) => b.evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); return !!el && getComputedStyle(el).display !== 'none' && !el.closest('[style*="display: none"]'); })()`);
 const cursorId = (b: Browser) => b.evaluate(`(async () => (await import('/js/data.js')).getJobs()[+document.activeElement.closest('tr').dataset.index]._id)()`);
@@ -71,6 +79,7 @@ Deno.test('vim: off by default; default keys, Ctrl+D duplicate and Russian-layou
     await b.beforeLoad(layoutStub);
     await b.open(f.url);
     equal(await mode(b), null);
+    equal(await gutter(b), { width: '16px', stickyLeft: '16px', numbers: ['none', 'none'], current: -1 });
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'false');
     await b.evaluate(`document.querySelector('#table-body td[data-col="Täitmise koht"]').focus()`);
     const before = await at(b);
@@ -104,6 +113,8 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     equal(await b.evaluate(`localStorage.getItem('vimMode')`), 'true');
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'true');
     equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Vim klahvid sisse lülitatud');
+    // The gutter widens for row numbers at once, without a reload.
+    equal(await gutter(b), { width: '44px', stickyLeft: '44px', numbers: ['1', '2', '3'], current: -1 });
     await b.open(f.url);
     await until(async () => await mode(b) === 'NORMAL');
     const rows = await order(b);
@@ -112,11 +123,13 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     // First key shows the cursor, later keys move it; edges clamp.
     await press(b, 'j'); equal(await at(b), { row: rows[0], col: 'Töö Nr' });
     equal(await ruler(b), 'Töö Nr  1,1  Top');
+    equal((await gutter(b)).numbers, ['1', '1', '2']); equal((await gutter(b)).current, 0);
     await until(() => cursorline(b));
     await press(b, 'k'); equal(await at(b), { row: rows[0], col: 'Töö Nr' });
     await press(b, 'h'); equal(await at(b), { row: rows[0], col: 'Töö Nr' });
     await press(b, 'j'); equal(await at(b), { row: rows[1], col: 'Töö Nr' });
     equal(await ruler(b), 'Töö Nr  2,1  67%');
+    equal((await gutter(b)).numbers, ['1', '2', '1']); equal((await gutter(b)).current, 1);
     await until(() => cursorline(b));
     await press(b, 'k'); equal(await at(b), { row: rows[0], col: 'Töö Nr' });
     await press(b, 'l'); equal(await at(b), { row: rows[0], col: 'Valmis' });

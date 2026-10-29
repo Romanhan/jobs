@@ -65,6 +65,11 @@ export function getStatus(job) {
     return null;
 }
 
+// The left gutter holds the status dot; vim mode widens it for row numbers.
+export function rowGutterWidth() {
+    return document.body.classList.contains('vim-on') ? 44 : 16;
+}
+
 export function renderTable(skipBody) {
     const thead = document.querySelector('thead');
     const showHidden = document.getElementById('show-hidden-dates')?.checked;
@@ -75,10 +80,10 @@ export function renderTable(skipBody) {
     
     const colgroup = document.createElement('colgroup');
     const indicatorCol = document.createElement('col');
-    indicatorCol.style.width = '16px';
+    indicatorCol.style.width = rowGutterWidth() + 'px';
     colgroup.appendChild(indicatorCol);
     
-    let totalWidth = 16;
+    let totalWidth = rowGutterWidth();
     const ths = [];
     const widths = getColumnWidths();
     const { sortColumn, sortDirection } = getSortingState();
@@ -210,7 +215,7 @@ export function updateStickyPositions() {
 
         const headerSticky = headerRow.querySelectorAll('.sticky-col:not(.hidden-col)');
         const positions = [];
-        let left = 16;
+        let left = rowGutterWidth();
 
         headerSticky.forEach(el => {
             positions.push({ left: left });

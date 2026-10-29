@@ -4,6 +4,10 @@
 
 - Vim keys: the row with the cursor is highlighted like a hovered row (nvim's
   cursorline), also while its cell is being edited.
+- Vim keys: relative row numbers in the left gutter, like nvim's `number` +
+  `relativenumber`: the cursor row shows its own number (in bold), every
+  other row its distance from it, so `5j` / `3k` can be read off the gutter.
+  The gutter only widens while vim mode is on.
 - Vim keys: the statusline ruler now reads like nvim's: column name, then
   `row,column`, then `Top` / `Bot` / `All` or the position in percent. It used
   to show `row/total`, whose second number never changed while moving.

@@ -292,6 +292,36 @@ table td.row-indicator {
     background: var(--bg-table);
 }
 
+/* Vim mode: relative row numbers before the status dot (nvim's number +
+   relativenumber). The gutter width matches rowGutterWidth() in ui.js. */
+body.vim-on table thead .row-indicator {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+}
+
+body.vim-on #table-body td.row-indicator {
+    white-space: nowrap;
+}
+
+body.vim-on #table-body td.row-indicator::before {
+    content: attr(data-rel);
+    display: inline-block;
+    width: 24px;
+    margin-right: 4px;
+    text-align: right;
+    vertical-align: middle;
+    font-size: var(--font-row-size);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+
+body.vim-on #table-body td.row-indicator.is-cursor-row::before {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
 table td.sticky-col {
     position: sticky;
     background: var(--bg-table);
