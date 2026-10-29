@@ -8,7 +8,8 @@
   `Ctrl+B`).
 - Vim keys: the row-number gutter is sized from the real width of the numbers
   at the current font size (and re-sized when the font size changes), so the
-  status dot keeps the same gap to the work number as with vim mode off.
+  status dot sits exactly midway: 4 px to the number and 4 px to the work
+  number, at every font size.
 
 ## 0.5.1
 

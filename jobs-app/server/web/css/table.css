@@ -314,7 +314,7 @@ body.vim-on #table-body td.row-indicator .cell-inner::before {
     content: attr(data-rel);
     display: inline-block;
     min-width: 2ch;
-    margin-right: 2px;
+    margin-right: 4px;
     text-align: right;
     vertical-align: baseline;
     /* Smaller than the row text, like nvim's dim number column. */

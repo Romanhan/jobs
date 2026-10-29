@@ -66,8 +66,8 @@ export function getStatus(job) {
 }
 
 // The left gutter holds the status dot; vim mode widens it for row numbers.
-// The numbers scale with the row font, so their box is measured: the gutter
-// grows by exactly that much and the dot keeps its gap to the first column.
+// The numbers scale with the row font, so their box is measured and the
+// gutter grows by exactly that much.
 export function rowGutterWidth() {
     if (!document.body.classList.contains('vim-on')) return 16;
     const probe = document.createElement('span');
@@ -76,9 +76,11 @@ export function rowGutterWidth() {
     document.body.appendChild(probe);
     const numberWidth = probe.getBoundingClientRect().width;
     probe.remove();
-    // The 16 px dot area loses 3 px of padding and gains the number box
-    // plus its 2 px margin (see td.row-indicator in table.css).
-    return Math.ceil(16 - 3 + numberWidth + 2);
+    // 1 px padding, the number box, 4 px, the 8 px dot, then 2 px that the
+    // first column's 2 px padding makes 4: the dot sits midway between the
+    // number and the work number (see td.row-indicator in table.css). Not
+    // rounded, so both gaps stay equal at every font size.
+    return 1 + numberWidth + 4 + 8 + 2;
 }
 
 export function renderTable(skipBody) {

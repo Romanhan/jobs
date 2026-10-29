@@ -64,16 +64,24 @@ const cursorline = (b: Browser) => b.evaluate(`(() => {
 const gutter = (b: Browser) => b.evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => {
   const first = document.querySelector('#table-body td.row-indicator');
   const col = document.querySelector('#jobs-table colgroup col').style.width;
-  resolve({
-    // The first column starts where the gutter ends, and the space between
-    // the gutter content (number and dot) and that column stays as without
-    // vim mode, at any font size.
-    aligned: document.querySelector('#table-body td.sticky-col')?.style.left === col && first.getBoundingClientRect().width === parseFloat(col),
-    // The gutter is rounded up to whole pixels, so compare whole pixels.
-    slack: Math.floor(first.getBoundingClientRect().right - first.querySelector('.cell-inner').getBoundingClientRect().right + 0.01),
+  const inner = first.querySelector('.cell-inner');
+  // The test rows have no status, so measure with a temporary dot.
+  const added = !inner.querySelector('.status-dot');
+  if (added) inner.insertAdjacentHTML('beforeend', '<span class="status-dot status-dot--in-progress"></span>');
+  const dot = inner.querySelector('.status-dot').getBoundingClientRect();
+  const number = getComputedStyle(inner, '::before');
+  const work = first.parentElement.querySelector('td[data-col="Töö Nr"] .cell-inner').getBoundingClientRect();
+  const round = value => Math.round(value * 10) / 10;
+  const result = {
+    // The first column starts where the gutter ends.
+    aligned: Math.abs(parseFloat(document.querySelector('#table-body td.sticky-col')?.style.left) - parseFloat(col)) < 0.1 && Math.abs(first.getBoundingClientRect().width - parseFloat(col)) < 0.1,
+    // Space between the number and the dot, and between the dot and the work number.
+    gaps: [number.content === 'none' ? null : round(dot.left - inner.getBoundingClientRect().left - parseFloat(number.width)), round(work.left - dot.right)],
     numbers: [...document.querySelectorAll('#table-body td.row-indicator')].map(td => getComputedStyle(td.querySelector('.cell-inner'), '::before').content.replace(/"/g, '')),
     current: [...document.querySelectorAll('#table-body tr')].findIndex(row => row.cells[0].classList.contains('is-cursor-row')),
-  });
+  };
+  if (added) inner.querySelector('.status-dot').remove();
+  resolve(result);
 })))`);
 const ruler = (b: Browser) => b.evaluate(`document.querySelector('#vim-indicator .vim-ruler').textContent`);
 const visible = (b: Browser, selector: string) => b.evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); return !!el && getComputedStyle(el).display !== 'none' && !el.closest('[style*="display: none"]'); })()`);
@@ -88,7 +96,7 @@ Deno.test('vim: off by default; default keys, Ctrl+D duplicate and Russian-layou
     await b.open(f.url);
     equal(await mode(b), null);
     const offGutter = await gutter(b);
-    equal(offGutter, { aligned: true, slack: 12, numbers: ['none', 'none'], current: -1 });
+    equal(offGutter, { aligned: true, gaps: [null, 6], numbers: ['none', 'none'], current: -1 });
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'false');
     await b.evaluate(`document.querySelector('#table-body td[data-col="Täitmise koht"]').focus()`);
     const before = await at(b);
@@ -123,11 +131,11 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'true');
     equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Vim klahvid sisse lülitatud');
     // The gutter widens for row numbers at once, without a reload.
-    equal(await gutter(b), { aligned: true, slack: 12, numbers: ['1', '2', '3'], current: -1 });
+    equal(await gutter(b), { aligned: true, gaps: [4, 4], numbers: ['1', '2', '3'], current: -1 });
     // A larger font widens the numbers; the gutter is re-measured and the
     // space before the first column stays the same.
     await b.evaluate(`(() => { const s = document.getElementById('font-size-slider'); s.value = '17'; s.dispatchEvent(new Event('input')); })()`);
-    equal(await gutter(b), { aligned: true, slack: 12, numbers: ['1', '2', '3'], current: -1 });
+    equal(await gutter(b), { aligned: true, gaps: [4, 4], numbers: ['1', '2', '3'], current: -1 });
     await b.evaluate(`(() => { const s = document.getElementById('font-size-slider'); s.value = '12'; s.dispatchEvent(new Event('input')); })()`);
     await b.open(f.url);
     await until(async () => await mode(b) === 'NORMAL');
