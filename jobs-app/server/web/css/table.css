@@ -370,19 +370,24 @@ body.modal-open .row-indicator {
     outline-offset: 2px;
 }
 
+/* Vim mode highlights the cursor row like hover (nvim's cursorline), also
+   while its cell is being edited. */
 #table-body tr.row-in-progress:hover td:not(.row-indicator),
 #table-body tr.row-allhanke:hover td:not(.row-indicator),
 #table-body tr.row-machined:hover td:not(.row-indicator),
 #table-body tr.row-overdue:hover td:not(.row-indicator),
-#table-body tr.row-completed:hover td:not(.row-indicator) {
+#table-body tr.row-completed:hover td:not(.row-indicator),
+body.vim-on #table-body tr:is(.row-in-progress, .row-allhanke, .row-machined, .row-overdue, .row-completed):is(:focus-within, :has(td.editing)) td:not(.row-indicator) {
     background: var(--bg-row-hover);
 }
 
-#table-body tr:hover td {
+#table-body tr:hover td,
+body.vim-on #table-body tr:is(:focus-within, :has(td.editing)) td {
     background-color: var(--bg-row-hover);
 }
 
-#table-body tr:hover td.row-indicator {
+#table-body tr:hover td.row-indicator,
+body.vim-on #table-body tr:is(:focus-within, :has(td.editing)) td.row-indicator {
     background-color: var(--bg-row-hover);
 }
 

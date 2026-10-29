@@ -800,11 +800,20 @@ function renderVimIndicator() {
     el.querySelector('.vim-mode').textContent = blocked ? t('vim.layoutBadge') : (insert ? 'INSERT' : 'NORMAL');
     const typed = leaderPath !== null ? LEADER_KEY + leaderPath.join('') : count + pending;
     el.querySelector('.vim-showcmd').textContent = blocked ? t('vim.layoutTooltip') : typed;
-    const td = focusedCell();
-    const rows = tableBody()?.rows.length || 0;
-    el.querySelector('.vim-ruler').textContent = td && !blocked
-        ? columnLabel(cellCol(td)) + '  ' + (tableRows().indexOf(td.parentElement) + 1) + '/' + rows
-        : '';
+    // The editor holds focus in INSERT mode, so fall back to the edited cell.
+    const td = focusedCell() || getEditingCell()?.td;
+    el.querySelector('.vim-ruler').textContent = td?.isConnected && !blocked ? rulerText(td) : '';
+}
+
+// "Column  row,col  pos", like nvim's ruler: pos is All, Top, Bot or the
+// row's position through the visible rows in percent.
+function rulerText(td) {
+    const rows = tableRows();
+    const row = rows.indexOf(td.parentElement) + 1;
+    const col = rowCells(td.parentElement).indexOf(td) + 1;
+    const pos = rows.length <= 1 ? 'All' : row === 1 ? 'Top' : row === rows.length ? 'Bot'
+        : Math.round(row / rows.length * 100) + '%';
+    return columnLabel(cellCol(td)) + '  ' + row + ',' + col + '  ' + pos;
 }
 
 function keyRows(rows, prefix = '') {

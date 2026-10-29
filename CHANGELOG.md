@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+- Vim keys: the row with the cursor is highlighted like a hovered row (nvim's
+  cursorline), also while its cell is being edited.
+- Vim keys: the statusline ruler now reads like nvim's: column name, then
+  `row,column`, then `Top` / `Bot` / `All` or the position in percent. It used
+  to show `row/total`, whose second number never changed while moving.
+
 ## 0.5.0
 
 - Add an optional vim-style keyboard mode: Menu → "Vim keys". It is off by
