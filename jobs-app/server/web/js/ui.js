@@ -67,7 +67,7 @@ export function getStatus(job) {
 
 // The left gutter holds the status dot; vim mode widens it for row numbers.
 export function rowGutterWidth() {
-    return document.body.classList.contains('vim-on') ? 36 : 16;
+    return document.body.classList.contains('vim-on') ? 32 : 16;
 }
 
 export function renderTable(skipBody) {

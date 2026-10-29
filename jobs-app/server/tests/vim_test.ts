@@ -114,7 +114,7 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'true');
     equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Vim klahvid sisse lülitatud');
     // The gutter widens for row numbers at once, without a reload.
-    equal(await gutter(b), { width: '36px', stickyLeft: '36px', numbers: ['1', '2', '3'], current: -1 });
+    equal(await gutter(b), { width: '32px', stickyLeft: '32px', numbers: ['1', '2', '3'], current: -1 });
     await b.open(f.url);
     await until(async () => await mode(b) === 'NORMAL');
     const rows = await order(b);

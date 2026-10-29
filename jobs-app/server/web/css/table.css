@@ -295,20 +295,21 @@ table td.row-indicator {
 /* Vim mode: relative row numbers before the status dot (nvim's number +
    relativenumber). The gutter width matches rowGutterWidth() in ui.js. */
 body.vim-on table thead .row-indicator {
-    width: 36px;
-    min-width: 36px;
-    max-width: 36px;
+    width: 32px;
+    min-width: 32px;
+    max-width: 32px;
 }
 
 body.vim-on #table-body td.row-indicator {
+    padding-left: 1px;
     white-space: nowrap;
 }
 
 body.vim-on #table-body td.row-indicator .cell-inner::before {
     content: attr(data-rel);
     display: inline-block;
-    width: 18px;
-    margin-right: 3px;
+    min-width: 2ch;
+    margin-right: 2px;
     text-align: right;
     vertical-align: baseline;
     /* Smaller than the row text, like nvim's dim number column. */
