@@ -4,7 +4,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-**Current version: 0.5.2** — see the [release notes](CHANGELOG.md).
+**Current version: 0.5.3** — see the [release notes](CHANGELOG.md).
 
 ## Features
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.3
+
+- Relative dates: in a date cell or a date field of the add form, `t` +
+  Enter is today, `t5` / `t+5` five days later and `t-5` five days earlier
+  (any number of days). The Russian-layout `е` on the T key works too. Text
+  cells keep what was typed.
+- Vim keys: `t` still writes today at once; digits, `-` and `+` typed right
+  after it move the date as you type (`t5`, `t-12`), and a count works too
+  (`5t`). The statusline shows the entry, `Esc` ends it, and one `u` undoes
+  the whole entry.
+- `Ctrl+;` (insert today's date) is removed; `t` replaces it.
+
 ## 0.5.2
 
 - Vim keys: `Ctrl+D` / `Ctrl+U` now move half a screen, like nvim, and the
