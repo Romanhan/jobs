@@ -4,7 +4,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-**Current version: 0.5.1** — see the [release notes](CHANGELOG.md).
+**Current version: 0.5.2** — see the [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -47,7 +47,7 @@ Turn on Menu → "Vim keys" (off by default, remembered per browser). The keys r
 | --- | --- |
 | `h j k l`, `5j`, `w` / `b` | Move the cursor (with counts; next / previous text cell); the left gutter shows relative row numbers |
 | `gg` / `G` / `10G`, `0` / `$` | First / last / Nth row, first / last column |
-| `Ctrl+D` / `Ctrl+U`, `zz` | Page down / up, center the row |
+| `Ctrl+D` / `Ctrl+U`, `PageDown` / `PageUp`, `zz` | Half page down / up, whole page down / up, center the row |
 | `i` / `Enter`, `jk`, `Esc` | Edit, save and leave the editor, cancel |
 | `Space`, `x` / `s` / `m` | Tick the checkbox; toggle Valmis / Alustatud / Töötlus Lõpetatud |
 | `t`, `gd` | Today's date; open the calendar (`hjkl`, `H` / `L`, `t`, `Enter`) |

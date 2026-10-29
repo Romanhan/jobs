@@ -66,8 +66,21 @@ export function getStatus(job) {
 }
 
 // The left gutter holds the status dot; vim mode widens it for row numbers.
+// The numbers scale with the row font, so their box is measured and the
+// gutter grows by exactly that much.
 export function rowGutterWidth() {
-    return document.body.classList.contains('vim-on') ? 32 : 16;
+    if (!document.body.classList.contains('vim-on')) return 16;
+    const probe = document.createElement('span');
+    probe.className = 'row-number-probe';
+    probe.textContent = '00';
+    document.body.appendChild(probe);
+    const numberWidth = probe.getBoundingClientRect().width;
+    probe.remove();
+    // 1 px padding, the number box, 4 px, the 8 px dot, then 2 px that the
+    // first column's 2 px padding makes 4: the dot sits midway between the
+    // number and the work number (see td.row-indicator in table.css). Not
+    // rounded, so both gaps stay equal at every font size.
+    return 1 + numberWidth + 4 + 8 + 2;
 }
 
 export function renderTable(skipBody) {
@@ -80,10 +93,11 @@ export function renderTable(skipBody) {
     
     const colgroup = document.createElement('colgroup');
     const indicatorCol = document.createElement('col');
-    indicatorCol.style.width = rowGutterWidth() + 'px';
+    const gutterWidth = rowGutterWidth();
+    indicatorCol.style.width = gutterWidth + 'px';
     colgroup.appendChild(indicatorCol);
     
-    let totalWidth = rowGutterWidth();
+    let totalWidth = gutterWidth;
     const ths = [];
     const widths = getColumnWidths();
     const { sortColumn, sortDirection } = getSortingState();
@@ -116,7 +130,8 @@ export function renderTable(skipBody) {
         }
     }
     
-    let html = '<tr><th class="row-indicator"></th>';
+    const gutter = gutterWidth + 'px';
+    let html = '<tr><th class="row-indicator" style="width: ' + gutter + '; min-width: ' + gutter + '; max-width: ' + gutter + '"></th>';
     ths.forEach(th => { html += th.html; });
     html += '<th class="cell-delete-header"></th></tr>';
     thead.innerHTML = html;

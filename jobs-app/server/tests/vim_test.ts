@@ -61,12 +61,28 @@ const cursorline = (b: Browser) => b.evaluate(`(() => {
 })()`);
 // The left gutter as drawn: its width, where the first sticky column starts,
 // and each row's number (CSS content, so "none" when vim mode is off).
-const gutter = (b: Browser) => b.evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve({
-  width: document.querySelector('#jobs-table colgroup col').style.width,
-  stickyLeft: document.querySelector('#table-body td.sticky-col')?.style.left,
-  numbers: [...document.querySelectorAll('#table-body td.row-indicator')].map(td => getComputedStyle(td.querySelector('.cell-inner'), '::before').content.replace(/"/g, '')),
-  current: [...document.querySelectorAll('#table-body tr')].findIndex(row => row.cells[0].classList.contains('is-cursor-row')),
-}))))`);
+const gutter = (b: Browser) => b.evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => {
+  const first = document.querySelector('#table-body td.row-indicator');
+  const col = document.querySelector('#jobs-table colgroup col').style.width;
+  const inner = first.querySelector('.cell-inner');
+  // The test rows have no status, so measure with a temporary dot.
+  const added = !inner.querySelector('.status-dot');
+  if (added) inner.insertAdjacentHTML('beforeend', '<span class="status-dot status-dot--in-progress"></span>');
+  const dot = inner.querySelector('.status-dot').getBoundingClientRect();
+  const number = getComputedStyle(inner, '::before');
+  const work = first.parentElement.querySelector('td[data-col="Töö Nr"] .cell-inner').getBoundingClientRect();
+  const round = value => Math.round(value * 10) / 10;
+  const result = {
+    // The first column starts where the gutter ends.
+    aligned: Math.abs(parseFloat(document.querySelector('#table-body td.sticky-col')?.style.left) - parseFloat(col)) < 0.1 && Math.abs(first.getBoundingClientRect().width - parseFloat(col)) < 0.1,
+    // Space between the number and the dot, and between the dot and the work number.
+    gaps: [number.content === 'none' ? null : round(dot.left - inner.getBoundingClientRect().left - parseFloat(number.width)), round(work.left - dot.right)],
+    numbers: [...document.querySelectorAll('#table-body td.row-indicator')].map(td => getComputedStyle(td.querySelector('.cell-inner'), '::before').content.replace(/"/g, '')),
+    current: [...document.querySelectorAll('#table-body tr')].findIndex(row => row.cells[0].classList.contains('is-cursor-row')),
+  };
+  if (added) inner.querySelector('.status-dot').remove();
+  resolve(result);
+})))`);
 const ruler = (b: Browser) => b.evaluate(`document.querySelector('#vim-indicator .vim-ruler').textContent`);
 const visible = (b: Browser, selector: string) => b.evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); return !!el && getComputedStyle(el).display !== 'none' && !el.closest('[style*="display: none"]'); })()`);
 const cursorId = (b: Browser) => b.evaluate(`(async () => (await import('/js/data.js')).getJobs()[+document.activeElement.closest('tr').dataset.index]._id)()`);
@@ -79,7 +95,8 @@ Deno.test('vim: off by default; default keys, Ctrl+D duplicate and Russian-layou
     await b.beforeLoad(layoutStub);
     await b.open(f.url);
     equal(await mode(b), null);
-    equal(await gutter(b), { width: '16px', stickyLeft: '16px', numbers: ['none', 'none'], current: -1 });
+    const offGutter = await gutter(b);
+    equal(offGutter, { aligned: true, gaps: [null, 6], numbers: ['none', 'none'], current: -1 });
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'false');
     await b.evaluate(`document.querySelector('#table-body td[data-col="Täitmise koht"]').focus()`);
     const before = await at(b);
@@ -114,7 +131,12 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     equal(await b.evaluate(`document.getElementById('menu-vim-mode').getAttribute('aria-pressed')`), 'true');
     equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Vim klahvid sisse lülitatud');
     // The gutter widens for row numbers at once, without a reload.
-    equal(await gutter(b), { width: '32px', stickyLeft: '32px', numbers: ['1', '2', '3'], current: -1 });
+    equal(await gutter(b), { aligned: true, gaps: [4, 4], numbers: ['1', '2', '3'], current: -1 });
+    // A larger font widens the numbers; the gutter is re-measured and the
+    // space before the first column stays the same.
+    await b.evaluate(`(() => { const s = document.getElementById('font-size-slider'); s.value = '17'; s.dispatchEvent(new Event('input')); })()`);
+    equal(await gutter(b), { aligned: true, gaps: [4, 4], numbers: ['1', '2', '3'], current: -1 });
+    await b.evaluate(`(() => { const s = document.getElementById('font-size-slider'); s.value = '12'; s.dispatchEvent(new Event('input')); })()`);
     await b.open(f.url);
     await until(async () => await mode(b) === 'NORMAL');
     const rows = await order(b);
@@ -254,7 +276,7 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     assert(!(await rowsOf(f)).some(row => row._id === copyId), 'dd deletes the cursor row');
     assert(await at(b), 'Cursor stays in the table after deleting');
 
-    // Ctrl+D / Ctrl+U page instead of duplicating.
+    // Ctrl+D / Ctrl+U move half a page instead of duplicating (3 rows: clamped).
     await press(b, 'g'); await press(b, 'g');
     await b.key('d', 68, CTRL, 'KeyD');
     equal((await at(b)).row, (await order(b))[2]);
@@ -338,6 +360,37 @@ Deno.test('vim: counts, w/b, zz, today, filters, status pills and conflict jumps
     await press(b, '1'); await press(b, '0'); equal(await showcmd(b), '10');
     await press(b, 'G'); equal((await at(b)).row, rows[9]);
     equal(await ruler(b), 'Töö Nr  10,1  25%');
+    // Like nvim: Ctrl+D / Ctrl+U move half a screen and scroll the view with
+    // the cursor, so it keeps its place on screen; PageDown / PageUp move a
+    // whole screen.
+    const view = () => b.evaluate(`(() => {
+      const wrap = document.querySelector('.table-wrap');
+      const rowHeight = document.querySelector('#table-body tr').offsetHeight;
+      return {
+        screen: Math.floor((wrap.clientHeight - wrap.querySelector('thead').offsetHeight) / rowHeight) - 1,
+        room: wrap.scrollHeight - wrap.clientHeight - wrap.scrollTop,
+        rowHeight,
+        top: Math.round(document.activeElement.getBoundingClientRect().top),
+      };
+    })()`);
+    const start = await view();
+    const half = Math.max(1, Math.floor((start.screen + 1) / 2));
+    assert(start.screen >= 4 && half < start.screen, `screen of ${start.screen} rows`);
+    await b.key('d', 68, CTRL, 'KeyD');
+    equal((await at(b)).row, rows[9 + half]);
+    if (start.room >= half * start.rowHeight) {
+      // Scroll offsets snap to whole device pixels while the row pitch can
+      // be fractional (Linux font metrics), so the closest achievable
+      // position can round 1 px away from the start.
+      assert(Math.abs((await view()).top - start.top) <= 1, 'Ctrl+D keeps the cursor in place');
+    }
+    await b.key('u', 85, CTRL, 'KeyU');
+    equal((await at(b)).row, rows[9]);
+    await b.key('PageDown', 34, 0, 'PageDown');
+    equal((await at(b)).row, rows[Math.min(39, 9 + start.screen)]);
+    await b.key('PageUp', 33, 0, 'PageUp');
+    equal((await at(b)).row, rows[Math.max(0, Math.min(39, 9 + start.screen) - start.screen)]);
+    await press(b, '1'); await press(b, '0'); await press(b, 'G');
     await press(b, '2'); await press(b, 'g'); equal(await showcmd(b), '2g');
     await press(b, 'g'); equal((await at(b)).row, rows[1]);
     await press(b, '9'); await press(b, '9'); await press(b, 'j'); equal((await at(b)).row, rows[39]);

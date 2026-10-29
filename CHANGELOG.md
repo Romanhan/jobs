@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.2
+
+- Vim keys: `Ctrl+D` / `Ctrl+U` now move half a screen, like nvim, and the
+  view scrolls with the cursor so it keeps its place on screen. They used to
+  jump a whole screen; `PageDown` / `PageUp` still do (nvim's `Ctrl+F` /
+  `Ctrl+B`).
+- Vim keys: the row-number gutter is sized from the real width of the numbers
+  at the current font size (and re-sized when the font size changes), so the
+  status dot sits exactly midway: 4 px to the number and 4 px to the work
+  number, at every font size.
+
 ## 0.5.1
 
 - Vim keys: the row with the cursor is highlighted like a hovered row (nvim's
