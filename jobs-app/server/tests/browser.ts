@@ -26,9 +26,10 @@ export async function browser() {
     await Deno.remove(dir, { recursive: true });
   };
   try {
-    // A cold Windows runner can take longer to start Chrome (before any app
-    // code runs). Keep this separate from the shorter UI assertion timeouts.
-    await until(async () => port, 30000);
+    // A cold runner can take longer to start Chrome (before any app code
+    // runs): ubuntu-latest once needed just over 30 s for the first launch.
+    // Keep this separate from the shorter UI assertion timeouts.
+    await until(async () => port, 60000);
     const response = await fetch(`http://127.0.0.1:${port}/json/list`);
     const targets = await response.json();
     socket = new WebSocket(targets.find((t: { type: string }) => t.type === "page").webSocketDebuggerUrl);
