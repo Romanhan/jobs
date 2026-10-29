@@ -378,7 +378,12 @@ Deno.test('vim: counts, w/b, zz, today, filters, status pills and conflict jumps
     assert(start.screen >= 4 && half < start.screen, `screen of ${start.screen} rows`);
     await b.key('d', 68, CTRL, 'KeyD');
     equal((await at(b)).row, rows[9 + half]);
-    if (start.room >= half * start.rowHeight) equal((await view()).top, start.top);
+    if (start.room >= half * start.rowHeight) {
+      // Scroll offsets snap to whole device pixels while the row pitch can
+      // be fractional (Linux font metrics), so the closest achievable
+      // position can round 1 px away from the start.
+      assert(Math.abs((await view()).top - start.top) <= 1, 'Ctrl+D keeps the cursor in place');
+    }
     await b.key('u', 85, CTRL, 'KeyU');
     equal((await at(b)).row, rows[9]);
     await b.key('PageDown', 34, 0, 'PageDown');

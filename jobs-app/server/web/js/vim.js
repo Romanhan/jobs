@@ -314,8 +314,21 @@ function scrollRows(delta) {
     const wrap = td?.closest('.table-wrap');
     if (before === undefined || !wrap) return;
     // Scroll by the distance the cursor actually moved on screen (row
-    // heights vary); the browser clamps at the top and bottom of the table.
-    wrap.scrollTop += td.getBoundingClientRect().top - before;
+    // heights vary); the browser clamps at the top and bottom of the table
+    // and snaps the offset to whole device pixels, so a fractional cursor
+    // position needs a second pass to converge. The loop guards against
+    // hidden rounding quirks with a small iteration budget.
+    // The browser snaps scroll offsets to whole device pixels while row
+    // pitches can be fractional (Linux font metrics), so the first pass can
+    // leave a sub-pixel drift; finer passes converge while they still move
+    // the offset.
+    for (let pass = 0; pass < 3; pass++) {
+        const drift = td.getBoundingClientRect().top - before;
+        if (Math.abs(drift) < 0.5) break;
+        const scroll = wrap.scrollTop;
+        wrap.scrollTop += drift;
+        if (wrap.scrollTop === scroll) break;
+    }
 }
 
 function centerRow() {
