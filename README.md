@@ -4,7 +4,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 
 ![App Screenshot](screenshot-3.png)
 
-**Current version: 0.5.4** — see the [release notes](CHANGELOG.md).
+**Current version: 0.5.5** — see the [release notes](CHANGELOG.md).
 
 ## Features
 
@@ -15,6 +15,7 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 - **Filters** — by job number and machine, rows without a need date, show completed or subcontract work
 - **CSV import/export** and **automatic backups** (validated snapshot every 48 hours, newest 36 kept, filed by month)
 - **Text formatting** — bold (`**`), important (`!!`), strikethrough (`~~`)
+- **Cell copy & paste** — hover a cell and press `Ctrl+C`, hover another and press `Ctrl+V`; works for text, dates and checkboxes, and takes text copied from Excel or e-mail
 - **Undo, duplicate row, sorting, column resize and font size**
 - **Light & dark theme** with a soft neumorphic look
 - **Interface languages** — Estonian, English and Russian, switched from the menu
@@ -36,8 +37,12 @@ A soft neumorphic (soft UI) job management app — replaces Excel spreadsheets w
 | `Ctrl+Shift+S` | Strikethrough |
 | `Ctrl+Z` | Undo |
 | `Ctrl+D` | Duplicate the focused or hovered row |
+| `Ctrl+C` | Copy the cell under the mouse |
+| `Ctrl+V` | Paste into the cell under the mouse |
 
 The Ctrl shortcuts also work with the Russian keyboard layout.
+
+**Copying cells.** No click is needed: point at a cell, press `Ctrl+C`, point at another cell, press `Ctrl+V`. Dates are copied as shown (`DD.MM.YYYY`) and checked like typed dates, so text that is not a date is refused in a date cell. A checkbox copies its tick and pastes only into another checkbox (pasting a ticked "Alustatud" fills the start date, like a click). Text copied in Excel, e-mail or Notepad pastes too. `Ctrl+Z` undoes a paste. With text selected, or with the cursor in a text field or the cell editor, `Ctrl+C` / `Ctrl+V` work as usual.
 
 ### Vim keys
 
@@ -51,7 +56,8 @@ Turn on Menu → "Vim keys" (off by default, remembered per browser). The keys r
 | `i` / `Enter`, `jk`, `Esc` | Edit, save and leave the editor, cancel |
 | `Space`, `x` / `s` / `m` | Tick the checkbox; toggle Valmis / Alustatud / Töötlus Lõpetatud |
 | `t`, `gd` | Today's date; open the calendar (`hjkl`, `H` / `L`, `t`, `Enter`) |
-| `o`, `dd`, `yy` / `p` | New job, delete row (`y` / `n`), copy / paste a duplicate |
+| `o`, `dd` | New job, delete row (`y` / `n`) |
+| `y`, `yy`, `p` | Copy the cell, copy the row, paste whichever was copied last (the cell value or a duplicate row) |
 | `u` / `Ctrl+R` | Undo / redo |
 | `/`, `f`, `g1` … `g6`, `Esc Esc` | Search Töö Nr / machine, status pills, clear filters |
 | `]c` / `[c`, `!` | Next / previous conflict, open conflicts |
