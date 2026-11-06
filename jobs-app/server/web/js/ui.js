@@ -36,7 +36,7 @@ function parseDeadline(str) {
 }
 
 // Machining is finished and the part only waits for delivery, so it is no longer
-// counted as in progress or subcontracted.
+// counted as in progress.
 function isMachined(job) {
     return job['Töötlus Lõpetatud'] && !job['Valmis'];
 }
@@ -45,8 +45,10 @@ function isInProgress(job) {
     return job['Alustatud'] && !job['Töötlus allhankes'] && !job['Valmis'] && !isMachined(job);
 }
 
+// A subcontracted job stays under Allhanke after machining is finished, so it can
+// still be found there (it is also counted as machined and tinted as machined).
 function isAllhanke(job) {
-    return job['Töötlus allhankes'] && !job['Valmis'] && !isMachined(job);
+    return job['Töötlus allhankes'] && !job['Valmis'];
 }
 
 function isOverdue(job, today) {

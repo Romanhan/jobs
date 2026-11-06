@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.5.4
 
+- A subcontracted job marked "Töötlus Lõpetatud" no longer disappears: it
+  stays out of the main list as before, but now shows under both the Allhanke
+  and Töödeldud pills and is counted in both. It used to drop out of
+  Allhanke and was only reachable through Töödeldud or the Allhange toggle.
 - Move the build toolchain back to Deno 2.9.6. WithSecure quarantined the
   0.5.3 executable as `Trojan.TR/W64.Evo` and now blocks the 2.9.8 runtime
   itself, so even a hello-world cannot be compiled with it. With 2.9.6 both a
