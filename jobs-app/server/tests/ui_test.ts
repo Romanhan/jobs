@@ -165,7 +165,10 @@ Deno.test('UI: Ctrl+C / Ctrl+V copy and paste the hovered cell', async () => {
     await b.key('м', 86, 2, 'KeyV');
     await until(async () => (await row('b'))[DETAIL] === 'hello');
     // Selected text and text fields keep the browser's own copy and paste.
-    await b.evaluate(`getSelection().selectAllChildren(document.querySelector(${JSON.stringify(cell('0', COMMENT))}))`);
+    // The selection is outside the table: a re-render after the last save
+    // would replace a selected cell and drop the selection.
+    await b.evaluate(`getSelection().selectAllChildren(document.querySelector('h1'))`);
+    assert(await b.evaluate(`getSelection().toString() === 'Tööde Haldus'`), 'title text is selected');
     equal(await copy(), null);
     await b.evaluate(`getSelection().removeAllRanges(); document.getElementById('filter-nr').focus()`);
     equal(await copy(), null);
