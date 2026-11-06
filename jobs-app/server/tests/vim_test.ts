@@ -254,7 +254,7 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     // yy p adds a duplicate and moves the cursor onto it.
     await press(b, 'g'); await press(b, 'g'); await press(b, '0');
     await press(b, 'p');
-    equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Kopeeri rida enne klahvidega yy');
+    equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Midagi pole kopeeritud — y kopeerib lahtri, yy rea');
     await press(b, 'y'); await press(b, 'y');
     equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Rida kopeeritud — p lisab koopia');
     const yanked = await cursorId(b);
@@ -275,6 +275,27 @@ Deno.test('vim: toggle persists; movement, editing, toggles, copy, delete, undo 
     await until(async () => (await rowsOf(f)).length === 3);
     assert(!(await rowsOf(f)).some(row => row._id === copyId), 'dd deletes the cursor row');
     assert(await at(b), 'Cursor stays in the table after deleting');
+
+    // A single y copies the cell; p then pastes the cell, not the row.
+    await press(b, 'g'); await press(b, 'g'); await press(b, '0');
+    equal((await at(b)).col, 'Töö Nr');
+    const sourceNr = (await byId(f, await cursorId(b)))['Töö Nr'];
+    await press(b, 'y');
+    equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Lahter kopeeritud');
+    await press(b, 'j');
+    const target = await cursorId(b);
+    const targetNr = (await byId(f, target))['Töö Nr'];
+    assert(sourceNr !== targetNr, 'rows differ before the paste');
+    await press(b, 'p');
+    await until(async () => (await byId(f, target))['Töö Nr'] === sourceNr);
+    equal((await rowsOf(f)).length, 3);
+    // A checkbox does not take text.
+    await press(b, 'l');
+    equal((await at(b)).col, 'Valmis');
+    await press(b, 'p');
+    equal(await b.evaluate(`document.getElementById('status-bar').textContent`), 'Linnukesse saab kleepida ainult linnukest');
+    await press(b, 'u');
+    await until(async () => (await byId(f, target))['Töö Nr'] === targetNr);
 
     // Ctrl+D / Ctrl+U move half a page instead of duplicating (3 rows: clamped).
     await press(b, 'g'); await press(b, 'g');
@@ -678,17 +699,27 @@ Deno.test('vim: leader menu with which-key, menu and popup keys, delete confirm,
     // Sync popup: j walks its buttons and a letter presses the button with that key.
     await press(b, '!');
     equal(await b.evaluate(`document.getElementById('sync-popup').style.display`), 'block');
+    // Every 2 s poll re-renders the popup's buttons, so the test button is
+    // put back whenever that happens (it once vanished between j and r).
     await b.evaluate(`(() => {
-      const button = document.createElement('button');
-      button.type = 'button'; button.dataset.key = 'r'; button.textContent = 'Retry';
-      button.onclick = () => { window.__retried = true; };
-      document.getElementById('sync-popup-actions').appendChild(button);
+      const actions = document.getElementById('sync-popup-actions');
+      const add = () => {
+        if (actions.querySelector('[data-key="r"]')) return;
+        const button = document.createElement('button');
+        button.type = 'button'; button.dataset.key = 'r'; button.textContent = 'Retry';
+        button.onclick = () => { window.__retried = true; };
+        actions.appendChild(button);
+      };
+      add();
+      window.__keepRetry = new MutationObserver(add);
+      window.__keepRetry.observe(actions, { childList: true });
     })()`);
     equal(await b.evaluate(`getComputedStyle(document.querySelector('#sync-popup-actions button'), '::after').content`), '"r"');
     await press(b, 'j');
     equal(await b.evaluate(`document.activeElement.dataset.key`), 'r');
     await press(b, 'r');
     equal(await b.evaluate(`window.__retried === true`), true);
+    await b.evaluate(`window.__keepRetry.disconnect()`);
     await press(b, 'Escape');
     equal(await b.evaluate(`document.getElementById('sync-popup').style.display`), 'none');
 

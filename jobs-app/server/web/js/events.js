@@ -217,18 +217,13 @@ export function saveEdited(input, index, col) {
     if (!editingCell || editingCell.index !== index || editingCell.col !== col) return;
     pushUndo();
     let value = editingCell.isDate ? expandRelativeDate(input.value) : input.value;
-    if (DATE_COLS.includes(col) && value) {
-        if (/^\d{1,2}\.\d{1,2}$/.test(value)) {
-            const [d, m] = value.split('.');
-            value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
-        }
-        const parsed = parseDate(value);
-        if (parsed && !isValidDate(parsed)) {
+    if (DATE_COLS.includes(col)) {
+        value = storedDate(value);
+        if (value === null) {
             showStatus(t('toast.invalidDateFormat'), 'error');
             finishEditing();
             return;
         }
-        value = parsed;
     }
     const jobsArr = getJobs();
     jobsArr[index][col] = value;
@@ -237,6 +232,158 @@ export function saveEdited(input, index, col) {
     doAutoSave(jobsArr);
     renderTableBody();
     updateStats();
+}
+
+// A typed date as stored in a date column: "dd.mm" gets this year, "t5" is
+// relative to today. '' stays empty; null means it is not a valid date.
+function storedDate(text) {
+    let value = expandRelativeDate(text);
+    if (!value) return '';
+    if (/^\d{1,2}\.\d{1,2}$/.test(value)) {
+        const [d, m] = value.split('.');
+        value = d.padStart(2, '0') + '.' + m.padStart(2, '0') + '.' + new Date().getFullYear();
+    }
+    const parsed = parseDate(value);
+    return isValidDate(parsed) ? parsed : null;
+}
+
+// ---- Cell copy / paste ------------------------------------------------------
+// One register shared by Ctrl+C / Ctrl+V on the hovered cell and vim's y / p.
+// Ctrl+C also puts the text on the system clipboard, and Ctrl+V takes text
+// copied anywhere else (Excel, e-mail). A checkbox only takes a checkbox.
+
+const CELL_SELECTOR = '#table-body td[data-col], #table-body td[data-checkbox]';
+let cellRegister = null;
+// Remembered by job id, so a re-render (poll, save) keeps it.
+let hoveredCell = null;
+
+function cellInfo(td) {
+    const index = parseInt(td?.dataset.index, 10);
+    const job = getJobs()[index];
+    if (!job) return null;
+    const checkbox = td.dataset.checkbox !== undefined;
+    const col = (td.dataset.col ?? td.dataset.checkbox).replace(/\\'/g, "'");
+    return { index, col, checkbox, job };
+}
+
+function findCell(jobId, col) {
+    const index = getJobs().findIndex(job => job._id === jobId);
+    if (index < 0) return null;
+    return [...document.querySelectorAll(`#table-body tr[data-index="${index}"] td`)]
+        .find(td => td.matches(CELL_SELECTOR) && cellInfo(td)?.col === col) || null;
+}
+
+export function getCellRegister() {
+    return cellRegister;
+}
+
+export function copyCell(td) {
+    const cell = cellInfo(td);
+    if (!cell) return null;
+    const raw = cell.job[cell.col];
+    const value = cell.checkbox ? !!raw : String(raw ?? '');
+    const isDate = DATE_COLS.includes(cell.col) || cell.col === 'Tooriku saabumise kuupäev EE';
+    const text = cell.checkbox ? (value ? 'x' : '') : isDate ? formatDate(value) : value;
+    cellRegister = { checkbox: cell.checkbox, value, text, at: Date.now() };
+    showStatus(t('toast.cellCopied'), 'success');
+    return cellRegister;
+}
+
+export function pasteCell(td, clip = cellRegister) {
+    const cell = cellInfo(td);
+    if (!cell) return false;
+    if (!clip) {
+        showStatus(t('toast.nothingCopied'), 'error');
+        return false;
+    }
+    if (cell.checkbox !== clip.checkbox) {
+        showStatus(t(cell.checkbox ? 'toast.pasteNeedsCheckbox' : 'toast.pasteCheckboxOnly'), 'error');
+        return false;
+    }
+    if (cell.checkbox) {
+        if (!!cell.job[cell.col] !== clip.value) toggleField(cell.index, cell.col, clip.value);
+        showStatus(t('toast.cellPasted'), 'success');
+        return true;
+    }
+    let value = clip.text;
+    if (DATE_COLS.includes(cell.col)) {
+        value = storedDate(value.trim());
+        if (value === null) {
+            showStatus(t('toast.invalidDateFormat'), 'error');
+            return false;
+        }
+    }
+    if ((cell.job[cell.col] ?? '') !== value) {
+        pushUndo();
+        cell.job[cell.col] = value;
+        doAutoSave(getJobs());
+        renderTableBody();
+        updateStats();
+    }
+    showStatus(t('toast.cellPasted'), 'success');
+    return true;
+}
+
+// Vim mode works on its cursor cell; otherwise the cell under the mouse,
+// or a cell focused with the keyboard.
+function clipboardCell() {
+    const focused = document.activeElement?.closest?.(CELL_SELECTOR) || null;
+    const hovered = hoveredCell ? findCell(hoveredCell.jobId, hoveredCell.col) : null;
+    return isVimEnabled() ? focused || hovered : hovered || focused;
+}
+
+// Text fields, the editor and the add form keep their own copy and paste.
+function cellClipboardAllowed() {
+    if (editingCell || document.getElementById('modal').classList.contains('active')) return false;
+    const active = document.activeElement;
+    if (!active) return true;
+    if (active.isContentEditable || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT') return false;
+    return !(active.tagName === 'INPUT' && !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(active.type));
+}
+
+// Ctrl+C copies the cell itself (selected text is copied as usual) and puts
+// the text on the system clipboard too. Ctrl+V lets the browser send its
+// "paste" event, which carries text copied anywhere; when no event comes (no
+// selection or text field to paste into), the cell copied here is pasted.
+let pasteEventSeen = false;
+
+function handleCellClipboardKey(e, key) {
+    if (!e.ctrlKey || e.shiftKey || e.altKey || (key !== 'c' && key !== 'v')) return false;
+    if (!cellClipboardAllowed()) return false;
+    const td = clipboardCell();
+    if (!td) return false;
+    if (key === 'c') {
+        if (window.getSelection()?.toString()) return false;
+        e.preventDefault();
+        const copied = copyCell(td);
+        if (copied) navigator.clipboard?.writeText(copied.text).catch(() => {});
+        return true;
+    }
+    pasteEventSeen = false;
+    setTimeout(() => {
+        if (!pasteEventSeen && td.isConnected) pasteCell(td);
+    }, 0);
+    return true;
+}
+
+// Chrome sends "paste" outside a text field only when "beforepaste" is
+// cancelled; that does not cancel the paste itself.
+function onBeforePaste(e) {
+    if (cellClipboardAllowed() && clipboardCell()) e.preventDefault();
+}
+
+function onPaste(e) {
+    pasteEventSeen = true;
+    if (!cellClipboardAllowed()) return;
+    const td = clipboardCell();
+    if (!td) return;
+    e.preventDefault();
+    // A spreadsheet cell comes with a trailing line break.
+    const text = (e.clipboardData?.getData('text/plain') ?? '').replace(/\r?\n$/, '');
+    // Our own copy keeps its kind (a checkbox); other text pastes as text.
+    if (cellRegister && cellRegister.text === text) pasteCell(td, cellRegister);
+    else if (text) pasteCell(td, { checkbox: false, value: text, text });
+    else showStatus(t('toast.nothingCopied'), 'error');
 }
 
 export function finishEditing() {
@@ -489,6 +636,7 @@ export function handleKeydown(e) {
         }
         return;
     }
+    if (handleCellClipboardKey(e, key)) return;
     if (e.ctrlKey && key === 'd') {
         if (document.getElementById('modal').classList.contains('active')) return;
         e.preventDefault();
@@ -579,7 +727,9 @@ export function attachEventListeners() {
     });
     
     document.addEventListener('keydown', handleKeydown);
-    
+    document.addEventListener('beforepaste', onBeforePaste);
+    document.addEventListener('paste', onPaste);
+
     addForm.addEventListener('submit', addJob);
     addForm.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
@@ -735,6 +885,8 @@ export function attachEventListeners() {
     document.addEventListener('mouseover', function(e) {
         const hoveredRow = e.target && e.target.closest ? e.target.closest('tr[data-index]') : null;
         hoveredRowIndex = hoveredRow ? parseInt(hoveredRow.getAttribute('data-index'), 10) : null;
+        const cell = cellInfo(e.target.closest?.(CELL_SELECTOR));
+        hoveredCell = cell ? { jobId: cell.job._id, col: cell.col } : null;
         const target = e.target.closest('[data-tooltip]');
         if (!target) {
             if (tooltipTimeout) {
@@ -764,6 +916,8 @@ export function attachEventListeners() {
     });
 
     document.addEventListener('mouseout', function(e) {
+        // The mouse left the window.
+        if (!e.relatedTarget) hoveredCell = null;
         const target = e.target.closest('[data-tooltip]');
         if (!target || !e.relatedTarget || !target.contains(e.relatedTarget)) {
             hideTooltip();

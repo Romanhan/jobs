@@ -96,3 +96,82 @@ Deno.test('UI: language switch translates the interface, keeps data keys, and pe
     equal(await f.read(), [job('1')]);
   } finally { await b.close(); await f.close(); }
 });
+
+Deno.test('UI: Ctrl+C / Ctrl+V copy and paste the hovered cell', async () => {
+  const COMMENT = 'Kommentaar(tooriku/detaili seis, muu oluline info)';
+  const NEED = 'EE vajaduse kuupäev (koostamiseks valmis kujul)';
+  const DETAIL = 'Detaili/koostu nimetus või joonise Nr';
+  const f = await fixture([job('a', { [COMMENT]: 'hello', [NEED]: '2026-12-01', Alustatud: true }), job('b')]);
+  const b = await browser();
+  const cell = (row: string, col: string) => `#table-body tr[data-index="${row}"] td[data-col="${col}"], #table-body tr[data-index="${row}"] td[data-checkbox="${col}"]`;
+  const hover = (selector: string) => b.evaluate(`document.querySelector(${JSON.stringify(selector)}).querySelector('.cell-inner').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))`);
+  // Ctrl+C returns what the app copied (null when it left the key alone).
+  const copy = async () => {
+    await b.evaluate(`window.__copied = null; import('/js/events.js').then(m => { window.__before = m.getCellRegister(); })`);
+    await b.key('c', 67, 2, 'KeyC');
+    return b.evaluate(`import('/js/events.js').then(m => m.getCellRegister() === window.__before ? null : m.getCellRegister().text)`);
+  };
+  // Headless Chrome has no system clipboard, so a paste from elsewhere is a
+  // "paste" event carrying its own data.
+  const paste = (text: string) => b.evaluate(`(() => {
+    const data = new DataTransfer();
+    data.setData('text/plain', ${JSON.stringify(text)});
+    return !document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+  })()`);
+  const toast = () => b.evaluate(`document.getElementById('status-bar').textContent`);
+  const row = async (id: string) => (await f.read()).find((r: Record<string, unknown>) => r._id === id);
+  try {
+    await b.open(f.url);
+    // Text: copy from one comment, paste into another.
+    await hover(cell('0', COMMENT));
+    equal(await copy(), 'hello');
+    equal(await toast(), 'Lahter kopeeritud');
+    await hover(cell('1', COMMENT));
+    equal(await paste('hello'), true);
+    await until(async () => (await row('b'))[COMMENT] === 'hello');
+    equal(await toast(), 'Lahter kleebitud');
+    // Dates copy as shown and store as ISO.
+    await hover(cell('0', NEED));
+    equal(await copy(), '01.12.2026');
+    await hover(cell('1', NEED));
+    await paste('01.12.2026');
+    await until(async () => (await row('b'))[NEED] === '2026-12-01');
+    // Text that is not a date is refused in a date cell.
+    await paste('not a date');
+    equal(await toast(), 'Vigane kuupäeva vorming (Kasuta: PP.KK.AAAA)');
+    equal((await row('b'))[NEED], '2026-12-01');
+    // Text copied elsewhere (a spreadsheet cell ends with a line break).
+    await hover(cell('1', DETAIL));
+    await paste('from excel\r\n');
+    await until(async () => (await row('b'))[DETAIL] === 'from excel');
+    // Checkboxes copy their state and only go into a checkbox.
+    await hover(cell('0', 'Alustatud'));
+    equal(await copy(), 'x');
+    await hover(cell('1', COMMENT));
+    await paste('x');
+    equal(await toast(), 'Linnukest saab kleepida ainult linnukesse');
+    await hover(cell('1', 'Alustatud'));
+    await paste('x');
+    await until(async () => (await row('b')).Alustatud === true);
+    assert((await row('b'))['Alustamise kpv'], 'pasting a checked Alustatud fills the start date');
+    // Undo takes back the paste.
+    await b.key('z', 90, 2, 'KeyZ');
+    await until(async () => !(await row('b')).Alustatud);
+    // Ctrl+V with no "paste" event from the browser pastes the cell copied
+    // here; the Russian layout ('м' on the V key) works too.
+    await hover(cell('0', COMMENT));
+    equal(await copy(), 'hello');
+    await hover(cell('1', DETAIL));
+    await b.key('м', 86, 2, 'KeyV');
+    await until(async () => (await row('b'))[DETAIL] === 'hello');
+    // Selected text and text fields keep the browser's own copy and paste.
+    // The selection is outside the table: a re-render after the last save
+    // would replace a selected cell and drop the selection.
+    await b.evaluate(`getSelection().selectAllChildren(document.querySelector('h1'))`);
+    assert(await b.evaluate(`getSelection().toString() === 'Tööde Haldus'`), 'title text is selected');
+    equal(await copy(), null);
+    await b.evaluate(`getSelection().removeAllRanges(); document.getElementById('filter-nr').focus()`);
+    equal(await copy(), null);
+    equal(await paste('typed'), false);
+  } finally { await b.close(); await f.close(); }
+});
