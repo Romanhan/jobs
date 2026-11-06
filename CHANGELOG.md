@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.5
+
+- Copy and paste a single cell: hover over a cell and press `Ctrl+C`, then
+  hover over another cell and press `Ctrl+V`. Works for text, date and
+  checkbox cells (a checkbox only pastes into a checkbox), checks dates like
+  the editor does, and takes text copied from elsewhere (Excel, e-mail).
+  `Ctrl+Z` undoes a paste. Selected text and text fields copy as before.
+- Vim keys: `y` copies the cell under the cursor, `yy` still copies the row,
+  and `p` pastes whichever was copied last (the cell value, or a duplicate
+  row).
+
 ## 0.5.4
 
 - A subcontracted job marked "Töötlus Lõpetatud" no longer disappears: it

@@ -7,7 +7,7 @@
 // the "?" help and the which-key popup are all built from these two tables.
 import { getJobs, undo, redo, duplicateJob, pushUndo, autoSave } from './data.js';
 import { renderTable, rowGutterWidth, renderTableBody, updateStats, showStatus, sortBy } from './ui.js';
-import { editCell, toggleField, deleteRow, openModal, getEditingCell } from './events.js';
+import { editCell, toggleField, deleteRow, openModal, getEditingCell, copyCell, pasteCell, getCellRegister } from './events.js';
 import { DATE_COLS } from './config.js';
 import { t, columnLabel } from './i18n.js';
 import { escapeHTML, matchesUSLayout, parseDate, dayFromToday } from './utils.js';
@@ -43,6 +43,7 @@ let pendingTimer = null;
 let count = '';
 let lastEscapeAt = 0;
 let yankedId = null;
+let yankedAt = 0;
 let lastJAt = 0;
 // Keys typed after the leader, e.g. [] right after "," and ['v'] after ",v".
 let leaderPath = null;
@@ -87,7 +88,7 @@ const KEYMAP = [
     { group: 'edit', keys: 'gd', label: 'vim.calendar', bindings: { gd: openCalendar } },
     { group: 'edit', keys: 'o', label: 'vim.newJob', bindings: { o: () => openModal() } },
     { group: 'edit', keys: 'dd', label: 'vim.delete', bindings: { dd: deleteCursorRow } },
-    { group: 'edit', keys: 'yy / p', label: 'vim.copy', bindings: { yy: yankRow, p: pasteRow } },
+    { group: 'edit', keys: 'y / yy / p', label: 'vim.copy', bindings: { y: yankCell, yy: yankRow, p: paste } },
     { group: 'edit', keys: 'u / Ctrl+R', label: 'vim.undoRedo', bindings: {
         u: () => undoChange(false), 'C-r': () => undoChange(true), 'C-y': () => undoChange(true)
     } },
@@ -465,11 +466,27 @@ function deleteCursorRow() {
     if (td) deleteRow(rowIndex(td));
 }
 
+// "y" copies the cell at once (shared with Ctrl+C); a second "y" makes it the
+// whole row. "p" pastes whichever was copied last, like vim's registers.
+function yankCell() {
+    const copied = copyCell(targetCell());
+    if (copied) navigator.clipboard?.writeText(copied.text).catch(() => {});
+}
+
 function yankRow() {
     const td = targetCell();
     if (!td) return;
     yankedId = getJobs()[rowIndex(td)]?._id ?? null;
+    yankedAt = Date.now();
     if (yankedId) showStatus(t('vim.toastYanked'), 'success');
+}
+
+function paste() {
+    const cell = getCellRegister();
+    if (cell && cell.at >= yankedAt) {
+        const td = targetCell();
+        if (td) pasteCell(td, cell);
+    } else pasteRow();
 }
 
 function pasteRow() {
@@ -722,8 +739,13 @@ function handleCtrlKey(e) {
 
 function runKey(key, e) {
     if (SEQUENCE_STARTS.has(key)) {
+        // A key that is also an action on its own ("y") runs at once and
+        // still waits for the rest of its sequence ("yy").
+        const now = BINDINGS.get(key);
+        const n = now ? takeCount() : 0;
         setPending(key);
         e.preventDefault();
+        now?.(n);
         return true;
     }
     const action = BINDINGS.get(key);
