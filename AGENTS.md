@@ -68,7 +68,7 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - **Show completed** — Toggle "Lõppenud" checkbox
 - **Show allhankes** — Toggle "Allhange" checkbox
 - **Show dates** — Toggle "Kuupäevad" checkbox
-- **Mark fully machined** — Check "Töötlus Lõpetatud" (without "Valmis") → "Fully Machined" status: deep green tint, dimmed text, own counter pill; an overdue need date still shows red
+- **Mark fully machined** — Check "Töötlus Lõpetatud" (without "Valmis") → "Fully Machined" status: deep green tint, dimmed text, own counter pill; an overdue need date still shows red. A subcontracted job ("Töötlus allhankes") stays out of the main list after it is marked machined and shows under both the Allhanke and Töödeldud pills
 - **Filters** — Text filter by "Töö Nr" and "Koht", blank-location toggle, "Kpv puudub" button for rows without "EE vajaduse kuupäev"
 - **Save CSV** — Menu → "Save CSV" downloads `jobs_data.csv`
 - **Load CSV** — Menu → "Load CSV" loads data from file

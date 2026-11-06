@@ -5,20 +5,27 @@ export async function filtersAndCounters() {
         { _id: 'b', 'Töö Nr': 'B', 'Täitmise koht': 'Karusel', 'Töötlus allhankes': true },
         { _id: 'c', 'Töö Nr': 'C', 'Täitmise koht': '', [deadline]: '2000-01-01' },
         { _id: 'd', 'Töö Nr': 'D', 'Täitmise koht': 'TOS', Valmis: true },
+        { _id: 'e', 'Töö Nr': 'E', 'Täitmise koht': 'Karusel', 'Töötlus allhankes': true, 'Töötlus Lõpetatud': true },
     ]);
     testUI.renderTable(); testUI.updateStats();
     const count = () => document.querySelectorAll('#table-body tr').length;
-    for (const [id, n] of Object.entries({ active: 3, 'in-progress': 1, allhanke: 1, overdue: 1, completed: 1 })) equal(document.getElementById('count-' + id).textContent, String(n));
+    for (const [id, n] of Object.entries({ active: 4, 'in-progress': 1, allhanke: 2, machined: 1, overdue: 1, completed: 1 })) equal(document.getElementById('count-' + id).textContent, String(n));
+    // A machined subcontract job stays out of the main list but shows under both Allhanke and Töödeldud.
+    const shown = () => [...document.querySelectorAll('#table-body tr')].map(tr => testData.getJobs()[tr.dataset.index]._id).join();
+    equal(shown(), 'a,c');
+    document.querySelector('[data-filter="allhanke"]').click(); equal(shown(), 'b,e');
+    document.querySelector('[data-filter="machined"]').click(); equal(shown(), 'e');
+    document.querySelector('[data-filter="all"]').click();
     equal(count(), 2);
-    document.getElementById('show-allhankes').click(); equal(count(), 3);
+    document.getElementById('show-allhankes').click(); equal(count(), 4);
     document.getElementById('btn-filter-tos').click(); equal(count(), 1);
     document.getElementById('show-blank-koht').click(); equal(count(), 2);
-    document.getElementById('btn-filter-karusel').click(); equal(count(), 2);
+    document.getElementById('btn-filter-karusel').click(); equal(count(), 3);
     const input = document.getElementById('filter-nr'); input.value = 'B'; input.dispatchEvent(new Event('input')); equal(count(), 1);
     document.querySelector('[data-filter="all"]').click(); equal(count(), 2);
     equal(document.getElementById('filter-koht').value, '');
-    for (const status of ['in-progress', 'allhanke', 'overdue', 'completed']) {
-        document.querySelector(`[data-filter="${status}"]`).click(); equal(count(), 1);
+    for (const [status, n] of Object.entries({ 'in-progress': 1, allhanke: 2, machined: 1, overdue: 1, completed: 1 })) {
+        document.querySelector(`[data-filter="${status}"]`).click(); equal(count(), n);
     }
     document.querySelector('[data-filter="all"]').click();
     document.getElementById('show-completed').click(); equal(count(), 3);
