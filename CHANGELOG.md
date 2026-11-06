@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Move the build toolchain back to Deno 2.9.6. WithSecure quarantined the
+  0.5.3 executable as `Trojan.TR/W64.Evo` and now blocks the 2.9.8 runtime
+  itself, so even a hello-world cannot be compiled with it. With 2.9.6 both a
+  hello-world build and a full 0.5.3 executable were accepted by WithSecure
+  and ran. 2.9.7 and 2.9.8 are excluded; CI pins `v2.9.6`.
+
 ## 0.5.3
 
 - Relative dates: in a date cell or a date field of the add form, `t` +

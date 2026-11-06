@@ -38,9 +38,10 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 1. **Local:** Open `jobs-app/server/web/index.html` in Chrome/Edge
 2. **Shared folder:** Copy `jobs-app.exe` to the shared network folder and point every shortcut at the same data file: `jobs-app.exe --data K:\folder\jobs_data.json`
 3. **Build .exe:** `cd jobs-app/server && deno task build` (cross-compiles to a Windows PE and stamps the file version; `deno task build:quick` compiles without the version resource)
-   - **Always build with Deno 2.9.8 — for every future release.** This is the project's fixed release toolchain. Deno 2.9.7 `deno compile` output was quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build was flagged too) and broke the resource merge that `set-version-info.ts` relies on. On 2026-10-22 both a hello-world build and a full 0.3.10 executable were built with 2.9.8, accepted by WithSecure, and the embedded payload survived the version stamp, so the pin moved to 2.9.8. CI pins the exact tag `v2.9.8` (never `v2.x` or a newer release); `set-version-info.ts` warns when another version is used.
+   - **Always build with Deno 2.9.6 — for every future release.** This is the project's fixed release toolchain. Deno 2.9.7 `deno compile` output was quarantined by WithSecure as `Trojan.TR/W64.Malware` (false positive on the compiled shell — a hello-world build was flagged too) and broke the resource merge that `set-version-info.ts` relies on. 2.9.8 passed a scan on 2026-10-22, but on 2026-10-30 WithSecure quarantined 0.5.3 as `Trojan.TR/W64.Evo` and blocked the 2.9.8 runtime (`denort.exe`) outright, so even a hello-world could not be compiled. The same day a hello-world and a full 0.5.3 executable built with 2.9.6 were accepted by WithSecure and ran, so the pin moved back to 2.9.6. CI pins the exact tag `v2.9.6` (never `v2.x` or a newer release); `set-version-info.ts` warns when another version is used.
+   - The detection targets the Deno runtime that every `deno compile` executable carries, so any version can be flagged by a later WithSecure update. The lasting fix is a WithSecure exception from IT (by signing certificate, hash or path) or signing the exe; report flagged builds to WithSecure as false positives.
    - Do not bump the pin casually. Only change it after a fresh WithSecure scan of both a hello-world build and a real app build shows the new Deno is clean; then update the pin in `.github/workflows/build.yml`, `.github/workflows/test.yml`, this note, and the version check in `set-version-info.ts` together.
-   - Local builds: the pinned binary is at `~/.cache/deno-2.9.8/deno`, so run `PATH="$HOME/.cache/deno-2.9.8:$PATH" deno task build` if the `deno` on `PATH` is a different version.
+   - Local builds: the pinned binary is at `~/.cache/deno-2.9.6/deno`, so run `PATH="$HOME/.cache/deno-2.9.6:$PATH" deno task build` if the `deno` on `PATH` is a different version.
 
 ## Version Info
 - Version managed in `jobs-app/server/deno.json` (field `"version"`)
@@ -51,9 +52,9 @@ Single-page HTML work management app with soft neumorphic (soft UI) design.
 - App icon — `icon.ico` in `server/` (16×16, 32×32, 64×64 combined), baked via `--icon icon.ico`
 
 ## Release
-- **Toolchain is fixed for all releases: Deno 2.9.8** (see "How to Run"). Every release from the next version onward is built with it. 2.9.7 stays excluded; a newer Deno only replaces 2.9.8 after a fresh WithSecure scan of both a hello-world build and a real app build.
+- **Toolchain is fixed for all releases: Deno 2.9.6** (see "How to Run"). Every release from the next version onward is built with it. 2.9.7 and 2.9.8 stay excluded; a newer Deno only replaces 2.9.6 after a fresh WithSecure scan of both a hello-world build and a real app build.
 - Flow: branch → PR → CI green (tests run on ubuntu and windows) → merge to `main` → annotated tag `vX.Y.Z` on `main` → push the tag.
-- CI (`build.yml`, `windows-latest`, Deno `v2.9.8`) builds, verifies `VersionInfo.FileVersion` matches `deno.json`, runs the full test suite against the compiled exe, and attaches `jobs-app.exe` to the GitHub release.
+- CI (`build.yml`, `windows-latest`, Deno `v2.9.6`) builds, verifies `VersionInfo.FileVersion` matches `deno.json`, runs the full test suite against the compiled exe, and attaches `jobs-app.exe` to the GitHub release.
 - Bump `jobs-app/server/deno.json` and add a `CHANGELOG.md` entry before tagging.
 - Never commit `jobs-app.exe` or archives — the release asset (or CI artifact) is the only binary.
 
